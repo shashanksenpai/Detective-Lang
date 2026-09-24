@@ -171,12 +171,13 @@ page) with Search / Timeline / Evidence tabs, and the pipeline underneath now ke
   changed, 18 captioned ones stayed text). Only WhatsApp is classified; Instagram/Telegram media entries are dropped by their parsers.
 - **Tests:** `conftest.py` points every pytest run at a throwaway DB (`DETECTIVE_DATABASE_URL`) so the suite can never touch
   `detective.db`; `test_whatsapp_formats.py` (F-01/F-02) and `test_message_kinds.py` (F-03, through the real ingestion path).
-  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 244 passed,
-  2 xfailed with the model built (231 before the `judge.py` placeholder's 13 tests); a fresh clone without it: 217 passed, 29 skipped.
-- **The Paper Leak eval moved, and it is not an improvement:** removing 4 media placeholders changed top-1 from 44.1% to 47.2%
-  (model) and 46.9% to 53.5% (VADER fallback), because `eval_attribution.py` shuffles every sender's messages with one shared
-  RNG, so any change to one sender's list re-draws the held-out set of every later sender (BACKLOG E-1). Treat single-split
-  accuracy as roughly +-5 points.
+  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 258 passed,
+  2 xfailed with the model built (after the `judge.py` placeholder and `eval_split.py` tests); a fresh clone without it: 231 passed, 29 skipped.
+- **The Paper Leak eval moved after F-03, and it was not an improvement - now fixed (E-1, 2026-09-24):** removing 4 media
+  placeholders changed top-1 from 44.1% to 47.2% (model) and 46.9% to 53.5% (VADER fallback), because `eval_attribution.py`
+  shuffled every sender's messages with one shared RNG, so a change to one sender's list could re-draw other senders' held-out
+  sets (in a synthetic check: 12 of 19 list sizes). `eval_split.py` now gives each sender its own generator seeded from
+  (seed, split index, sender) and the eval averages 5 splits; see "Improvement Stage" for the resulting mean +- sd.
 
 **Demo: The Paper Leak** - a fourth seeded case built for the investigation phases (6 and 7 below): nine
 people and ~730 messages over Sep 1 - Nov 17 2025 - the class group (480 msgs) plus five DMs, two of them
@@ -196,10 +197,9 @@ inconsistency) that a detector should *not* score as the suspect lying. Every re
 timestamp + sender + quote, and `test_leak_case.py` checks each one really exists in the chats (and that every
 line of every sample parses - the parser silently drops non-matching lines). Dates are settled by the data
 (no ambiguity note). Baseline on this case, untouched: attribution top-1 accuracy 49.7% when first recorded;
-**latest measurement 2026-09-24 (after F-03): 53.5% with the VADER fallback, 47.2% with the Hinglish model** on 142 test
-messages (chance is 11%). It has read 44.1%-53.5% across recent commits: the differences are the fixed-seed split being
-re-drawn (BACKLOG E-1), not real change - treat it as roughly +-5 points. Coverage is 0.0% on 142 messages (0.7% before
-F-03 with the fallback) - the engine commits on essentially none, because the "uncertain" thresholds were set
+**latest measurement 2026-09-24 (after F-03 and E-1, mean +- sd over 5 splits, 142 test messages each): 51.7% +- 3.3 with the
+VADER fallback, 49.6% +- 2.1 with the Hinglish model** (chance is 11%). Older single-split figures for this case (44.1%-53.5%)
+were split noise (BACKLOG E-1, now fixed). Coverage is 0.0% - the engine never commits on this case, because the "uncertain" thresholds were set
 for 3-person cases and nine speakers dilute the softmax. That is honest behaviour and is more evidence for
 Improvement Stage item (1), fitting weights/thresholds; it is recorded, not tuned. Ingesting this case
 exposed a real inefficiency: `identity_resolution.score_pair` re-embedded every person once per *pair*
@@ -298,12 +298,19 @@ CC-BY-4.0, the English tweets' licence is unstated - fine for local use, check b
 found through real testing rather than guessing:
 
 - `eval_attribution.py` is a real eval harness for the attribution engine: per case, holds out ~20%
-  of each sender's messages (fixed seed, reproducible), builds a `DetectiveEngine` on the rest, and
-  reports top-1 accuracy, coverage (% not flagged uncertain), precision-when-confident, and a
-  per-sender breakdown. This didn't exist before - "accuracy" was pure eyeballing until now.
-  **Baseline** (hand-tuned weights, untouched): Demo: Study Group - 44.4% top-1 accuracy, 38.9%
-  coverage, 42.9% precision when confident. Demo: Housemates - 57.1% / 47.6% / 60.0%. Precision
-  when confident is barely above chance among 3 people (33%) - real evidence the hand-picked signal
+  of each sender's messages, builds a `DetectiveEngine` on the rest, and reports top-1 accuracy,
+  coverage (% not flagged uncertain), precision-when-confident, and a per-sender breakdown. This
+  didn't exist before - "accuracy" was pure eyeballing until now. Since E-1 (2026-09-24) it averages
+  **5 reproducible splits** (`--splits N`, 1 = quick) and reports mean +- sd; each sender's split
+  depends only on that sender (`eval_split.py`, tested by `test_eval_split.py`, whose independence
+  tests fail if the old shared-generator design comes back).
+  **Baseline** (hand-tuned weights, untouched; mean +- sd over 5 splits, VADER fallback / Hinglish model):
+  Demo: Study Group (18 test msgs/split, chance 33%) - top-1 44.4% +- 13.6 / 40.0% +- 9.1, coverage 43% / 40%,
+  precision when confident 51.3% / 50.0%. Demo: Housemates (21/split) - 61.0% +- 8.5 / 59.0% +- 8.7, coverage
+  45% / 44%, precision 68.1% / 71.7%. **On Study Group the engine is not clearly distinguishable from chance**
+  (within ~1 sd), and the model vs fallback gaps (2-4 points) are all inside one sd. The old single-split
+  figures (44.4% / 38.9% / 42.9%, 57.1% / 47.6% / 60.0%) were one draw each. Precision
+  when confident is modest among 3 people (33% chance) - real evidence the hand-picked signal
   weights and uncertainty thresholds need fitting against labeled data, not more guessing (deferred
   as its own item below - see why)
 - `eval_identity.py` is a self-contained regression fixture for identity resolution's soft tier,
@@ -438,8 +445,9 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   `score_pair`) that produces `MergeSuggestion` rows; never merges anything itself. Soft tier
   (`stylometric_fingerprint`, `person_centroid`) computed for evidence but disabled from gating a
   suggestion - see Improvement Stage notes above
-- `eval_attribution.py` — eval harness for the attribution engine: per-case train/test split,
-  reports accuracy/coverage/precision. Run after any change to signals/weights/thresholds
+- `eval_attribution.py` — eval harness for the attribution engine: per-case train/test splits (5 by default),
+  reports accuracy/coverage/precision as mean +- sd. Run after any change to signals/weights/thresholds
+- `eval_split.py` — its light (no ML/DB imports) per-sender split + `summarize`; `test_eval_split.py` pins it
 - `eval_identity.py` — self-contained regression fixture for identity resolution's soft tier,
   built from the permanent sample files. Run before ever re-enabling the soft tier
 - `graph_analysis.py` — Phase 4 relationship-graph computation (`build_graph`,

@@ -253,19 +253,20 @@ The Paper Leak case is the stress test. Its nine speakers are written to be dist
 
 ## Measured results and limitations
 
-Reproduce the attribution numbers with `python eval_attribution.py`. For each case it holds out ~20% of every sender's messages (fixed seed), builds an engine on the rest, and reports top-1 accuracy (forced choice), **coverage** (how often the engine was willing to commit rather than say "uncertain") and **precision when it does commit**.
+Reproduce the attribution numbers with `python eval_attribution.py`. For each case it holds out ~20% of every sender's messages, builds an engine on the rest, and reports top-1 accuracy (forced choice), **coverage** (how often the engine was willing to commit rather than say "uncertain") and **precision when it does commit**. It repeats this over **5 reproducible splits** (`--splits 1` is a quick single run) and reports **mean ± standard deviation**, because on a small case a single split can swing by several points. Each sender's split depends only on that sender, so unrelated changes to the data don't re-draw everyone else's test messages.
 
-| Case | Senders | Test messages | Chance | Top-1, VADER fallback | Top-1, Hinglish model | Coverage (fallback / model) | Precision when confident (fallback / model) |
+| Case | Senders | Test msgs / split | Chance | Top-1, VADER fallback | Top-1, Hinglish model | Coverage (fallback / model) | Precision when confident (fallback / model) |
 |---|---:|---:|---:|---:|---:|---|---|
-| Study Group | 3 | 18 | 33% | 44.4% | 44.4% | 38.9% / 44.4% | 42.9% / 50.0% |
-| Housemates | 3 | 21 | 33% | 57.1% | 57.1% | 47.6% / 47.6% | 60.0% / 60.0% |
-| The Paper Leak | 9 | 142 | 11% | 53.5% | 47.2% | 0.0% / 0.0% | no commits |
+| Study Group | 3 | 18 | 33% | 44.4% ± 13.6 | 40.0% ± 9.1 | 43% / 40% | 51.3% / 50.0% |
+| Housemates | 3 | 21 | 33% | 61.0% ± 8.5 | 59.0% ± 8.7 | 45% / 44% | 68.1% / 71.7% |
+| The Paper Leak | 9 | 142 | 11% | 51.7% ± 3.3 | 49.6% ± 2.1 | 0% / 0% | never committed |
 
 **How to read this honestly:**
 
-- The engine is **clearly better than chance but not a reliable classifier.** With 3 speakers, "precision when confident" is only 43–60% against a 33% chance level.
+- **The engine is above chance on the larger cases, and not clearly so on the smallest.** On the nine-person Paper Leak (chance 11%) it gets about 50% and the spread is small (±2–3 points). On Housemates it is around 60% against 33%. On Study Group, with only 18 test messages per split, it scores 40–44% ± 9–14 against a 33% chance level, which is within about one standard deviation of guessing. It is not a reliable classifier anywhere: "precision when confident" is only 50–72% on the 3-person cases.
+- **The Hinglish model and the VADER fallback are indistinguishable here.** Their gaps (2–4 points) are all well inside one standard deviation, so nothing in this table says one attributes better than the other.
 - **The uncertainty thresholds (35% / 8 pts) were set for 3-person chats.** With nine speakers the softmax spreads out and the engine declines everything: it commits on none of the 142 test messages, with either scorer. That is honest behaviour, but it means the thresholds need refitting, and this is the strongest evidence for fitting the weights and thresholds against labeled data.
-- **Treat single-split accuracy as roughly ±5 points.** The small cases have only 18–21 test messages. The Paper Leak figure has read anywhere from 44% to 54% across recent commits, including a change as small as dropping four media placeholders, because the eval shuffles every sender's messages with one shared random generator: changing one sender's list re-draws the held-out messages of every later sender. That is a test-harness weakness (tracked as `E-1` in [`BACKLOG.md`](BACKLOG.md)), not the engine changing. Likewise the Hinglish model changes attribution accuracy by no more than that (a paired comparison over 5 splits × 3 cases gave 48.6% vs 47.7%).
+- **Why the spread is reported.** An earlier version of the eval used a single split and shuffled every sender's messages with one shared random generator, so changing one sender's list could re-draw other senders' held-out messages. Dropping four media placeholders moved the Paper Leak figure from 44% to 47% (model) and from 47% to 54% (fallback) with no change to the engine; in a synthetic check that design re-drew another sender's held-out set for 12 of 19 list sizes. That is fixed (`E-1` in [`BACKLOG.md`](BACKLOG.md)), and the standard deviations above show how much a single split can wander.
 - Everything here is on **synthetic** chats. Nothing has been validated on real conversations.
 
 **Known limitations**, tracked in [`BACKLOG.md`](BACKLOG.md):
@@ -327,13 +328,13 @@ To analyse your own chats, create a case and upload an export. In WhatsApp use *
 
 ```bash
 pip install pytest
-python -m pytest -q          # 244 passed, 2 xfailed once the model is built (under a minute)
-python eval_attribution.py   # attribution accuracy / coverage / precision per case
+python -m pytest -q          # 258 passed, 2 xfailed once the model is built (under a minute)
+python eval_attribution.py   # attribution accuracy / coverage / precision per case, mean ± sd over 5 splits (--splits 1 = quick)
 python eval_sentiment.py     # sentiment model vs VADER on the held-out sets
 python eval_identity.py      # regression fixture for the (disabled) soft identity tier
 ```
 
-**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 217 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
+**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 231 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
 
 ---
 
@@ -384,6 +385,7 @@ cases.html  detective_lang.html  person.html  combined_dossier.html
 merge_review.html  investigation_board.html  workspace.html      The UI pages
 
 eval_attribution.py  eval_sentiment.py  eval_identity.py        Evaluation harnesses
+eval_split.py             Per-sender train/test split and mean ± sd helper for eval_attribution.py
 test_*.py  conftest.py    pytest suites (parsers, message kinds, graph rules, sentiment, static policy,
                           leak-case key); conftest.py points them at a throwaway database
 sample_*.txt / *.json     Synthetic chats, training lines, labeled sets, answer key

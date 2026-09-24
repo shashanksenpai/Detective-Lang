@@ -19,8 +19,11 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 2. **Parser fidelity - F-01, F-02, F-03.** *Done 2026-09-24* (see Done). Everything downstream (the chat reader,
    contradictions on real chats) is only as good as the import; follow-ups F-31 to F-35 remain, mainly validating
    against a real phone export.
-3. **N-1 design** - a plan for approval, not code: the method is deliberately undesigned (CLAUDE.md, Phase 6).
-4. **N-1 implementation**, then **N-2 chat reader** (needs step 2).
+2b. **E-1 - a trustworthy attribution eval.** *Done 2026-09-24* (see Done): per-sender splits, 5 splits, mean +- sd.
+3. **N-1 design** - with the owner. Direction set 2026-09-24: no paid API, Gemini as the semantic judge (`judge.py`
+   placeholder); see N-1 below for the design so far and the open privacy question.
+4. **N-1 slice 6a** (candidate generation + `eval_contradictions.py`, judge-agnostic), then the judge, then **N-2 chat
+   reader** (needs step 2).
 5. **N-3** waits for the owner's specifics.
 
 ---
@@ -120,16 +123,11 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 
 ### Attribution / identity
 - [ ] **F-16 · Uncertainty thresholds are calibrated for 3-person cases.** On the 9-person paper-leak case
-  top-1 accuracy read 53.5% (VADER fallback) / 47.2% (Hinglish model) at the last measurement (2026-09-24, after
-  F-03) - it has ranged 44.1%-53.5% across recent commits, which is split noise (E-1), not change - and the
-  engine commits on 0 of 142 test messages. (Improvement Stage item 1.)
-- [ ] **E-1 · The attribution eval's single split is fragile.** `eval_attribution.py` shuffles every sender's
-  messages with ONE shared `random.Random(42)`, so changing any one sender's list (dropping 4 media placeholders
-  did it) re-draws the held-out set of every later sender: the paper-leak top-1 moved 44.1% -> 47.2% (model) and
-  46.9% -> 53.5% (fallback) with no change to the engine. Small cases have only 18-21 test messages. Fix: a
-  per-sender RNG (`random.Random(f"{SEED}:{sender}")`) so unrelated changes don't re-draw other senders, and
-  report mean +- sd over several repeated splits (or k-fold), keeping the single split as a quick mode. Do this
-  before fitting any weights or thresholds (F-16, F-17) - otherwise every "improvement" is unmeasurable.
+  top-1 accuracy is 51.7% +- 3.3 (VADER fallback) / 49.6% +- 2.1 (Hinglish model), mean +- sd over 5 splits
+  (2026-09-24, chance 11%), and the engine never commits (0% coverage on 142 test messages per split). On the
+  3-person cases the spread is large (sd 8-14 points at 18-21 test messages) and Study Group (40-44%, chance 33%)
+  is not clearly distinguishable from chance. (Improvement Stage item 1; the eval is now trustworthy enough to
+  fit against - E-1 is done.)
 - [ ] **F-17 · spaCy syntax signal** (Improvement Stage item 2).
 - [ ] **F-18 · `DetectiveEngine` treats the last message of one source and the first of the next as
   adjacent** when it counts turn-taking (`transition_counts`). The board's exchange counting had the same
@@ -247,6 +245,13 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   with the instruction to run `python eval_sentiment.py --retrain` (fresh clone: 154 passed, 29 skipped; with the model:
   181 passed, 2 xfailed). A model file with the wrong feature version still fails rather than skips (verified).
 - 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): the 49.7% first recorded for paper-leak top-1 was stale; see F-16 / E-1 for the current, noisy figures.
+- 2026-09-24 · **E-1 · Attribution eval no longer depends on unrelated senders.** `eval_split.py` seeds each sender's shuffle
+  from (seed, split index, sender) instead of one shared generator, and `eval_attribution.py` averages 5 splits and reports mean
+  +- sd (`--splits N`; 1 = quick). In a synthetic check the old design re-drew another sender's held-out set for 12 of 19
+  list sizes; 14 tests in `test_eval_split.py` include one that runs the legacy algorithm to show that, and reintroducing the
+  shared generator (verified by mutation) fails 6 of them. **New honest numbers (fallback / model):** Study Group 44.4% +- 13.6 /
+  40.0% +- 9.1 (chance 33%, not clearly above it), Housemates 61.0% +- 8.5 / 59.0% +- 8.7, Paper Leak 51.7% +- 3.3 / 49.6% +- 2.1
+  (chance 11%, never commits); model vs fallback is within one sd everywhere. The old single-split figures were one draw each.
 - 2026-09-24 · **H-1 · LICENSE**: Apache License 2.0 added (the owner's choice), verbatim canonical text; README updated.
 - 2026-09-24 · **DB isolation for tests** (F-15, part): `DETECTIVE_DATABASE_URL` + `conftest.py` - a full suite run leaves the real
   `detective.db` byte-identical (verified by size and mtime).
