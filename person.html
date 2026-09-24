@@ -5,67 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Detective Lang — Dossier</title>
 <link rel="stylesheet" href="static/theme.css">
+<link rel="stylesheet" href="static/dossier.css">
 <style>
-  /* page-specific only; the design system lives in static/theme.css */
-  :root{
-    /* sentiment bar colours, kept as they were (owner: leave the blue/red sentiment colours for now) */
-    --sent-neg:#c77b72; --sent-neu:#565b69; --sent-pos:#7cb88f;
-  }
+  /* page-specific only; panels and rendering are shared with combined_dossier.html (static/dossier.*) */
   .picker{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; align-items:center;}
   .picker .lbl{margin-right:4px;}
   .wb-main button.picker-chip{text-transform:none; letter-spacing:.02em; font:500 12px/1 var(--f-mono); color:var(--text-dim); border-color:var(--line-3); padding:7px 12px;}
   .wb-main button.picker-chip:hover{color:var(--text); background:var(--bg-3); box-shadow:none; border-color:var(--text-faint);}
   .wb-main button.picker-chip.active{color:var(--cyan); border-color:var(--cyan); background:var(--cyan-bg); box-shadow:var(--glow-cyan);}
-
-  .dossier{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; align-items:start;}
-  @media (max-width:900px){ .dossier{grid-template-columns:1fr;} }
-  section.panel{margin-bottom:0;}
-  .col{display:flex; flex-direction:column; gap:18px;}
-
   .linked-banner{font:400 12px/1.5 var(--f-mono); color:var(--green); padding:10px 14px; margin-bottom:18px; border-left:2px solid var(--green); background:var(--green-bg);}
   .linked-banner a{color:var(--green); text-decoration:underline;}
   .linked-banner::before{content:"\2713\00A0";}
-
-  .source-chip{display:inline-flex; align-items:center; gap:8px; font:400 11.5px/1.3 var(--f-mono); background:var(--bg-2); border:1px solid var(--line-2); padding:6px 10px; margin:0 8px 8px 0; overflow-wrap:anywhere;}
-  .ctx-tag{font:500 9px/1 var(--f-mono); letter-spacing:.12em; padding:3px 6px; text-transform:uppercase; border:1px solid var(--line-3); color:var(--text-dim);}
-
-  .stat-row{display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:13px; border-top:1px dashed var(--line-2);}
-  .stat-row:first-of-type{border-top:none;}
-  .stat-row .label{color:var(--text-dim);}
-  .stat-row .value{font:600 12.5px/1 var(--f-mono);}
-
-  .sentiment-bar{height:10px; display:flex; margin:4px 0 8px; border:1px solid var(--line-2); background:var(--bg-2);}
-  .sentiment-bar .neg{background:var(--sent-neg);} .sentiment-bar .neu{background:var(--sent-neu);} .sentiment-bar .pos{background:var(--sent-pos);}
-  .sentiment-legend{display:flex; gap:16px; flex-wrap:wrap; font:400 11px/1.4 var(--f-mono); color:var(--text-dim); margin-bottom:8px;}
-  .sentiment-legend > span::before{content:"\25A0"; margin-right:5px;}
-  .sentiment-legend .neg::before{color:var(--sent-neg);} .sentiment-legend .neu::before{color:var(--sent-neu);} .sentiment-legend .pos::before{color:var(--sent-pos);}
-
-  .trait-row{margin-bottom:14px;}
-  .trait-head{display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;}
-  .trait-name{font-weight:600; text-transform:capitalize;}
-  .trait-score{font:500 12px/1 var(--f-mono); color:var(--blue);}
-  .meter.wide{display:block; width:100%;}
-  .trait-basis{font:400 11px/1.5 var(--f-mono); color:var(--text-faint); margin-top:5px;}
-  .disclaimer{margin-top:14px; padding:9px 12px; border-left:2px solid var(--amber); background:var(--amber-bg); font:400 11.5px/1.5 var(--f-mono); color:var(--amber);}
-
-  .topic-row{display:grid; grid-template-columns:96px 1fr 40px; align-items:center; gap:10px; margin-bottom:9px; font-size:13px;}
-  .topic-row .label{color:var(--text-dim); text-transform:capitalize;}
-  .topic-row .pct{font:400 11.5px/1 var(--f-mono); text-align:right; color:var(--text-dim);}
-
-  .word-cols{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
-  @media (max-width:560px){ .word-cols{grid-template-columns:1fr;} }
-  .word-list-title{font:500 10px/1 var(--f-mono); letter-spacing:.14em; color:var(--text-faint); text-transform:uppercase; margin-bottom:10px;}
-  .word-chip{display:inline-flex; align-items:baseline; gap:5px; font:400 12px/1.3 var(--f-mono); background:var(--bg-2); border:1px solid var(--line-2); padding:4px 8px; margin:0 6px 6px 0; color:var(--text);}
-  .word-chip .n{color:var(--text-faint); font-size:10px;}
-  .phrase-list{margin-top:14px;}
-
-  .compare-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
-  .compare-col{background:var(--bg-2); border:1px solid var(--line-2); padding:12px 14px;}
-  .compare-col h4{font:500 10px/1 var(--f-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--cyan); margin-bottom:10px;}
-  .insight{font-size:13px; color:var(--text-dim); padding:8px 0 8px 10px; border-top:1px dashed var(--line-2); border-left:2px solid var(--blue-dim);}
-  .insight:first-child{border-top:none;}
-
-  .empty-note{padding:6px 0;}
   #noCaseNote{padding:18px 0;}
   footer{margin-top:26px; text-align:center;}
 </style>
@@ -161,20 +111,11 @@
 </main>
 
 <script src="static/shell.js"></script>
+<script src="static/dossier.js"></script>
 <script>
 const API_BASE = 'http://127.0.0.1:8000';
 const CASE_ID = new URLSearchParams(window.location.search).get('case_id');
-
-// Person names, source labels and words come from uploaded chat exports, so they are untrusted:
-// nothing that originates in a file may reach innerHTML except through esc().
-function esc(value){
-  return String(value ?? '').replace(/[&<>"']/g, c => (
-    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-  ));
-}
-function pct(n){ return (n === undefined || n === null) ? '—' : n.toFixed(1) + '%'; }
-function signed(n){ return (n >= 0 ? '+' : '') + n.toFixed(2); }
-function frac(n){ return Math.max(0, Math.min(1, Number(n) / 100 || 0)); }
+const esc = Dossier.esc;      // person names and labels come from chat exports: untrusted (see static/dossier.js)
 
 async function loadPeople(){
   const resp = await fetch(API_BASE + '/cases/' + CASE_ID + '/people');
@@ -215,88 +156,6 @@ window.addEventListener('popstate', () => {
   if(name && peopleList.some(p => p.name === name)){ renderPicker(peopleList, name); render(name); }
 });
 
-function renderSentiment(stats){
-  const s = stats.sentiment;
-  const bar = document.getElementById('sentimentBar');
-  bar.innerHTML = `
-    <div class="neg" style="width:${Number(s.pct_negative) || 0}%"></div>
-    <div class="neu" style="width:${Number(s.pct_neutral) || 0}%"></div>
-    <div class="pos" style="width:${Number(s.pct_positive) || 0}%"></div>
-  `;
-  document.getElementById('pctPos').textContent = pct(s.pct_positive);
-  document.getElementById('pctNeu').textContent = pct(s.pct_neutral);
-  document.getElementById('pctNeg').textContent = pct(s.pct_negative);
-  document.getElementById('avgCompound').textContent = signed(s.avg_compound);
-  document.getElementById('volatility').textContent = s.volatility.toFixed(2);
-}
-
-function renderTraits(traits){
-  const el = document.getElementById('traits');
-  el.innerHTML = Object.entries(traits.scores).map(([name, score]) => `
-    <div class="trait-row">
-      <div class="trait-head">
-        <span class="trait-name">${esc(name)}</span>
-        <span class="trait-score">${esc(score)}/100</span>
-      </div>
-      <span class="meter wide" style="--v:${frac(score)}"></span>
-      <div class="trait-basis">Based on: ${esc(traits.basis[name])}</div>
-    </div>
-  `).join('');
-  document.getElementById('traitDisclaimer').textContent = traits.disclaimer;
-}
-
-function renderTopics(dist){
-  const el = document.getElementById('topics');
-  const entries = Object.entries(dist).sort((a, b) => b[1] - a[1]);
-  el.innerHTML = entries.map(([cat, val]) => `
-    <div class="topic-row">
-      <div class="label">${esc(cat)}</div>
-      <span class="meter wide" style="--v:${frac(val)}"></span>
-      <div class="pct">${esc(val.toFixed(0))}%</div>
-    </div>
-  `).join('');
-}
-
-function renderVocab(vocab){
-  document.getElementById('topWords').innerHTML = vocab.top_words.length
-    ? vocab.top_words.map(w => `<span class="word-chip">${esc(w.word)}<span class="n">×${esc(w.count)}</span></span>`).join('')
-    : '<span class="empty-note">not enough data yet</span>';
-
-  document.getElementById('distinctiveWords').innerHTML = vocab.distinctive_words.length
-    ? vocab.distinctive_words.map(w => `<span class="word-chip">${esc(w.word)}<span class="n">${esc(w.ratio)}×</span></span>`).join('')
-    : '<span class="empty-note">not enough data yet</span>';
-
-  document.getElementById('phrases').innerHTML = vocab.frequent_phrases.length
-    ? vocab.frequent_phrases.map(p => `<span class="word-chip">"${esc(p.phrase)}"<span class="n">×${esc(p.count)}</span></span>`).join('')
-    : '<span class="empty-note">not enough data yet</span>';
-}
-
-function statRows(stats){
-  return `
-    <div class="stat-row"><span class="label">Messages</span><span class="value">${esc(stats.message_count)}</span></div>
-    <div class="stat-row"><span class="label">Avg tone</span><span class="value">${esc(signed(stats.sentiment.avg_compound))}</span></div>
-    <div class="stat-row"><span class="label">Emoji / msg</span><span class="value">${esc(stats.avg_emoji_per_message)}</span></div>
-    <div class="stat-row"><span class="label">Self-reference</span><span class="value">${esc(stats.self_reference_ratio)}%</span></div>
-    <div class="stat-row"><span class="label">Volatility</span><span class="value">${esc(stats.sentiment.volatility)}</span></div>
-  `;
-}
-
-function renderComparison(profile){
-  const section = document.getElementById('comparisonSection');
-  const ctx = profile.by_context;
-  if(!ctx.group || !ctx.dm){
-    section.style.display = 'none';
-    return;
-  }
-  section.style.display = 'block';
-  document.getElementById('compareGrid').innerHTML = `
-    <div class="compare-col"><h4>Group</h4>${statRows(ctx.group)}</div>
-    <div class="compare-col"><h4>DM</h4>${statRows(ctx.dm)}</div>
-  `;
-  document.getElementById('insights').innerHTML = (profile.context_comparison || [])
-    .map(i => `<div class="insight">${esc(i)}</div>`).join('');
-}
-
 async function render(name){
   const profile = await loadPerson(name);
   if(!profile){
@@ -318,16 +177,7 @@ async function render(name){
     linkedBanner.style.display = 'none';
   }
 
-  document.getElementById('sourceChips').innerHTML = Object.entries(profile.by_source).map(([label, s]) => `
-    <span class="source-chip">${esc(label)} <span class="ctx-tag">${esc(s.context)}</span> · ${esc(s.message_count)} msgs</span>
-  `).join('');
-
-  renderSentiment(profile.overall);
-  renderTraits(profile.traits);
-  renderTopics(profile.overall.topic_distribution);
-  renderVocab(profile.vocabulary);
-  renderComparison(profile);
-
+  Dossier.renderProfile(profile);
   document.getElementById('content').style.display = 'block';
 }
 

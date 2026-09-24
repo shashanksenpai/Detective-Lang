@@ -2,303 +2,116 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Detective Lang — Combined Dossier</title>
+<link rel="stylesheet" href="static/theme.css">
+<link rel="stylesheet" href="static/dossier.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
-
-  :root{
-    --bg:#14161C;
-    --panel:#1B1E27;
-    --panel-raised:#232733;
-    --hairline:#2E3340;
-    --amber:#E8A33D;
-    --amber-dim:#8A6526;
-    --red-tape:#B5453D;
-    --text:#E8E6E0;
-    --text-muted:#8B8F9C;
-    --text-faint:#565B69;
-    --good:#7CB88F;
-    --bad:#C77B72;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    padding:48px 24px 80px;
-    background-image:radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
-  }
-  .wrap{max-width:760px; margin:0 auto;}
-
-  a{color:var(--amber-dim); text-decoration:none;}
-  a:hover{color:var(--amber);}
-
-  .back-link{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px;
-    text-transform:uppercase; display:inline-block; margin-bottom:24px;
-  }
-
-  header{text-align:center; margin-bottom:36px;}
-  .eyebrow{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
-    color:var(--amber-dim); margin-bottom:10px;
-  }
-  h1{
-    font-family:'Special Elite',monospace;
-    font-size:40px; font-weight:400; margin-bottom:10px;
-  }
-  .subtitle{color:var(--text-muted); font-size:14px;}
-
-  section{
-    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
-    padding:22px 24px; margin-bottom:18px; position:relative;
-  }
-  section::before{
-    content:attr(data-label);
-    position:absolute; top:-9px; left:16px;
-    background:var(--bg); padding:0 8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
-    letter-spacing:2px; color:var(--amber-dim); text-transform:uppercase;
-  }
-
-  .source-chip{
-    display:inline-flex; align-items:center; gap:8px;
-    font-family:'IBM Plex Mono',monospace; font-size:12px;
-    background:var(--panel-raised); border:1px solid var(--hairline);
-    padding:6px 12px; border-radius:3px; margin:0 8px 8px 0;
-  }
-  .ctx-tag{
-    font-size:9px; letter-spacing:1px; padding:2px 6px; border-radius:2px;
-    text-transform:uppercase;
-  }
-  .ctx-tag.group{background:rgba(138,101,38,0.25); color:var(--amber);}
-  .ctx-tag.dm{background:rgba(124,184,143,0.18); color:var(--good);}
-
-  .stat-row{display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:14px;}
-  .stat-row .label{color:var(--text-muted);}
-  .stat-row .value{font-family:'IBM Plex Mono',monospace; font-weight:600;}
-
-  .sentiment-bar{
-    height:10px; border-radius:5px; overflow:hidden; display:flex; margin:10px 0 4px;
-    border:1px solid var(--hairline);
-  }
-  .sentiment-bar .neg{background:var(--bad);}
-  .sentiment-bar .neu{background:var(--text-faint);}
-  .sentiment-bar .pos{background:var(--good);}
-  .sentiment-legend{display:flex; gap:16px; font-size:11px; color:var(--text-muted); font-family:'IBM Plex Mono',monospace;}
-  .sentiment-legend span::before{content:'●'; margin-right:4px;}
-  .sentiment-legend .neg::before{color:var(--bad);}
-  .sentiment-legend .neu::before{color:var(--text-faint);}
-  .sentiment-legend .pos::before{color:var(--good);}
-
-  .trait-row{margin-bottom:16px;}
-  .trait-head{display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;}
-  .trait-name{font-weight:600; text-transform:capitalize;}
-  .trait-score{font-family:'IBM Plex Mono',monospace; color:var(--amber);}
-  .bar-track{height:6px; background:var(--panel-raised); border-radius:3px; overflow:hidden; border:1px solid var(--hairline);}
-  .bar-fill{height:100%; background:var(--amber-dim);}
-  .trait-basis{font-size:11.5px; color:var(--text-faint); margin-top:4px;}
-  .disclaimer{
-    margin-top:18px; padding:10px 12px; border-left:2px solid var(--amber-dim);
-    font-size:11.5px; color:var(--text-muted); font-style:italic;
-  }
-
-  .topic-row{display:grid; grid-template-columns:90px 1fr 40px; align-items:center; gap:10px; margin-bottom:8px; font-size:13px;}
-  .topic-row .label{color:var(--text-muted); text-transform:capitalize;}
-  .topic-row .pct{font-family:'IBM Plex Mono',monospace; text-align:right; color:var(--text-muted);}
-
-  .word-cols{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
-  .word-list-title{
-    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px;
-    color:var(--text-faint); text-transform:uppercase; margin-bottom:10px;
-  }
-  .word-chip{
-    display:inline-flex; align-items:baseline; gap:5px;
-    font-family:'IBM Plex Mono',monospace; font-size:12px;
-    background:var(--panel-raised); border:1px solid var(--hairline);
-    padding:4px 9px; border-radius:3px; margin:0 6px 6px 0; color:var(--text);
-  }
-  .word-chip .n{color:var(--text-faint); font-size:10px;}
-  .phrase-list{margin-top:14px;}
-
-  .compare-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;}
-  .compare-col{background:var(--panel-raised); border:1px solid var(--hairline); border-radius:3px; padding:14px 16px;}
-  .compare-col h4{
-    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px;
-    text-transform:uppercase; color:var(--amber-dim); margin-bottom:10px;
-  }
-  .insight{
-    font-size:13px; color:var(--text-muted); padding:8px 0;
-    border-top:1px dashed var(--hairline);
-  }
-  .insight:first-child{border-top:none;}
-
-  .empty-note{color:var(--text-faint); font-size:13px; font-style:italic;}
-
-  footer{
-    text-align:center; margin-top:40px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px;
-    color:var(--text-faint); letter-spacing:1px;
-  }
+  /* page-specific only; panels and rendering are shared with person.html (static/dossier.*) */
+  .linked{font:400 12px/1.5 var(--f-mono); color:var(--green); padding:10px 14px; margin-bottom:18px; border-left:2px solid var(--green); background:var(--green-bg);}
+  .linked::before{content:"\2713\00A0";}
+  #notFoundNote{padding:18px 0;}
+  footer{margin-top:26px; text-align:center;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <a class="back-link" href="cases.html">&larr; all cases</a>
-
-  <header>
-    <div class="eyebrow">Detective Lang · Combined Dossier</div>
-    <h1 id="personName">—</h1>
-    <div class="subtitle" id="personSubtitle"></div>
-  </header>
+<main class="wb-main">
+  <div class="wb-head">
+    <div>
+      <div class="lbl">Combined dossier</div>
+      <h1 id="personName">—</h1>
+      <div class="sub" id="personSubtitle"></div>
+    </div>
+    <div class="row"><a class="btn ghost sm" href="cases.html">&larr; All cases</a></div>
+  </div>
 
   <div id="content" style="display:none;">
-    <section data-label="Cases &amp; Sources">
-      <div id="sourceChips"></div>
-    </section>
+    <div class="linked">One person, pooled across every case they have been linked to by a reviewed identity match.</div>
 
-    <section data-label="Overall Sentiment">
-      <div class="sentiment-bar" id="sentimentBar"></div>
-      <div class="sentiment-legend">
-        <span class="pos">Positive <span id="pctPos"></span></span>
-        <span class="neu">Neutral <span id="pctNeu"></span></span>
-        <span class="neg">Negative <span id="pctNeg"></span></span>
+    <div class="dossier">
+      <div class="col">
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Cases &amp; sources</span><span class="meta">pooled</span></div>
+          <div class="panel__bd" id="sourceChips"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Overall sentiment</span><span class="meta">reads wording only</span></div>
+          <div class="panel__bd">
+            <div class="sentiment-bar" id="sentimentBar"></div>
+            <div class="sentiment-legend">
+              <span class="pos">Positive <span id="pctPos"></span></span>
+              <span class="neu">Neutral <span id="pctNeu"></span></span>
+              <span class="neg">Negative <span id="pctNeg"></span></span>
+            </div>
+            <div class="stat-row"><span class="label">Average tone (−1 to +1)</span><span class="value" id="avgCompound"></span></div>
+            <div class="stat-row"><span class="label">Emotional volatility</span><span class="value" id="volatility"></span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Topic distribution</span><span class="meta">share of messages</span></div>
+          <div class="panel__bd" id="topics"></div>
+        </section>
+
+        <section class="panel" id="comparisonSection">
+          <div class="panel__hd"><span class="lbl plain">Group vs. DM</span><span class="meta">context split</span></div>
+          <div class="panel__bd">
+            <div class="compare-grid" id="compareGrid"></div>
+            <div id="insights"></div>
+          </div>
+        </section>
       </div>
-      <div class="stat-row"><span class="label">Average tone (−1 to +1)</span><span class="value" id="avgCompound"></span></div>
-      <div class="stat-row"><span class="label">Emotional volatility</span><span class="value" id="volatility"></span></div>
-    </section>
 
-    <section data-label="Estimated Personality (Big Five)">
-      <div id="traits"></div>
-      <div class="disclaimer" id="traitDisclaimer"></div>
-    </section>
+      <div class="col">
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Estimated personality (Big Five)</span><span class="meta">writing style, not a diagnosis</span></div>
+          <div class="panel__bd">
+            <div id="traits"></div>
+            <div class="disclaimer" id="traitDisclaimer"></div>
+          </div>
+        </section>
 
-    <section data-label="Topic Distribution">
-      <div id="topics"></div>
-    </section>
-
-    <section data-label="Vocabulary">
-      <div class="word-cols">
-        <div>
-          <div class="word-list-title">Frequently used words</div>
-          <div id="topWords"></div>
-        </div>
-        <div>
-          <div class="word-list-title">Distinctive / rare words</div>
-          <div id="distinctiveWords"></div>
-        </div>
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Vocabulary</span><span class="meta">this person's words</span></div>
+          <div class="panel__bd">
+            <div class="word-cols">
+              <div>
+                <div class="word-list-title">Frequently used words</div>
+                <div id="topWords"></div>
+              </div>
+              <div>
+                <div class="word-list-title">Distinctive / rare words</div>
+                <div id="distinctiveWords"></div>
+              </div>
+            </div>
+            <div class="phrase-list">
+              <div class="word-list-title">Frequent phrases</div>
+              <div id="phrases"></div>
+            </div>
+          </div>
+        </section>
       </div>
-      <div class="phrase-list">
-        <div class="word-list-title">Frequent phrases</div>
-        <div id="phrases"></div>
-      </div>
-    </section>
-
-    <section data-label="Group vs. DM" id="comparisonSection">
-      <div class="compare-grid" id="compareGrid"></div>
-      <div id="insights"></div>
-    </section>
+    </div>
   </div>
 
   <div class="empty-note" id="notFoundNote" style="display:none;">No combined profile for this person.</div>
 
-  <footer>PROTOTYPE — POOLED FROM EVERY CASE THIS PERSON HAS BEEN LINKED TO</footer>
-</div>
+  <footer class="lbl plain">pooled from every case this person has been linked to</footer>
+</main>
 
+<script src="static/shell.js"></script>
+<script src="static/dossier.js"></script>
 <script>
 const API_BASE = 'http://127.0.0.1:8000';
 const PERSON_ID = new URLSearchParams(window.location.search).get('person_id');
-
-function pct(n){ return (n === undefined || n === null) ? '—' : n.toFixed(1) + '%'; }
-function signed(n){ return (n >= 0 ? '+' : '') + n.toFixed(2); }
-
-function renderSentiment(stats){
-  const s = stats.sentiment;
-  document.getElementById('sentimentBar').innerHTML = `
-    <div class="neg" style="width:${s.pct_negative}%"></div>
-    <div class="neu" style="width:${s.pct_neutral}%"></div>
-    <div class="pos" style="width:${s.pct_positive}%"></div>
-  `;
-  document.getElementById('pctPos').textContent = pct(s.pct_positive);
-  document.getElementById('pctNeu').textContent = pct(s.pct_neutral);
-  document.getElementById('pctNeg').textContent = pct(s.pct_negative);
-  document.getElementById('avgCompound').textContent = signed(s.avg_compound);
-  document.getElementById('volatility').textContent = s.volatility.toFixed(2);
-}
-
-function renderTraits(traits){
-  document.getElementById('traits').innerHTML = Object.entries(traits.scores).map(([name, score]) => `
-    <div class="trait-row">
-      <div class="trait-head">
-        <span class="trait-name">${name}</span>
-        <span class="trait-score">${score}/100</span>
-      </div>
-      <div class="bar-track"><div class="bar-fill" style="width:${score}%"></div></div>
-      <div class="trait-basis">Based on: ${traits.basis[name]}</div>
-    </div>
-  `).join('');
-  document.getElementById('traitDisclaimer').textContent = traits.disclaimer;
-}
-
-function renderTopics(dist){
-  const entries = Object.entries(dist).sort((a, b) => b[1] - a[1]);
-  document.getElementById('topics').innerHTML = entries.map(([cat, val]) => `
-    <div class="topic-row">
-      <div class="label">${cat}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${val}%"></div></div>
-      <div class="pct">${val.toFixed(0)}%</div>
-    </div>
-  `).join('');
-}
-
-function renderVocab(vocab){
-  document.getElementById('topWords').innerHTML = vocab.top_words.length
-    ? vocab.top_words.map(w => `<span class="word-chip">${w.word}<span class="n">×${w.count}</span></span>`).join('')
-    : '<span class="empty-note">not enough data yet</span>';
-
-  document.getElementById('distinctiveWords').innerHTML = vocab.distinctive_words.length
-    ? vocab.distinctive_words.map(w => `<span class="word-chip">${w.word}<span class="n">${w.ratio}×</span></span>`).join('')
-    : '<span class="empty-note">not enough data yet</span>';
-
-  document.getElementById('phrases').innerHTML = vocab.frequent_phrases.length
-    ? vocab.frequent_phrases.map(p => `<span class="word-chip">"${p.phrase}"<span class="n">×${p.count}</span></span>`).join('')
-    : '<span class="empty-note">not enough data yet</span>';
-}
-
-function statRows(stats){
-  return `
-    <div class="stat-row"><span class="label">Messages</span><span class="value">${stats.message_count}</span></div>
-    <div class="stat-row"><span class="label">Avg tone</span><span class="value">${signed(stats.sentiment.avg_compound)}</span></div>
-    <div class="stat-row"><span class="label">Emoji / msg</span><span class="value">${stats.avg_emoji_per_message}</span></div>
-    <div class="stat-row"><span class="label">Self-reference</span><span class="value">${stats.self_reference_ratio}%</span></div>
-    <div class="stat-row"><span class="label">Volatility</span><span class="value">${stats.sentiment.volatility}</span></div>
-  `;
-}
-
-function renderComparison(profile){
-  const section = document.getElementById('comparisonSection');
-  const ctx = profile.by_context;
-  if(!ctx.group || !ctx.dm){
-    section.style.display = 'none';
-    return;
-  }
-  section.style.display = 'block';
-  document.getElementById('compareGrid').innerHTML = `
-    <div class="compare-col"><h4>Group</h4>${statRows(ctx.group)}</div>
-    <div class="compare-col"><h4>DM</h4>${statRows(ctx.dm)}</div>
-  `;
-  document.getElementById('insights').innerHTML = (profile.context_comparison || [])
-    .map(i => `<div class="insight">${i}</div>`).join('');
-}
 
 async function init(){
   if(!PERSON_ID){
     document.getElementById('notFoundNote').style.display = 'block';
     return;
   }
-  const resp = await fetch(API_BASE + '/people/' + PERSON_ID);
+  const resp = await fetch(API_BASE + '/people/' + encodeURIComponent(PERSON_ID));
   if(!resp.ok){
     document.getElementById('notFoundNote').style.display = 'block';
     return;
@@ -310,16 +123,7 @@ async function init(){
   document.getElementById('personSubtitle').textContent =
     `${profile.message_count} messages pooled across ${caseNames.length} case${caseNames.length === 1 ? '' : 's'}: ${caseNames.join(', ')}`;
 
-  document.getElementById('sourceChips').innerHTML = Object.entries(profile.by_source).map(([label, s]) => `
-    <span class="source-chip">${label} <span class="ctx-tag ${s.context}">${s.context}</span> · ${s.message_count} msgs</span>
-  `).join('');
-
-  renderSentiment(profile.overall);
-  renderTraits(profile.traits);
-  renderTopics(profile.overall.topic_distribution);
-  renderVocab(profile.vocabulary);
-  renderComparison(profile);
-
+  Dossier.renderProfile(profile);      // escaping lives in static/dossier.js
   document.getElementById('content').style.display = 'block';
 }
 

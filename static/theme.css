@@ -126,6 +126,8 @@ h1{font-size:26px;} h2{font-size:18px;} h3{font-size:14px;}
 /* ---- layout helpers ---- */
 .wb-main{max-width:1180px; margin:0 auto; padding:26px 22px 60px;}
 .wb-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--line);}
+.wb-head > div{min-width:0;}
+.wb-head h1, .wb-head .sub{overflow-wrap:anywhere;}   /* a long unbroken name or label must wrap, not widen the page */
 .wb-head .lbl{margin-bottom:8px;}
 .wb-head .sub{color:var(--text-dim); margin-top:6px; max-width:70ch;}
 .cols{display:grid; grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); gap:18px; align-items:start;}
