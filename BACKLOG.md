@@ -214,6 +214,16 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 - [ ] **H-3 · README figures are copied by hand** from `eval_*.py` / `sentiment_metrics.json`. Re-check them after
   any change to the signals, weights, thresholds or the sentiment model (a stale figure already turned up: F-16).
 
+- [ ] **S-3 · Untrusted text must never reach `innerHTML` unescaped.** Found 2026-09-24 while migrating
+  `detective_lang.html`: sender names from an uploaded chat export were put into `innerHTML` raw, so a crafted export
+  (`Mal<img src=x onerror=...>: hi`) ran script on the attribution page - **proven in a real browser on the old page**
+  (a script side effect, an injected `<img>`), then fixed with `esc()` and re-checked (0 injected elements, name shown as
+  text). It matters more here than usual: importing exports from third parties is the tool's whole job, the API is
+  unauthenticated (S-2) and CORS is open, so injected script could read or change any case. `cases.html`, `workspace.html`,
+  the board and `shell.js` already escape. **Still to audit page by page during the Phase 7 migration:** `person.html`,
+  `combined_dossier.html`, `merge_review.html`. A guard that fails on an unescaped `${...}` in an `innerHTML` template would
+  be brittle; the browser check with a hostile sender name is the reliable test (keep it for every page that renders names).
+
 ### Infrastructure (deferred by the roadmap)
 - [ ] **I-1 · SQLite → Postgres + pgvector, thread pool → Celery + Redis** — only if real usage volume
   justifies it.

@@ -2,234 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Detective Lang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detective Lang — Investigate</title>
+<link rel="stylesheet" href="static/theme.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+  /* page-specific only; the design system lives in static/theme.css */
+  main.wb-main{max-width:900px;}
+  .case-scope{font:400 11px/1.4 var(--f-mono); color:var(--text-dim);}
+  section.panel{margin-bottom:18px;}
+  .uncertain-banner{display:flex; align-items:center; gap:10px; font:400 12px/1.5 var(--f-mono); color:var(--amber); padding:10px 14px; margin-bottom:14px; border-left:2px solid var(--amber); background:var(--amber-bg);}
 
-  :root{
-    --bg:#14161C;
-    --panel:#1B1E27;
-    --panel-raised:#232733;
-    --hairline:#2E3340;
-    --amber:#E8A33D;
-    --amber-dim:#8A6526;
-    --red-tape:#B5453D;
-    --text:#E8E6E0;
-    --text-muted:#8B8F9C;
-    --text-faint:#565B69;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    padding:48px 24px 80px;
-    background-image:
-      radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
-  }
-  .wrap{max-width:640px; margin:0 auto;}
+  .query-box{display:flex; gap:10px; align-items:stretch;}
+  .query-box textarea{flex:1; min-height:64px; font-size:14px; line-height:1.5; resize:vertical;}
+  .wb-main button.investigate{padding:0 22px; min-width:130px;}
+  .context-toggle{font:500 10.5px/1 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); cursor:pointer; margin:14px 0 0; display:inline-block;}
+  .context-toggle:hover{color:var(--cyan);}
+  .context-box{margin-top:8px;}
+  .context-box textarea{font-size:13px; min-height:60px;}
+  .try-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; align-items:center;}
+  .try-row .lbl{margin-right:4px;}
+  .wb-main button.try-chip{text-transform:none; letter-spacing:0; font:400 11.5px/1.3 var(--f-mono); color:var(--text-dim); border-color:var(--line-3); padding:6px 10px;}
 
-  header{text-align:center; margin-bottom:44px;}
-  .eyebrow{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
-    color:var(--amber-dim); margin-bottom:10px;
-  }
-  h1{
-    font-family:'Special Elite',monospace;
-    font-size:42px; font-weight:400; letter-spacing:1px;
-    color:var(--text);
-  }
-  .case-scope{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px; color:var(--text-muted); margin-top:12px;
-  }
-  .case-scope select{
-    background:transparent; border:none; color:var(--amber);
-    font-family:'IBM Plex Mono',monospace; font-size:12px;
-    border-bottom:1px dotted var(--amber-dim); cursor:pointer;
-  }
-
-  .query-box{
-    background:var(--panel);
-    border:1px solid var(--hairline);
-    border-radius:3px;
-    padding:6px;
-    display:flex; gap:8px;
-    box-shadow:0 20px 40px -20px rgba(0,0,0,0.6);
-    position:relative;
-  }
-  .query-box::before{
-    content:'EVIDENCE';
-    position:absolute; top:-9px; left:16px;
-    background:var(--bg); padding:0 8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
-    letter-spacing:2px; color:var(--amber-dim);
-  }
-  textarea{
-    flex:1; background:transparent; border:none; outline:none;
-    color:var(--text); font-family:'Inter',sans-serif; font-size:15px;
-    resize:none; padding:14px 12px; line-height:1.5;
-  }
-  textarea::placeholder{color:var(--text-faint);}
-  button.investigate{
-    background:var(--amber); color:#14161C; border:none;
-    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px;
-    letter-spacing:1px; text-transform:uppercase;
-    padding:0 22px; border-radius:2px; cursor:pointer;
-    transition:filter .15s ease;
-  }
-  button.investigate:hover{filter:brightness(1.12);}
-  .context-toggle{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.5px;
-    color:var(--text-faint); cursor:pointer; margin:10px 2px 0;
-    display:inline-block;
-  }
-  .context-toggle:hover{color:var(--amber-dim);}
-  .context-box{
-    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
-    margin-top:8px; padding:2px;
-  }
-  .context-box textarea{font-size:13px; color:var(--text-muted);}
-  button.investigate:disabled{opacity:0.4; cursor:default;}
-
-  .try-row{
-    display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;
-  }
-  .try-chip{
-    font-family:'IBM Plex Mono',monospace; font-size:11px;
-    color:var(--text-muted); background:var(--panel);
-    border:1px solid var(--hairline); padding:6px 11px; border-radius:20px;
-    cursor:pointer; transition:border-color .15s, color .15s;
-  }
-  .try-chip:hover{border-color:var(--amber-dim); color:var(--amber);}
-
-  #results{margin-top:40px; display:none;}
+  #results{display:none;}
   #results.show{display:block;}
-
-  .verdict-sentence{
-    font-family:'Special Elite',monospace;
-    font-size:15px; color:var(--text-muted);
-    padding-bottom:18px; margin-bottom:24px;
-    border-bottom:1px dashed var(--hairline);
-  }
+  .verdict-sentence{font:400 13px/1.5 var(--f-mono); color:var(--text-dim); padding-bottom:12px; margin-bottom:14px; border-bottom:1px dashed var(--line-2);}
   .verdict-sentence span{color:var(--text);}
+  #caseTags{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 14px;}
+  #caseTags:empty{display:none;}
+  .tell-chip{display:inline-block; font:500 10px/1 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); border:1px solid var(--line-3); padding:4px 7px;}
 
-  #caseTags{margin:-14px 0 20px;}
-  #caseTags .tell-chip{text-transform:uppercase; letter-spacing:1px; color:var(--amber-dim);}
-
-  .uncertain-banner{
-    background:rgba(181,69,61,0.12); border:1px solid rgba(181,69,61,0.4);
-    border-radius:3px; padding:14px 16px; margin-bottom:20px;
-    font-family:'IBM Plex Mono',monospace; font-size:12px; color:#E7A29C;
-    display:flex; align-items:center; gap:10px;
-  }
-
-  .suspect{
-    display:flex; align-items:center; gap:16px;
-    padding:16px 18px; margin-bottom:10px;
-    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
-    position:relative; overflow:hidden;
-  }
-  .suspect.lead{
-    background:var(--panel-raised);
-    border-color:var(--amber-dim);
-  }
-  .suspect.lead::before{
-    content:'PRIME SUSPECT';
-    position:absolute; top:0; right:0;
-    background:var(--amber); color:#14161C;
-    font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:600;
-    letter-spacing:1px; padding:3px 9px; border-radius:0 0 0 4px;
-  }
-  .avatar{
-    width:44px; height:44px; border-radius:50%;
-    background:var(--hairline); flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Special Elite',monospace; font-size:17px; color:var(--text-muted);
-  }
-  .suspect.lead .avatar{background:var(--amber-dim); color:#14161C;}
+  .suspect{display:flex; align-items:center; gap:14px; padding:12px 14px; margin-bottom:8px; background:var(--bg-2); border:1px solid var(--line); position:relative; cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease;}
+  .suspect:hover{border-color:var(--cyan-dim); box-shadow:var(--glow-cyan);}
+  .suspect.lead{border-color:var(--cyan-dim); background:linear-gradient(90deg, var(--cyan-bg), transparent 45%), var(--bg-2);}
+  .suspect.lead::after{content:"TOP MATCH"; position:absolute; top:-1px; right:-1px; font:600 9px/1 var(--f-mono); letter-spacing:.12em; background:var(--cyan); color:#04181b; padding:4px 8px;}
+  .rank{font:500 11px/1 var(--f-mono); color:var(--text-faint); width:20px; flex:none;}
+  .avatar{width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line-3); font:500 15px/1 var(--f-display); color:var(--text-dim); flex:none;}
+  .suspect.lead .avatar{border-color:var(--cyan); color:var(--cyan);}
   .suspect-info{flex:1; min-width:0;}
-  .suspect-name{font-size:15px; font-weight:600; margin-bottom:5px;}
-  .bar-track{
-    height:5px; background:var(--hairline); border-radius:3px; overflow:hidden;
-  }
-  .bar-fill{height:100%; background:var(--text-faint); border-radius:3px;}
-  .suspect.lead .bar-fill{background:var(--amber);}
-  .confidence{
-    font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600;
-    color:var(--text-muted); width:58px; text-align:right; flex-shrink:0;
-  }
-  .suspect.lead .confidence{color:var(--amber);}
+  .suspect-name{font-weight:600; margin-bottom:7px; overflow-wrap:anywhere;}
+  .meter.wide{display:block; width:100%;}
+  .confidence{font:600 17px/1 var(--f-mono); color:var(--text-dim); width:74px; text-align:right; flex:none;}
+  .suspect.lead .confidence{color:var(--cyan);}
 
-  .tells{margin-top:24px;}
-  .tells-label{
-    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px;
-    color:var(--text-faint); text-transform:uppercase; margin-bottom:10px;
-  }
-  .tell-chip{
-    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px;
-    color:var(--text-muted); background:var(--panel); border:1px solid var(--hairline);
-    padding:5px 10px; border-radius:3px; margin:0 6px 6px 0;
-  }
-
-  footer{
-    text-align:center; margin-top:60px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px;
-    color:var(--text-faint); letter-spacing:1px;
-  }
+  .tells .tbl td:first-child{max-width:34ch;}
+  .tells .tbl tr.off td{color:var(--text-faint);}
+  .tells .foot{padding:10px 14px; border-top:1px solid var(--line);}
+  footer{margin-top:26px; text-align:center;}
+  @media (max-width:560px){ .query-box{flex-direction:column;} .wb-main button.investigate{padding:12px 22px;} .suspect.lead::after{display:none;} }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Detective Lang · Case File</div>
-    <h1>Who said it?</h1>
+<main class="wb-main">
+  <div class="wb-head">
+    <div>
+      <div class="lbl">Attribution</div>
+      <h1>Who said it?</h1>
+      <div class="sub">Paste a message. The engine ranks who in this case most likely wrote it and shows the evidence behind each score — or says it can't tell.</div>
+    </div>
     <div class="case-scope">Case: <span id="caseNameLabel">—</span> · <a href="cases.html">switch case</a></div>
-  </header>
+  </div>
 
   <div id="noCaseBanner" class="uncertain-banner" style="display:none;">
-    ⚠ No case selected — <a href="cases.html">pick or create a case</a> to investigate.
+    &#x26A0; No case selected — <a href="cases.html">pick or create a case</a> to investigate.
   </div>
 
-  <div class="query-box">
-    <textarea id="sentenceInput" rows="2" placeholder="Paste the message in question…"></textarea>
-    <button class="investigate" onclick="investigate()">Investigate</button>
-  </div>
+  <section class="panel">
+    <div class="panel__hd"><span class="lbl plain">Evidence</span><span class="meta">the message in question</span></div>
+    <div class="panel__bd">
+      <div class="query-box">
+        <textarea id="sentenceInput" rows="2" placeholder="Paste the message in question…" aria-label="Message in question"></textarea>
+        <button class="investigate" onclick="investigate()">Investigate</button>
+      </div>
 
-  <div class="context-toggle" onclick="toggleContext()" id="contextToggle">+ add what was said just before (optional)</div>
-  <div class="context-box" id="contextBox" style="display:none;">
-    <textarea id="contextInput" rows="2" placeholder="One line per prior message, oldest first — e.g.&#10;Karan: agreed, the plot twist caught me off guard"></textarea>
-  </div>
+      <div class="context-toggle" onclick="toggleContext()" id="contextToggle" role="button" tabindex="0">+ add what was said just before (optional)</div>
+      <div class="context-box" id="contextBox" style="display:none;">
+        <textarea id="contextInput" rows="2" aria-label="Prior messages" placeholder="One line per prior message, oldest first — e.g.&#10;Karan: agreed, the plot twist caught me off guard"></textarea>
+      </div>
 
-  <div class="try-row">
-    <div class="try-chip" onclick="tryExample(0)">"omg no way that's crazy lol 😭"</div>
-    <div class="try-chip" onclick="tryExample(1)">"we need to split the work into sections"</div>
-    <div class="try-chip" onclick="tryExample(2)">"the deadline is tomorrow and I haven't started"</div>
-    <div class="try-chip" onclick="tryExample(3)">"haha yeah for sure, sounds good"</div>
-    <div class="try-chip" onclick="tryExample(4)">"I'm so worried about our exam tomorrow"</div>
-  </div>
+      <div class="try-row">
+        <span class="lbl plain">Try</span>
+        <button type="button" class="try-chip" onclick="tryExample(0)">"omg no way that's crazy lol 😭"</button>
+        <button type="button" class="try-chip" onclick="tryExample(1)">"we need to split the work into sections"</button>
+        <button type="button" class="try-chip" onclick="tryExample(2)">"the deadline is tomorrow and I haven't started"</button>
+        <button type="button" class="try-chip" onclick="tryExample(3)">"haha yeah for sure, sounds good"</button>
+        <button type="button" class="try-chip" onclick="tryExample(4)">"I'm so worried about our exam tomorrow"</button>
+      </div>
+    </div>
+  </section>
 
   <div id="results">
-    <div class="verdict-sentence">Evidence: <span id="echoedSentence"></span></div>
-    <div id="caseTags"></div>
-    <div id="uncertainBanner" class="uncertain-banner" style="display:none;">
-      ⚠ Confidence too low to name a suspect — this may be a speech pattern not yet on file.
-    </div>
-    <div id="errorBanner" class="uncertain-banner" style="display:none;">
-      ⚠ <span id="errorBannerText">Can't reach the attribution engine — start it with <code>python server.py</code>.</span>
-    </div>
-    <div id="suspectList"></div>
-    <div class="tells">
-      <div class="tells-label">Why the lead suspect</div>
+    <section class="panel">
+      <div class="panel__hd"><span class="lbl plain">Ranking</span><span class="meta" id="rankMeta"></span></div>
+      <div class="panel__bd">
+        <div class="verdict-sentence">Evidence: <span id="echoedSentence"></span></div>
+        <div id="caseTags"></div>
+        <div id="uncertainBanner" class="uncertain-banner" style="display:none;">
+          &#x26A0; Confidence too low to name a top match — this may be a speech pattern not yet on file.
+        </div>
+        <div id="errorBanner" class="uncertain-banner" style="display:none;">
+          &#x26A0; <span id="errorBannerText">Can't reach the attribution engine — start it with <code>python server.py</code>.</span>
+        </div>
+        <div id="suspectList"></div>
+      </div>
+    </section>
+
+    <section class="panel tells">
+      <div class="panel__hd"><span class="lbl plain">Why this ranking</span><span class="meta">the top match's six signals</span></div>
       <div id="tellsList"></div>
-    </div>
+    </section>
   </div>
 
-  <footer>PROTOTYPE — SCORING RUN BY THE ATTRIBUTION ENGINE, LOCAL CORPUS OF 3 PARTICIPANTS</footer>
-</div>
+  <footer class="lbl plain">scores blend six weighted signals &middot; a weight of "off" means that signal had nothing to say for this message</footer>
+</main>
 
+<script src="static/shell.js"></script>
 <script>
 // Live calls to the DetectiveEngine via server.py (run: python server.py).
 // No precomputed/hardcoded results here anymore — every query, including
@@ -237,6 +123,14 @@
 // whichever case is active (?case_id= in the URL, set from cases.html).
 const API_BASE = 'http://127.0.0.1:8000';
 const CASE_ID = new URLSearchParams(window.location.search).get('case_id');
+
+// Sender names come from someone else's chat export, so they are untrusted: nothing that
+// originates in a file may reach innerHTML except through esc().
+function esc(value){
+  return String(value ?? '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
 
 const EXAMPLES = [
   "omg no way that's crazy lol 😭",
@@ -262,6 +156,7 @@ function toggleContext(){
   document.getElementById('contextToggle').textContent =
     shown ? '+ add what was said just before (optional)' : '− hide prior context';
 }
+document.getElementById('contextToggle').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleContext(); } });
 
 function tryExample(i){
   document.getElementById('sentenceInput').value = EXAMPLES[i];
@@ -303,6 +198,7 @@ async function investigate(){
     document.getElementById('uncertainBanner').style.display = 'none';
     document.getElementById('suspectList').innerHTML = '';
     document.getElementById('caseTags').innerHTML = '';
+    document.getElementById('rankMeta').textContent = '';
     document.getElementById('tellsList').parentElement.style.display = 'none';
     document.getElementById('echoedSentence').textContent = '"' + text + '"';
     document.getElementById('results').classList.add('show');
@@ -315,39 +211,53 @@ async function investigate(){
   const tags = document.getElementById('caseTags');
   tags.innerHTML = [result.dominant_category, result.sentence_type]
     .filter(Boolean)
-    .map(t => `<span class="tell-chip">${t}</span>`)
-    .join('') + (result.context_used ? `<span class="tell-chip">+${result.context_used} prior msg</span>` : '');
+    .map(t => `<span class="tell-chip">${esc(t)}</span>`)
+    .join('') + (result.context_used ? `<span class="tell-chip">+${esc(result.context_used)} prior msg</span>` : '');
+
+  // real numbers only: how many candidates, and the lead over the runner-up
+  const top = result.ranking[0], second = result.ranking[1];
+  document.getElementById('rankMeta').textContent = result.ranking.length + ' candidates' +
+    (second ? ' · lead ' + (top.confidence - second.confidence).toFixed(1) + ' pts' : '') +
+    (result.uncertain ? ' · uncertain' : '');
 
   const list = document.getElementById('suspectList');
   list.innerHTML = '';
   result.ranking.forEach((r, idx) => {
+    const lead = idx === 0 && !result.uncertain;
     const el = document.createElement('div');
-    el.className = 'suspect' + (idx === 0 && !result.uncertain ? ' lead' : '');
-    el.style.cursor = 'pointer';
+    el.className = 'suspect' + (lead ? ' lead' : '');
+    el.tabIndex = 0;
+    el.setAttribute('role', 'link');
     el.title = `Open ${r.sender}'s dossier`;
-    el.onclick = () => { window.location.href = 'person.html?case_id=' + CASE_ID + '&name=' + encodeURIComponent(r.sender); };
+    const open = () => { window.location.href = 'person.html?case_id=' + encodeURIComponent(CASE_ID) + '&name=' + encodeURIComponent(r.sender); };
+    el.onclick = open;
+    el.onkeydown = e => { if(e.key === 'Enter') open(); };
     el.innerHTML = `
-      <div class="avatar">${r.sender[0]}</div>
+      <div class="rank">${String(idx + 1).padStart(2, '0')}</div>
+      <div class="avatar">${esc([...String(r.sender)][0] || '?')}</div>
       <div class="suspect-info">
-        <div class="suspect-name">${r.sender}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${r.confidence}%"></div></div>
+        <div class="suspect-name">${esc(r.sender)}</div>
+        <span class="meter wide ${lead ? 'cyan' : ''}" style="--v:${Math.max(0, Math.min(1, Number(r.confidence) / 100))}"></span>
       </div>
-      <div class="confidence">${r.confidence}%</div>
+      <div class="confidence">${esc(r.confidence)}%</div>
     `;
     list.appendChild(el);
   });
 
-  // Build the "why" panel from the lead suspect's actual signal breakdown —
-  // top 3 signals by strength, not a hardcoded per-person list.
-  const tellsList = document.getElementById('tellsList');
-  const lead = result.ranking[0];
-  const topSignals = Object.entries(lead.signals)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-  tellsList.innerHTML = topSignals
-    .map(([k, v]) => `<span class="tell-chip">${SIGNAL_LABELS[k] || k}: ${Math.round(v * 100)}%</span>`)
-    .join('');
-  tellsList.parentElement.style.display = result.uncertain ? 'none' : 'block';
+  // The "why" panel is built from the top match's actual signal breakdown and the weights the
+  // engine really used. A weight of 0 means the engine switched that signal off for this message.
+  const weights = result.weights_used || {};
+  const signals = Object.entries(top.signals).sort((a, b) => b[1] - a[1]);
+  document.getElementById('tellsList').innerHTML =
+    `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Signal</th><th>Match</th><th class="r">Score</th><th class="r">Weight</th></tr></thead><tbody>` +
+    signals.map(([k, v]) => {
+      const w = weights[k];
+      return `<tr class="${w === 0 ? 'off' : ''}"><td>${esc(SIGNAL_LABELS[k] || k)}</td>` +
+        `<td class="nw"><span class="meter" style="--v:${Math.max(0, Math.min(1, v))}"></span></td>` +
+        `<td class="r num">${Math.round(v * 100)}%</td>` +
+        `<td class="r num">${w === 0 ? 'off' : (w == null ? '—' : Math.round(w * 100) + '%')}</td></tr>`;
+    }).join('') + `</tbody></table></div>`;
+  document.getElementById('tellsList').parentElement.style.display = result.uncertain ? 'none' : 'block';
 
   document.getElementById('results').classList.add('show');
 }

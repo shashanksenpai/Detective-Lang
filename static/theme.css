@@ -196,9 +196,10 @@ input[type=file]::file-selector-button{
 
 /* data-density meter: segmented, filled to a real fraction (--v: 0..1) */
 .meter{display:inline-block; width:74px; height:7px; vertical-align:middle; background:repeating-linear-gradient(90deg, var(--line-2) 0 5px, transparent 5px 7px);}
-.meter > i{display:block; height:100%; width:calc(var(--v,0) * 100%); background:repeating-linear-gradient(90deg, var(--blue) 0 5px, transparent 5px 7px);}
-.meter.cyan > i{background:repeating-linear-gradient(90deg, var(--cyan) 0 5px, transparent 5px 7px);}
-.meter.amber > i{background:repeating-linear-gradient(90deg, var(--amber) 0 5px, transparent 5px 7px);}
+/* the fill is a pseudo-element, so `<span class="meter" style="--v:0.4"></span>` is all a template needs */
+.meter::before{content:""; display:block; height:100%; width:calc(var(--v,0) * 100%); background:repeating-linear-gradient(90deg, var(--blue) 0 5px, transparent 5px 7px);}
+.meter.cyan::before{background:repeating-linear-gradient(90deg, var(--cyan) 0 5px, transparent 5px 7px);}
+.meter.amber::before{background:repeating-linear-gradient(90deg, var(--amber) 0 5px, transparent 5px 7px);}
 
 /* ---- dense data table ---- */
 .tbl{width:100%; border-collapse:collapse;}

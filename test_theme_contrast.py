@@ -55,6 +55,17 @@ def test_dim_accents_are_never_used_as_text():
     assert violations == [], f"-dim colour used as text in: {violations}"
 
 
+def test_the_meter_fill_needs_no_child_element():
+    """Every template renders <span class="meter" style="--v:..."></span> with nothing inside. The fill
+    once lived on `.meter > i`, which no template creates, so every meter showed an empty track."""
+    assert not re.search(r"\.meter[^{]*>\s*i\b", CSS), "the meter fill must not depend on an <i> child"
+    fill = re.search(r"\.meter::before\s*\{([^}]*)\}", CSS)
+    assert fill, "no .meter::before rule draws the fill"
+    assert "var(--v" in fill.group(1) and "width" in fill.group(1), "the fill must be sized by --v"
+    for variant in ("cyan", "amber"):
+        assert re.search(rf"\.meter\.{variant}::before", CSS), f".meter.{variant} has no fill colour"
+
+
 def test_red_is_reserved_for_suspicious_indicators():
     """Colour contract: red means suspicious / high-risk only. The theme may define red
     tokens and a `.red` tag/dot, but no generic component (button, note, table, tab) may use it."""
