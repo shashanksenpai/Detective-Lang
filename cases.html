@@ -2,197 +2,132 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Detective Lang — Cases</title>
+<link rel="stylesheet" href="static/theme.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
-
-  :root{
-    --bg:#14161C;
-    --panel:#1B1E27;
-    --panel-raised:#232733;
-    --hairline:#2E3340;
-    --amber:#E8A33D;
-    --amber-dim:#8A6526;
-    --red-tape:#B5453D;
-    --text:#E8E6E0;
-    --text-muted:#8B8F9C;
-    --text-faint:#565B69;
-    --good:#7CB88F;
-    --bad:#C77B72;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    padding:48px 24px 80px;
-    background-image:radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
-  }
-  .wrap{max-width:760px; margin:0 auto;}
-  a{color:var(--amber-dim); text-decoration:none;}
-  a:hover{color:var(--amber);}
-  .back-link{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px;
-    text-transform:uppercase; display:inline-block; margin-bottom:24px;
-  }
-  header{text-align:center; margin-bottom:36px;}
-  .eyebrow{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
-    color:var(--amber-dim); margin-bottom:10px;
-  }
-  h1{font-family:'Special Elite',monospace; font-size:40px; font-weight:400;}
-  .subtitle{color:var(--text-muted); font-size:14px; margin-top:10px;}
-
-  section{
-    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
-    padding:22px 24px; margin-bottom:18px; position:relative;
-  }
-  section::before{
-    content:attr(data-label);
-    position:absolute; top:-9px; left:16px;
-    background:var(--bg); padding:0 8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
-    letter-spacing:2px; color:var(--amber-dim); text-transform:uppercase;
-  }
-
-  .field-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
-  input[type=text], input[type=file], textarea, select{
-    background:var(--panel-raised); border:1px solid var(--hairline); color:var(--text);
-    font-family:'Inter',sans-serif; font-size:14px; padding:9px 11px; border-radius:3px;
-    outline:none;
-  }
-  input[type=text]{flex:1; min-width:180px;}
-  textarea{width:100%; resize:vertical; min-height:52px; margin-bottom:12px;}
-  button{
-    background:var(--amber); color:#14161C; border:none;
-    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px;
-    letter-spacing:1px; text-transform:uppercase;
-    padding:10px 18px; border-radius:2px; cursor:pointer;
-    transition:filter .15s ease;
-  }
-  button:hover{filter:brightness(1.12);}
-  button:disabled{opacity:0.4; cursor:default;}
-  button.secondary{background:var(--panel-raised); color:var(--text-muted); border:1px solid var(--hairline);}
-
-  .case-card{
-    display:block; background:var(--panel-raised); border:1px solid var(--hairline);
-    border-radius:3px; padding:16px 18px; margin-bottom:10px; cursor:pointer;
-    transition:border-color .15s ease;
-  }
-  .case-card:hover{border-color:var(--amber-dim);}
-  .case-name{font-size:16px; font-weight:600; margin-bottom:4px;}
-  .case-desc{font-size:13px; color:var(--text-muted); margin-bottom:8px;}
-  .case-meta{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-faint);}
-
-  .empty-note{color:var(--text-faint); font-size:13px; font-style:italic;}
-
-  .source-row{
-    display:flex; align-items:flex-start; gap:12px; padding:10px 0;
-    border-top:1px dashed var(--hairline);
-  }
-  .source-row:first-child{border-top:none;}
-  .source-label{font-size:14px;}
-  .source-tags{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); margin-top:2px;}
-  .status-badge{
-    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px;
-    text-transform:uppercase; padding:3px 9px; border-radius:20px; white-space:nowrap;
-  }
-  .status-badge.pending, .status-badge.processing{background:rgba(138,101,38,0.25); color:var(--amber);}
-  .status-badge.ready{background:rgba(124,184,143,0.18); color:var(--good);}
-  .status-badge.failed{background:rgba(181,69,61,0.18); color:var(--bad);}
-  .source-error{font-size:11.5px; color:var(--bad); margin-top:4px;}
-  .source-note{font-size:11.5px; color:var(--amber-dim); margin-top:4px; line-height:1.45;}
-  .btn-remove{padding:4px 10px; font-size:10px;}
-
-  .case-actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
-
-  footer{
-    text-align:center; margin-top:40px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px;
-    color:var(--text-faint); letter-spacing:1px;
-  }
+  /* page-specific only; the design system lives in static/theme.css */
+  .idx-state{display:flex; gap:8px; align-items:center;}
+  .src-notes{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
+  .import-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .import-grid .wide{grid-column:1 / -1;}
+  #sourceFile{width:100%;}
+  .tags{display:flex; gap:6px; flex-wrap:wrap;}
+  @media (max-width:560px){ .import-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
-<div class="wrap">
+<main class="wb-main">
+
+  <!-- ============ case index ============ -->
   <div id="listView">
-    <header>
-      <div class="eyebrow">Detective Lang · Cases</div>
-      <h1>Open Cases</h1>
-      <div class="subtitle">Each case is its own investigation — its own sources, its own people.</div>
-      <div class="subtitle"><a href="merge_review.html" id="reviewLink">Identity Review</a></div>
-    </header>
-
-    <section data-label="New Case">
-      <div class="field-row">
-        <input type="text" id="newCaseName" placeholder="Case name, e.g. Office Group">
+    <div class="wb-head">
+      <div>
+        <div class="lbl">Case index</div>
+        <h1>Open cases</h1>
+        <div class="sub">Each case is its own investigation — its own sources, its own people. Nothing crosses between cases unless you link identities in Identity review.</div>
       </div>
-      <textarea id="newCaseDesc" placeholder="Description (optional)"></textarea>
-      <div class="case-actions">
-        <button onclick="createCase()">Create case</button>
-      </div>
-    </section>
+    </div>
 
-    <section data-label="Cases">
-      <div id="caseList"></div>
-    </section>
-  </div>
+    <div class="cols">
+      <section class="panel">
+        <div class="panel__hd"><span class="lbl plain">Cases</span><span class="meta" id="caseCount">—</span></div>
+        <div id="caseList"></div>
+      </section>
 
-  <div id="detailView" style="display:none;">
-    <a class="back-link" href="cases.html">&larr; all cases</a>
-    <header>
-      <div class="eyebrow">Detective Lang · Case</div>
-      <h1 id="caseName">—</h1>
-      <div class="subtitle" id="caseDesc"></div>
-    </header>
-
-    <section data-label="Sources">
-      <div id="sourceList"></div>
-      <div class="empty-note" id="noSourcesNote" style="display:none;">No sources imported yet — add one below.</div>
-      <div class="empty-note" id="pollNote" style="display:none;">Can't reach the server — still trying…</div>
-    </section>
-
-    <section data-label="Import Source">
-      <div class="field-row">
-        <input type="text" id="sourceLabel" placeholder="Label, e.g. WhatsApp — Team Chat">
-        <select id="sourcePlatform">
-          <option value="whatsapp">WhatsApp (.txt export)</option>
-          <option value="instagram">Instagram (.json export)</option>
-          <option value="telegram">Telegram (.json export)</option>
-        </select>
-        <select id="sourceContext">
-          <option value="group">Group</option>
-          <option value="dm">Direct message</option>
-        </select>
-      </div>
-      <div class="field-row">
-        <input type="file" id="sourceFile">
-        <button onclick="uploadSource()" id="uploadBtn">Import</button>
-      </div>
-      <div class="empty-note" id="uploadError" style="display:none;"></div>
-    </section>
-
-    <div class="case-actions">
-      <a id="investigateLink" href="#"><button class="secondary">Open investigate</button></a>
-      <a id="dossierLink" href="#"><button class="secondary">Open dossiers</button></a>
-      <a id="boardLink" href="#"><button class="secondary">Open investigation board</button></a>
-      <a id="workspaceLink" href="#"><button class="secondary">Open workspace</button></a>
+      <section class="panel">
+        <div class="panel__hd"><span class="lbl plain">New case</span><span class="meta">isolated</span></div>
+        <div class="panel__bd stack" style="gap:12px;">
+          <div class="field">
+            <label class="lbl plain" for="newCaseName">Case name</label>
+            <input type="text" id="newCaseName" placeholder="e.g. Office group">
+          </div>
+          <div class="field">
+            <label class="lbl plain" for="newCaseDesc">Description (optional)</label>
+            <textarea id="newCaseDesc" placeholder="what is being reconstructed"></textarea>
+          </div>
+          <div class="row"><button class="btn" onclick="createCase()">Create case</button></div>
+        </div>
+      </section>
     </div>
   </div>
 
-  <footer>PROTOTYPE — CASES ARE ISOLATED INVESTIGATIONS; LINKED IDENTITY ACROSS CASES COMES IN A LATER PHASE</footer>
-</div>
+  <!-- ============ one case ============ -->
+  <div id="detailView" style="display:none;">
+    <div class="wb-head">
+      <div>
+        <div class="lbl" id="caseLabel">Case</div>
+        <h1 id="caseName">—</h1>
+        <div class="sub" id="caseDesc"></div>
+      </div>
+      <div class="row"><a class="btn ghost sm" href="cases.html">&larr; All cases</a></div>
+    </div>
 
+    <div class="stats" id="caseStats"></div>
+
+    <div class="cols">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Sources</span><span class="meta" id="sourceCount">—</span></div>
+          <div id="sourceList"></div>
+          <div class="empty" id="noSourcesNote" style="display:none;">no sources imported yet — add one on the right</div>
+          <div class="note amber" id="pollNote" style="display:none; margin:10px;">Can't reach the server — still trying…</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__hd"><span class="lbl plain">Modules</span><span class="meta">open this case in…</span></div>
+          <div class="panel__bd">
+            <div class="mods">
+              <a class="mod" id="investigateLink" href="#"><div class="code">M1</div><div class="name">Investigate</div><div class="what">Who said this? Ranked speakers with the evidence behind each score.</div></a>
+              <a class="mod" id="dossierLink" href="#"><div class="code">M2</div><div class="name">Dossiers</div><div class="what">Per-person profile: tone, vocabulary, group vs DM.</div></a>
+              <a class="mod" id="boardLink" href="#"><div class="code">M3</div><div class="name">Board</div><div class="what">Relationship map: who talks to whom, and in what tone.</div></a>
+              <a class="mod" id="workspaceLink" href="#"><div class="code">M4</div><div class="name">Workspace</div><div class="what">Search, timeline and evidence pins.</div></a>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel__hd"><span class="lbl plain">Import source</span><span class="meta">.txt / .json</span></div>
+        <div class="panel__bd stack" style="gap:12px;">
+          <div class="field wide">
+            <label class="lbl plain" for="sourceLabel">Label</label>
+            <input type="text" id="sourceLabel" placeholder="e.g. WhatsApp — team chat">
+          </div>
+          <div class="import-grid">
+            <div class="field">
+              <label class="lbl plain" for="sourcePlatform">Platform</label>
+              <select id="sourcePlatform">
+                <option value="whatsapp">WhatsApp (.txt)</option>
+                <option value="instagram">Instagram (.json)</option>
+                <option value="telegram">Telegram (.json)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl plain" for="sourceContext">Context</label>
+              <select id="sourceContext">
+                <option value="group">Group</option>
+                <option value="dm">Direct message</option>
+              </select>
+            </div>
+            <div class="field wide">
+              <label class="lbl plain" for="sourceFile">Export file</label>
+              <input type="file" id="sourceFile">
+            </div>
+          </div>
+          <div class="row"><button class="btn" onclick="uploadSource()" id="uploadBtn">Import</button></div>
+          <div class="note amber" id="uploadError" style="display:none;"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<script src="static/shell.js"></script>
 <script>
 const API_BASE = 'http://127.0.0.1:8000';
 let pollTimer = null;
-
-function fmtDate(iso){
-  const d = new Date(iso);
-  return isNaN(d) ? '' : d.toLocaleDateString();
-}
 
 // Case names, source labels and error text come from users and uploaded
 // files; nothing is put into innerHTML without going through this.
@@ -212,27 +147,38 @@ async function loadCases(){
   return resp.json();
 }
 
-function caseMeta(c){
-  const bits = [c.ready_source_count + '/' + c.source_count + ' sources ready'];
-  if(c.importing_source_count) bits.push(c.importing_source_count + ' importing');
-  if(c.failed_source_count) bits.push(c.failed_source_count + ' failed');
-  bits.push('opened ' + fmtDate(c.created_at));
-  return bits.join(' · ');
+function pad(n){ return String(n).padStart(2, '0'); }
+
+// The state of a whole case, in words as well as colour: importing = cyan (live), failed = amber
+// (warning), ready = blue (analytical data is available), empty = neutral.
+function caseState(c){
+  if(c.failed_source_count) return `<span class="tag amber">&#x2715; ${c.failed_source_count} failed</span>`;
+  if(c.importing_source_count) return `<span class="tag cyan"><span class="dot cyan pulse"></span>importing</span>`;
+  if(c.source_count && c.ready_source_count === c.source_count) return `<span class="tag blue">&#x25CF; ready</span>`;
+  return `<span class="tag">&#x25CB; empty</span>`;
 }
 
 function renderCaseList(cases){
   const el = document.getElementById('caseList');
+  document.getElementById('caseCount').textContent = cases.length + (cases.length === 1 ? ' case' : ' cases');
   if(!cases.length){
-    el.innerHTML = '<div class="empty-note">No cases yet — create one above.</div>';
+    el.innerHTML = '<div class="empty">no cases yet — create one on the right</div>';
     return;
   }
-  el.innerHTML = cases.map(c => `
-    <div class="case-card" onclick="openCase(${c.id})">
-      <div class="case-name">${esc(c.name)}</div>
-      ${c.description ? `<div class="case-desc">${esc(c.description)}</div>` : ''}
-      <div class="case-meta">${esc(caseMeta(c))}</div>
-    </div>
-  `).join('');
+  el.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+      <th>ID</th><th>Case</th><th class="hide-sm">Sources</th><th class="r">Msgs</th><th class="hide-sm">Opened</th><th>State</th>
+    </tr></thead><tbody>` + cases.map(c => {
+      const v = c.source_count ? c.ready_source_count / c.source_count : 0;
+      return `<tr class="link" tabindex="0" role="link" aria-label="Open case ${esc(c.name)}"
+                  onclick="openCase(${c.id})" onkeydown="if(event.key==='Enter')openCase(${c.id})">
+        <td class="num">${pad(c.id)}</td>
+        <td><div class="title">${esc(c.name)}</div>${c.description ? `<div class="desc" title="${esc(c.description)}">${esc(c.description)}</div>` : ''}</td>
+        <td class="hide-sm nw"><span class="meter ${c.failed_source_count ? 'amber' : ''}" style="--v:${v}"></span> <span class="num">${c.ready_source_count}/${c.source_count}</span></td>
+        <td class="r num">${(c.message_count ?? 0).toLocaleString()}</td>
+        <td class="num nw hide-sm">${esc(fmtDay(c.created_at))}</td>
+        <td>${caseState(c)}</td>
+      </tr>`;
+    }).join('') + '</tbody></table></div>';
 }
 
 async function createCase(){
@@ -248,41 +194,78 @@ async function createCase(){
   openCase(created.id);
 }
 
+// A real navigation (not pushState): Back works, and the workstation bar rebuilds with this case's context.
 function openCase(id){
-  const url = new URL(window.location);
-  url.searchParams.set('case', id);
-  window.history.pushState({}, '', url);
-  showDetail(id);
+  window.location.href = 'cases.html?case=' + encodeURIComponent(id);
 }
 
-function statusLabel(s){
-  return {pending: 'queued', processing: 'processing', ready: 'ready', failed: 'failed'}[s] || s;
+function statusTag(s){
+  if(s === 'pending') return '<span class="tag cyan"><span class="dot cyan pulse"></span>queued</span>';
+  if(s === 'processing') return '<span class="tag cyan"><span class="dot cyan pulse"></span>processing</span>';
+  if(s === 'ready') return '<span class="tag blue">&#x25CF; ready</span>';
+  if(s === 'failed') return '<span class="tag amber">&#x2715; failed</span>';
+  return `<span class="tag">${esc(s)}</span>`;
 }
 
-function sourceDetail(s){
-  if(s.status !== 'ready') return '';
-  if(!s.first_at) return s.message_count + ' messages · undated';
-  const first = fmtDay(s.first_at), last = fmtDay(s.last_at);
-  return s.message_count + ' messages · ' + (first === last ? first : first + ' – ' + last);
+// "Sep 1 – Nov 17, 2025": the year once when both ends share it
+function fmtRange(a, b){
+  const d1 = new Date(a), d2 = new Date(b), md = {month: 'short', day: 'numeric'};
+  const f1 = d1.toLocaleDateString(undefined, md), f2 = d2.toLocaleDateString(undefined, md);
+  if(d1.getFullYear() !== d2.getFullYear()) return fmtDay(a) + ' – ' + fmtDay(b);
+  return (f1 === f2 ? f1 : f1 + ' – ' + f2) + ', ' + d1.getFullYear();
+}
+
+function spanText(s){
+  if(s.status !== 'ready') return '—';
+  if(!s.first_at) return 'undated';
+  return fmtRange(s.first_at, s.last_at);
+}
+
+// The evidence strip: a few real numbers computed from this case's sources.
+function renderStats(sources){
+  const ready = sources.filter(s => s.status === 'ready');
+  const msgs = ready.reduce((n, s) => n + (s.message_count || 0), 0);
+  const firsts = ready.map(s => s.first_at).filter(Boolean).sort();
+  const lasts = ready.map(s => s.last_at).filter(Boolean).sort();
+  let span = '—', days = '';
+  if(firsts.length){
+    const last = lasts[lasts.length - 1];
+    span = fmtRange(firsts[0], last);
+    days = ` <small>${Math.round((new Date(last) - new Date(firsts[0])) / 86400000) + 1} d</small>`;
+  }
+  const plats = {};
+  sources.forEach(s => { plats[s.platform] = (plats[s.platform] || 0) + 1; });
+  const cells = [
+    ['Sources', `${ready.length}<small>/${sources.length} ready</small>`],
+    ['Messages', msgs.toLocaleString()],
+    ['Span', esc(span) + days, 'wide'],
+    ['Platforms', Object.entries(plats).map(([p, n]) => `${esc(p)}<small> ×${n}</small>`).join(' · ') || '—'],
+  ];
+  document.getElementById('caseStats').innerHTML =
+    cells.map(([k, v, cls]) => `<div class="stat ${cls || ''}"><div class="lbl plain">${k}</div><div class="v">${v}</div></div>`).join('');
 }
 
 function renderSources(sources){
   const el = document.getElementById('sourceList');
   document.getElementById('noSourcesNote').style.display = sources.length ? 'none' : 'block';
-  el.innerHTML = sources.map(s => {
-    const failed = s.status === 'failed', detail = sourceDetail(s);
-    return `
-    <div class="source-row">
-      <div style="flex:1;">
-        <div class="source-label">${esc(s.label)}</div>
-        <div class="source-tags">${esc(s.platform)} · ${esc(s.context)}${detail ? ' · ' + esc(detail) : ''}</div>
-        ${s.date_note ? `<div class="source-note">${esc(s.date_note)}</div>` : ''}
-        ${failed ? `<div class="source-error">${esc(s.error_message || 'Import failed')}</div>` : ''}
-      </div>
-      ${failed ? `<button class="secondary btn-remove" onclick="removeSource(${s.id})">Remove</button>` : ''}
-      <span class="status-badge ${esc(s.status)}">${esc(statusLabel(s.status))}</span>
-    </div>`;
-  }).join('');
+  const ready = sources.filter(s => s.status === 'ready').length;
+  document.getElementById('sourceCount').textContent = sources.length ? `${ready}/${sources.length} ready` : 'none';
+  renderStats(sources);
+  if(!sources.length){ el.innerHTML = ''; }
+  else el.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+      <th>Source</th><th class="hide-sm">Type</th><th class="r">Msgs</th><th class="hide-sm">Span</th><th>State</th>
+    </tr></thead><tbody>` + sources.map(s => {
+      const notes = [];
+      if(s.date_note) notes.push(`<div class="note amber">${esc(s.date_note)}</div>`);
+      if(s.status === 'failed') notes.push(`<div class="note amber">${esc(s.error_message || 'Import failed')}</div>`);
+      return `<tr>
+        <td><div class="title">${esc(s.label)}</div>${notes.length ? `<div class="src-notes">${notes.join('')}</div>` : ''}</td>
+        <td class="hide-sm nw"><div class="tags" style="flex-wrap:nowrap;"><span class="tag">${esc(s.platform)}</span><span class="tag">${esc(s.context)}</span></div></td>
+        <td class="r num">${s.status === 'ready' ? (s.message_count ?? 0).toLocaleString() : '—'}</td>
+        <td class="num nw hide-sm">${esc(spanText(s))}</td>
+        <td><div class="idx-state">${statusTag(s.status)}${s.status === 'failed' ? `<button class="btn warn sm" onclick="removeSource(${s.id})">Remove</button>` : ''}</div></td>
+      </tr>`;
+    }).join('') + '</tbody></table></div>';
 
   const busy = sources.some(s => s.status === 'pending' || s.status === 'processing');
   const caseId = new URLSearchParams(window.location.search).get('case');
@@ -375,8 +358,10 @@ async function showDetail(caseId){
   const caseData = await caseResp.json();
   const sources = await sourcesResp.json();
 
+  document.getElementById('caseLabel').textContent = 'Case ' + pad(caseId);
   document.getElementById('caseName').textContent = caseData.name;
   document.getElementById('caseDesc').textContent = caseData.description || '';
+  document.title = 'Detective Lang — ' + caseData.name;
   document.getElementById('investigateLink').href = 'detective_lang.html?case_id=' + caseId;
   document.getElementById('dossierLink').href = 'person.html?case_id=' + caseId;
   document.getElementById('boardLink').href = 'investigation_board.html?case_id=' + caseId;
@@ -384,24 +369,18 @@ async function showDetail(caseId){
   renderSources(sources);
 }
 
-async function loadPendingMatchCount(){
-  try{
-    const resp = await fetch(API_BASE + '/merge-suggestions?status=pending');
-    const pending = await resp.json();
-    if(pending.length){
-      document.getElementById('reviewLink').textContent = `Identity Review (${pending.length} pending)`;
-    }
-  }catch(err){ /* server not reachable yet - leave the plain label */ }
-}
-
 (async function init(){
-  loadPendingMatchCount();
   const params = new URLSearchParams(window.location.search);
   const caseId = params.get('case');
   if(caseId){
     showDetail(caseId);
   } else {
-    renderCaseList(await loadCases());
+    try{
+      renderCaseList(await loadCases());
+    }catch(err){
+      document.getElementById('caseList').innerHTML =
+        '<div class="note amber" style="margin:10px;">Can\'t reach the server. Start it with: python -m uvicorn server:app --port 8000</div>';
+    }
   }
 })();
 </script>

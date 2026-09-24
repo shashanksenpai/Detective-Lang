@@ -24,7 +24,8 @@ Autonomous work goes first; anything that needs a human decision stops for it.
    placeholder); see N-1 below for the design so far and the open privacy question.
 4. **N-1 slice 6a** (candidate generation + `eval_contradictions.py`, judge-agnostic), then the judge, then **N-2 chat
    reader** (needs step 2).
-5. **N-3** waits for the owner's specifics.
+5. **N-3 (Phase 7 UI)** - the owner's brief arrived 2026-09-24; design system + shell + `cases.html` pilot done, then one
+   page per unit after the owner's checkpoint.
 
 ---
 
@@ -75,8 +76,16 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   rows so the reader can show the original.
   Also keep the original file reachable from the source (uploads are kept; the seeded demos point at the
   bundled samples).
-- [ ] **N-3 · Investigator-style presentation (roadmap Phase 7).** Details to come from the user; do not
-  design ahead of them. The investigation board was reworked on 2026-09-21 as a first step (see *Done*).
+- [ ] **N-3 · Investigator-style presentation (roadmap Phase 7).** *In progress.* The owner gave the direction on
+  2026-09-24 (a cyberpunk digital-forensics workstation; the full brief and the colour contract are in CLAUDE.md, Phase 7).
+  **Done:** shared design system `static/theme.css`, the workstation bar `static/shell.js` with real indicators
+  (`GET /status`), and `cases.html` as the pilot. **Remaining, one page per unit, each checked in a real browser:**
+  U2 `workspace.html`, U3 `investigation_board.html`, U4 `detective_lang.html`, U5 `person.html` + `combined_dossier.html`,
+  U6 `merge_review.html`. **Recolouring tasks the contract forces** (red is suspicious/high-risk only): the timeline mood
+  scale and the board's "tense" links are red today. Pending the owner's look at the pilot before U2.
+  - *Follow-ups:* the shell hardcodes the API address like every page (S-2 will change that); the bar scrolls sideways on a
+    phone rather than collapsing (case-scoped links are reachable but not obvious); Google Fonts need internet (the system
+    fallbacks work offline but look different); no light theme by design.
 
 ---
 
@@ -250,6 +259,14 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   with the instruction to run `python eval_sentiment.py --retrain` (fresh clone: 154 passed, 29 skipped; with the model:
   181 passed, 2 xfailed). A model file with the wrong feature version still fails rather than skips (verified).
 - 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): the 49.7% first recorded for paper-leak top-1 was stale; see F-16 / E-1 for the current, noisy figures.
+- 2026-09-24 · **N-3 pilot · workstation design system, shell and `cases.html`.** `static/theme.css` (tokens with a colour
+  contract, panels, tags, meters, dense tables, atmosphere layers), `static/shell.js` (bar with real indicators from the new
+  `GET /status`; case-scoped navigation replaces the per-page button rows), `cases.html` restyled with its behaviour intact.
+  `ui_static.py` extended to serve `static/<file>` assets only (57 tests, incl. content types and traversal); `GET /cases` now
+  returns `message_count`. `test_theme_contrast.py` (36 tests, mutation-checked) guards contrast, "-dim is never text" and
+  "red only in an explicit .red state". Verified in a headless browser at 1440 and 390 px (a horizontal-overflow bug on the
+  phone was found and fixed) and the create -> import -> fail -> remove -> Back flow re-tested against a real server, 0 console
+  errors. Opening a case is now a real navigation, so Back works (it did not before).
 - 2026-09-24 · **E-1 · Attribution eval no longer depends on unrelated senders.** `eval_split.py` seeds each sender's shuffle
   from (seed, split index, sender) instead of one shared generator, and `eval_attribution.py` averages 5 splits and reports mean
   +- sd (`--splits N`; 1 = quick). In a synthetic check the old design re-drew another sender's held-out set for 12 of 19

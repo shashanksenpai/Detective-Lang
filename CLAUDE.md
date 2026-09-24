@@ -171,8 +171,8 @@ page) with Search / Timeline / Evidence tabs, and the pipeline underneath now ke
   changed, 18 captioned ones stayed text). Only WhatsApp is classified; Instagram/Telegram media entries are dropped by their parsers.
 - **Tests:** `conftest.py` points every pytest run at a throwaway DB (`DETECTIVE_DATABASE_URL`) so the suite can never touch
   `detective.db`; `test_whatsapp_formats.py` (F-01/F-02) and `test_message_kinds.py` (F-03, through the real ingestion path).
-  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 258 passed,
-  2 xfailed with the model built (after the `judge.py` placeholder and `eval_split.py` tests); a fresh clone without it: 231 passed, 29 skipped.
+  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 332 passed,
+  2 xfailed with the model built (after the Phase 7 pilot's tests); a fresh clone without it: 305 passed, 29 skipped.
 - **The Paper Leak eval moved after F-03, and it was not an improvement - now fixed (E-1, 2026-09-24):** removing 4 media
   placeholders changed top-1 from 44.1% to 47.2% (model) and 46.9% to 53.5% (VADER fallback), because `eval_attribution.py`
   shuffled every sender's messages with one shared RNG, so a change to one sender's list could re-draw other senders' held-out
@@ -402,11 +402,31 @@ must be able to say "uncertain" - in particular it should not score decoys as li
 slip, an inconsistency the person later explains, a namesake, a buyer's contradiction). Evaluated against
 `sample_leak_case_key.json`: recall on the high-severity contradictions, precision against the decoys.
 
-**Phase 7 — Investigator-style presentation.** Planned, requested, not started. The current UI is
-considered dull; the goal is much better visibility of the data with a police-investigator feel. The user
-will give the specific details when we reach it - do not guess a design before then. Today's visual
-direction (noir, Special Elite + amber, corkboard investigation board) is the starting point, not a
-constraint.
+**Phase 7 — Investigator-style presentation.** In progress (started 2026-09-24). The owner's brief: a futuristic
+digital investigation workstation - a cyberpunk investigation terminal crossed with digital-forensics /
+intelligence-analysis software; dark command-center atmosphere; high information density without chaos; **not** a generic
+SaaS dashboard. Charcoal/near-black surfaces (never pure black), neon as a restrained accent, not decoration; subtle
+scanlines, thin technical borders, glowing active states, grid, tiny status indicators, terminal-style labels, monospaced
+metadata, grain, data-density indicators, animated connection lines where appropriate; avoid excessive glow or gradients,
+giant rounded cards, glassmorphism and the generic AI-dashboard look.
+- **Colour contract (a colour means one thing everywhere):** cyan = active / system state; blue = analytical data; amber =
+  warnings and UNCERTAIN evidence (also degraded or failed states); **red = suspicious / high-risk ONLY** (never errors, and
+  not negative mood or "tense" links); green = verified / confirmed by a person; white/gray = ordinary text. State is never
+  carried by colour alone (a word or glyph too). Every indicator in the shell is wired to real state (`GET /status`) - none is
+  decorative (same no-fake-logic rule as the rest of the project).
+- `static/theme.css` is the single design system: tokens, panels with bracket corners, mono `//` labels, tags, segmented
+  meters, dense tables, tabs, module tiles, the evidence strip, and the grid / scanline / grain layers (with
+  `prefers-reduced-motion`). `test_theme_contrast.py` fails if any text colour falls below WCAG contrast on any surface, if a
+  `-dim` accent is used as text, or if red is used outside an explicit `.red` state. `static/shell.js` builds the workstation
+  bar: brand, case crumb, case-scoped nav, and live indicators (API, NLP scorer, external-LLM switch, stored messages, pending
+  identity-review badge). Fonts: Chakra Petch (display), IBM Plex Sans (body), IBM Plex Mono (data), from Google Fonts.
+- **Done:** design system + shell + `/status` + `cases.html` as the pilot (checked in a headless browser at 1440 and 390 px,
+  and the whole create / import / fail / remove flow re-tested against a real server).
+- **To do, one page at a time:** `workspace.html` (the timeline's mood scale and the hatched "no text" cell must move to the
+  contract - use the dataviz skill), `investigation_board.html` ("tense" links must stop being red; animate the links),
+  `detective_lang.html`, `person.html`, `combined_dossier.html`, `merge_review.html` (accepted = green, pending = amber).
+  Pages not migrated yet still carry their own old CSS and no bar. The old noir direction (Special Elite, amber, corkboard) is
+  superseded.
 
 ## Core design principles (keep these across the codebase)
 - Never silently auto-merge identities — across sources within a case, or across cases — always
@@ -476,9 +496,13 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   `/cases/{id}/senders`, `/messages` (search/browse), `/messages/{mid}/context`, `/timeline`, `/pins`,
   `DELETE /cases/{id}/sources/{sid}` (failed imports only), `/board-layout` — still not the production
   backend (no auth, no Celery/Redis; CORS is wide open - BACKLOG S-2)
-- `ui_static.py` — static-file policy for the UI: serves only top-level `*.html` pages. The server used to mount the
-  whole project directory, which exposed `detective.db`, `uploads/`, the source and `.git/` (fixed 2026-09-24, BACKLOG
-  S-1); `test_ui_static.py` pins it (light: no ML imports)
+- `ui_static.py` — static-file policy for the UI: serves only top-level `*.html` pages and files directly inside `static/`
+  with a UI extension (`.css .js .svg .woff2`). The server used to mount the whole project directory, which exposed
+  `detective.db`, `uploads/`, the source and `.git/` (fixed 2026-09-24, BACKLOG S-1); `test_ui_static.py` pins it (light:
+  no ML imports). It also pins the MIME types, since Windows can serve `.js` as `text/plain`
+- `static/theme.css`, `static/shell.js` — the Phase 7 design system and the workstation bar (see Phase 7 above);
+  `status.py` — `GET /status` (sentiment scorer really loaded, external-LLM switch, counts) for the bar's indicators;
+  `test_status.py`, `test_theme_contrast.py`
 - `judge.py` — Phase 6 placeholder (BACKLOG N-1): `Judge` interface, provisional `Statement`/`StatementPair`/`Verdict`
   types and `GeminiJudge`, which checks its config (`DETECTIVE_ALLOW_EXTERNAL_LLM=1`, `GEMINI_API_KEY`,
   `DETECTIVE_GEMINI_MODEL`) and then raises `NotImplementedError` - it sends nothing and never invents a verdict.
