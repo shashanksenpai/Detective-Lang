@@ -11,7 +11,7 @@ import os
 import shutil
 from contextlib import asynccontextmanager
 from datetime import date, datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,6 +68,7 @@ class ContextMessage(BaseModel):
 class InvestigateRequest(BaseModel):
     sentence: str
     context: List[ContextMessage] = []
+    engine: Optional[Literal["learned", "legacy"]] = None   # None = the server's default (engine_cache.default_engine_kind)
 
 
 class RelationshipInferenceRequest(BaseModel):
@@ -216,14 +217,14 @@ def investigate(case_id: int, req: InvestigateRequest, session: Session = Depend
     case = session.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail=f"No case {case_id}")
-    det_engine = engine_cache.get_engine(case_id)
-    if not det_engine.centroids:
+    attributor = engine_cache.get_attributor(case_id, req.engine)
+    if not attributor.is_ready:
         raise HTTPException(
             status_code=422,
             detail="This case has no ingested sources yet - upload a chat export first.",
         )
     context = [c.model_dump() for c in req.context]
-    return det_engine.investigate(req.sentence, context=context)
+    return attributor.investigate(req.sentence, context=context)
 
 
 @app.get("/cases/{case_id}/people")

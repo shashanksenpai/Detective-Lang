@@ -249,6 +249,11 @@ class DetectiveEngine:
         self.transition_counts = defaultdict(lambda: defaultdict(int))  # prev_sender -> {next_sender: count}
         self.messages_by_sender = defaultdict(list)
 
+    @property
+    def is_ready(self):
+        """True once build() has seen at least one message (same meaning as LearnedEngine.is_ready)."""
+        return bool(self.centroids)
+
     def build(self, messages):
         for m in messages:
             self.messages_by_sender[m["sender"]].append(m["text"])
@@ -476,6 +481,7 @@ class DetectiveEngine:
         sentence_type = dominant_sentence_type(syntactic_features(sentence))
 
         return {
+            "engine": "legacy",
             "sentence": sentence,
             "uncertain": bool(is_uncertain),
             "dominant_category": dominant_category,

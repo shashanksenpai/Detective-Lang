@@ -9,6 +9,7 @@ route and its test are cheap.
 from sqlalchemy import func
 from sqlmodel import Session, select
 
+from engine_kind import ENGINE_KINDS, default_engine_kind
 from hinglish_sentiment import get_analyzer
 from judge import GeminiJudge
 from models import Case, Message, Source
@@ -18,6 +19,7 @@ def system_status(session: Session) -> dict:
     """Implements the /status contract the shell reads:
     sentiment.engine  "hinglish-model" | "vader-fallback"  (which scorer is really loaded)
     external_llm.state "off" | "configured"                 (configured != working: see `implemented`)
+    attribution.engine "learned" | "legacy"                 (the engine /investigate uses unless a request picks one)
     counts            cases, ready sources and stored messages.
     """
     judge = GeminiJudge()
@@ -29,6 +31,7 @@ def system_status(session: Session) -> dict:
     else:
         state, detail = "off", reason
     return {
+        "attribution": {"engine": default_engine_kind(), "engines": list(ENGINE_KINDS)},
         "sentiment": {"engine": "vader-fallback" if get_analyzer().is_fallback else "hinglish-model"},
         "external_llm": {"state": state, "implemented": judge.implemented, "detail": detail},
         "counts": {

@@ -101,7 +101,7 @@ def test_status_route(client):
     resp = client.get("/status")
     assert resp.status_code == 200
     body = resp.json()
-    assert set(body) == {"sentiment", "external_llm", "counts"}
+    assert set(body) == {"attribution", "sentiment", "external_llm", "counts"}
     assert body["sentiment"]["engine"] in ("hinglish-model", "vader-fallback")
 
 
