@@ -58,6 +58,10 @@ class Message(SQLModel, table=True):
     text: str
     sent_at: Optional[datetime] = None
     seq: int
+    # BACKLOG F-03: "text" (something a person wrote) | "media" (a photo/video/sticker
+    # placeholder) | "deleted" (a deleted-message notice). Non-text rows stay in the
+    # record but are not analysed as speech - see engine_cache.load_case_sources.
+    kind: str = "text"
 
 
 class MergeSuggestion(SQLModel, table=True):

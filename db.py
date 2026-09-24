@@ -18,6 +18,7 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 # arrive with the Postgres move, if that ever happens.
 _COLUMN_MIGRATIONS = [
     ("source", "date_note", "VARCHAR"),  # Phase 5
+    ("message", "kind", "VARCHAR NOT NULL DEFAULT 'text'"),  # F-03
 ]
 
 

@@ -8,6 +8,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
+from sqlalchemy import or_
 from sqlmodel import Session, select
 
 import engine_cache
@@ -15,6 +16,7 @@ import identity_resolution
 from db import engine as db_engine
 from models import Identifier, Message, Person, PersonCase, Source
 from parsers import PARSERS
+from parsers.whatsapp import classify_text
 
 log = logging.getLogger(__name__)
 
@@ -94,6 +96,7 @@ def ingest_source(source_id: int):
                     text=m["text"],
                     sent_at=m.get("sent_at"),
                     seq=seq,
+                    kind=m.get("kind", "text"),
                 ))
 
             source.status = "ready"
@@ -164,6 +167,42 @@ def backfill_timestamps() -> int:
             session.commit()
             filled += 1
     return filled
+
+
+def backfill_message_kinds() -> int:
+    """Implements BACKLOG F-03 for data that predates it: WhatsApp messages
+    ingested before Message.kind existed all read "text" (the column's
+    default), including `<Media omitted>` and deleted-message notices. Re-labels
+    those from their stored text with the same classifier the parser uses.
+    Changes only `kind` - no ids, `seq` or text - so pins and the timestamp
+    backfill are unaffected. Idempotent (a re-labelled row is no longer "text"),
+    and pre-filtered in SQL so it does not scan every message on every startup.
+    Runs before any engine is built, so there is no cache to invalidate.
+    Returns how many rows it re-labelled.
+    """
+    relabelled = 0
+    with Session(db_engine) as session:
+        rows = session.exec(
+            select(Message)
+            .join(Source, Message.source_id == Source.id)
+            .where(
+                Source.platform == "whatsapp",
+                Message.kind == "text",
+                or_(
+                    Message.text.contains("omitted"),
+                    Message.text.contains("attached"),
+                    Message.text.contains("deleted"),
+                ),
+            )
+        ).all()
+        for row in rows:
+            kind = classify_text(row.text)
+            if kind != "text":
+                row.kind = kind
+                session.add(row)
+                relabelled += 1
+        session.commit()
+    return relabelled
 
 
 def recover_stranded_sources() -> int:

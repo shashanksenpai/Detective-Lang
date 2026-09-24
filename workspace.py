@@ -66,6 +66,7 @@ def message_view(msg: Message, ident: Identifier, src: Source, pin_id: Optional[
         "id": msg.id,
         "pin_id": pin_id,
         "text": msg.text,
+        "kind": msg.kind,
         "sender": ident.raw_sender_name,
         "source_id": src.id,
         "source_label": src.label,
@@ -198,8 +199,14 @@ def timeline(session: Session, case_id: int) -> dict:
     activity are returned; the client fills the gaps between them, since a
     silent day is itself worth seeing. Messages with no timestamp can't be
     placed on a day and are only counted in `undated_count`.
+
+    BACKLOG F-03: every message counts towards `count`/`total` (so the numbers
+    match the day view), but mood is scored from text messages only. A person
+    whose only messages that day were media or deleted-message notices has
+    `mood: null` - there is nothing to score, and a neutral reading would be a
+    claim the data doesn't make.
     """
-    per_day: Dict[date, Dict[str, list]] = {}
+    per_day: Dict[date, Dict[str, dict]] = {}
     people = set()
     undated = 0
     dated = []
@@ -207,22 +214,30 @@ def timeline(session: Session, case_id: int) -> dict:
         if msg.sent_at is None:
             undated += 1
             continue
-        dated.append((msg.sent_at.date(), ident.raw_sender_name, msg.text))
-    # one batched pass: the trained scorer is far faster than message-at-a-time
-    compounds = [e["compound"] for e in emotion_features_batch([text for _d, _p, text in dated])]
-    for (day, person, _text), compound in zip(dated, compounds):
+        dated.append((msg.sent_at.date(), ident.raw_sender_name, msg.text, msg.kind))
+    # one batched pass over the text messages: the trained scorer is far faster than message-at-a-time
+    compounds = iter(
+        e["compound"] for e in emotion_features_batch([text for _d, _p, text, kind in dated if kind == "text"])
+    )
+    for day, person, _text, kind in dated:
         people.add(person)
-        per_day.setdefault(day, {}).setdefault(person, []).append(compound)
+        cell = per_day.setdefault(day, {}).setdefault(person, {"count": 0, "scores": []})
+        cell["count"] += 1
+        if kind == "text":
+            cell["scores"].append(next(compounds))
 
     days = []
     for day in sorted(per_day):
         by_person = per_day[day]
         days.append({
             "date": day.isoformat(),
-            "total": sum(len(v) for v in by_person.values()),
+            "total": sum(c["count"] for c in by_person.values()),
             "people": {
-                name: {"count": len(scores), "mood": round(sum(scores) / len(scores), 3)}
-                for name, scores in sorted(by_person.items())
+                name: {
+                    "count": c["count"],
+                    "mood": round(sum(c["scores"]) / len(c["scores"]), 3) if c["scores"] else None,
+                }
+                for name, c in sorted(by_person.items())
             },
         })
     return {"days": days, "people": sorted(people), "undated_count": undated}

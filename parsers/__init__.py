@@ -4,6 +4,8 @@ hardcoded parse_whatsapp call. Phase 1 of the CLAUDE.md roadmap.
 
 Parser contract: `parser(path, notes=None) -> [{"sender", "text", "sent_at"}]`
 in chronological order, where `sent_at` is a naive datetime or None (Phase 5).
+A parser may also set `kind` ("text" | "media" | "deleted"); absent means "text"
+(BACKLOG F-03 - only the WhatsApp parser classifies today).
 If a `notes` list is passed, the parser appends short human-readable caveats
 about how it interpreted the file (an assumed date order, a non-local
 timezone); ingestion stores them on the Source so the UI can show them

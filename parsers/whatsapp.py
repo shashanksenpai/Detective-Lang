@@ -50,6 +50,36 @@ _ANDROID_RE = re.compile(r"^" + _DATE + r",?\s+" + _CLOCK + r"\s*[-–—]\s+(?P
 _IOS_RE = re.compile(r"^\[" + _DATE + r",?\s+" + _CLOCK + r"\s*\]\s*(?P<rest>.*)$")
 _SENDER_RE = re.compile(r"^([^:]+): (.*)$")
 
+# BACKLOG F-03: lines WhatsApp writes in place of a message's content. Only a
+# message that is *entirely* one of these is flagged; a real caption next to a
+# placeholder ("look at this <Media omitted>") stays ordinary text.
+_MEDIA_PLACEHOLDER_RE = re.compile(
+    r"<Media omitted>"                                   # Android
+    r"|<attached: [^>]+>"                                # iOS
+    r"|(?:image|video|audio|sticker|GIF|document|Contact card|video note|voice message) omitted"
+    r"|\S+\.\w{2,5} \(file attached\)",                  # Android, media included
+    re.IGNORECASE,
+)
+_DELETED_RE = re.compile(
+    r"(?:\U0001F6AB\s*)?(?:this message was deleted|you deleted this message)\.?",
+    re.IGNORECASE,
+)
+
+
+def classify_text(text: str) -> str:
+    """What a message's text is: "media" (a photo/video/sticker/... placeholder),
+    "deleted" (a deleted-message notice) or "text" (something a person wrote).
+    Non-text messages stay in the record - they are real events, and the chat
+    reader will want to show them - but are not speech, so profiles, sentiment,
+    embeddings and turn-taking skip them (engine_cache.load_case_sources)."""
+    body = text.strip(_STRIP)
+    if _MEDIA_PLACEHOLDER_RE.fullmatch(body):
+        return "media"
+    if _DELETED_RE.fullmatch(body):
+        return "deleted"
+    return "text"
+
+
 _AMBIGUOUS_DATE_NOTE_HEAD = (
     "Dates in this export are ambiguous between DD/MM and MM/DD (no day above 12 "
     "and nothing else in the file settles it) - read as "
@@ -167,10 +197,11 @@ def _infer_date_order(
 
 
 def parse_whatsapp(path, notes: Optional[list] = None):
-    """Returns [{"sender", "text", "sent_at"}] in file order; sent_at is a
-    naive datetime (the export's own local time) or None if no consistent
-    date order could be read. Caveats about how the dates were read are
-    appended to `notes` if given (see parsers/__init__.py).
+    """Returns [{"sender", "text", "sent_at", "kind"}] in file order; sent_at is
+    a naive datetime (the export's own local time) or None if no consistent
+    date order could be read, and kind is "text" / "media" / "deleted" (see
+    classify_text). Caveats about how the dates were read are appended to
+    `notes` if given (see parsers/__init__.py).
     """
     parsed: List[dict] = []
     rows: List[_Fields] = []
@@ -194,6 +225,7 @@ def parse_whatsapp(path, notes: Optional[list] = None):
 
     for message in parsed:
         message["text"] = message["text"].rstrip()
+        message["kind"] = classify_text(message["text"])
 
     default_month_first = _default_month_first(rows[0]) if rows else True
     stamps, assumed = _infer_date_order(rows, default_month_first)

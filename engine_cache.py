@@ -26,6 +26,12 @@ def load_case_sources(session: Session, case_id: int):
     """Returns [{"label", "context", "messages": [{"sender", "text"}]}] for
     every ready source in this case, messages in original per-source order.
     Public: also reused by eval_attribution.py's train/test split.
+
+    Only messages a person actually wrote (kind == "text", BACKLOG F-03): media
+    placeholders and deleted-message notices are not speech, so they never reach
+    the engine, profiles, sentiment, relationship graph or evaluation. One rule
+    at one choke point; the trade-off is that a photo sent as a reply is not
+    counted as a turn or an exchange.
     """
     sources = session.exec(
         select(Source).where(Source.case_id == case_id, Source.status == "ready")
@@ -36,7 +42,7 @@ def load_case_sources(session: Session, case_id: int):
         rows = session.exec(
             select(Message, Identifier)
             .join(Identifier, Message.identifier_id == Identifier.id)
-            .where(Message.source_id == source.id)
+            .where(Message.source_id == source.id, Message.kind == "text")
             .order_by(Message.seq)
         ).all()
         messages = [{"sender": ident.raw_sender_name, "text": msg.text} for msg, ident in rows]

@@ -118,7 +118,7 @@ def _person_texts(session: Session, person_id: int):
     if not identifier_ids:
         return []
     return session.exec(
-        select(Message.text).where(Message.identifier_id.in_(identifier_ids))
+        select(Message.text).where(Message.identifier_id.in_(identifier_ids), Message.kind == "text")
     ).all()
 
 

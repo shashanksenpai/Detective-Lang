@@ -37,7 +37,7 @@ def build_combined_profile(session: Session, person_id: int):
         rows = session.exec(
             select(Message, Identifier)
             .join(Identifier, Message.identifier_id == Identifier.id)
-            .where(Message.source_id == source_id)
+            .where(Message.source_id == source_id, Message.kind == "text")   # F-03: speech only
             .order_by(Message.seq)
         ).all()
         all_msgs = [{"sender": ident.raw_sender_name, "text": msg.text} for msg, ident in rows]

@@ -151,6 +151,9 @@
   .sw.c-z{background:var(--mood-z);}
   .sw.c-p1{background:var(--mood-p1);} .sw.c-p2{background:var(--mood-p2);} .sw.c-p3{background:var(--mood-p3);}
   .sw.none{border:1px dashed var(--hairline);}
+  /* F-03: the person only sent media / deleted messages that day - nothing to score, so not a neutral reading */
+  .c-media{fill:url(#tlHatch); stroke:var(--text-faint); stroke-width:1;}
+  .sw.c-media{background:repeating-linear-gradient(45deg, var(--text-faint) 0 1.5px, transparent 1.5px 5px); border:1px solid var(--text-faint);}
   .tl-legend{
     display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-bottom:14px;
     font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted);
@@ -518,18 +521,19 @@ async function runSearch(append){
 /* ---------- Timeline tab ---------- */
 
 const MOOD_LABEL = {n3: 'strongly negative', n2: 'negative', n1: 'slightly negative', z: 'neutral',
-                    p1: 'slightly positive', p2: 'positive', p3: 'strongly positive'};
+                    p1: 'slightly positive', p2: 'positive', p3: 'strongly positive', media: 'no text (media / deleted)'};
 const MOOD_RANGE = {n3: '-0.40 or lower', n2: '-0.40 to -0.20', n1: '-0.20 to -0.05', z: '-0.05 to +0.05',
                     p1: '+0.05 to +0.20', p2: '+0.20 to +0.40', p3: '+0.40 or higher'};
 
 // compound (P(positive) - P(negative), -1..1): +-0.05 is the conventional neutral band; the outer steps
 // are equal-width so each arm of the diverging scale carries the same weight.
 function moodBin(v){
+  if(v == null) return 'media';   // only media / deleted messages that day: no text was scored (F-03)
   const a = Math.abs(v);
   if(a < 0.05) return 'z';
   return (v > 0 ? 'p' : 'n') + (a < 0.2 ? 1 : a < 0.4 ? 2 : 3);
 }
-function fmtMood(v){ return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2); }
+function fmtMood(v){ return v == null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2); }
 
 // 'YYYY-MM-DD' -> local Date (new Date('YYYY-MM-DD') would be UTC and can
 // land on the previous day when displayed).
@@ -570,9 +574,10 @@ async function mountTimeline(root){
       <div class="tl-legend">
         <span>negative</span>${legend}<span>positive</span>
         <span class="sep"></span><span class="sw none"></span><span>no messages</span>
+        <span class="sep"></span><span class="sw c-media" title="only media or deleted messages that day - nothing to score"></span><span>only media / deleted</span>
       </div>
       <div class="tl-scroll" id="tlScroll"></div>
-      <div class="hint">bars: messages per day, everyone · cells: each person's average sentiment that day (an English + Hinglish sentiment model — reads wording, not sarcasm or subtext) · click a day or cell to read its messages${esc(undated)}</div>
+      <div class="hint">bars: messages per day, everyone · cells: each person's average sentiment that day (an English + Hinglish sentiment model — reads wording, not sarcasm or subtext; hatched = only media or deleted messages that day, so nothing to score) · click a day or cell to read its messages${esc(undated)}</div>
       <details class="tl-table"><summary>Table view</summary><div class="tl-table-wrap" id="tlTable"></div></details>
     </section>
     <div id="dayView"></div>`;
@@ -624,6 +629,7 @@ function drawTimeline(root){
 
   root.querySelector('#tlScroll').innerHTML =
     `<svg id="tlSvg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Messages and average sentiment per person per day">`
+    + `<defs><pattern id="tlHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" style="stroke:var(--text-faint);stroke-width:1.5;opacity:.55"/></pattern></defs>`
     + hits + axis + bars + names + cells + labels
     + `<rect id="tlSelCol" class="sel" style="display:none" rx="3"/><rect id="tlSelCell" class="sel" style="display:none" rx="2"/></svg>`;
   attachTimelineEvents(root.querySelector('#tlScroll'));
@@ -660,7 +666,7 @@ function showTip(key, clientX, clientY){
       nm.className = 'tip-name';
       nm.textContent = name;
       val.className = 'tip-val';
-      val.textContent = c.count + ' msg · ' + fmtMood(c.mood) + ' ' + MOOD_LABEL[moodBin(c.mood)];
+      val.textContent = c.count + ' msg · ' + (c.mood == null ? '' : fmtMood(c.mood) + ' ') + MOOD_LABEL[moodBin(c.mood)];
       row.append(sw, nm, val);
       tip.appendChild(row);
     });

@@ -25,7 +25,7 @@ import identity_resolution
 import workspace
 from combined_profile import build_combined_profile
 from db import create_db_and_tables, get_session
-from ingestion import backfill_timestamps, recover_stranded_sources, submit_ingestion
+from ingestion import backfill_message_kinds, backfill_timestamps, recover_stranded_sources, submit_ingestion
 from models import BoardLayout, Case, Identifier, MergeSuggestion, Message, Person, PersonCase, Source
 from parsers import PARSERS
 from seed_demo_case import seed_demo_case_if_needed
@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     seed_demo_case_if_needed()
     backfill_timestamps()
+    backfill_message_kinds()
     recover_stranded_sources()
     yield
 
