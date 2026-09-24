@@ -88,7 +88,7 @@ These are deliberate constraints that shape the code, not accidents.
                                               FastAPI (server.py) ──► static HTML/JS pages
 ```
 
-Stack: Python, FastAPI, SQLModel/SQLite, sentence-transformers, scikit-learn, VADER. The frontend is plain HTML/CSS/JS with one shared design system (`static/theme.css`) and a workstation bar (`static/shell.js`) whose indicators read live state from `GET /status`; D3 v7 (loaded from a CDN) is its only external library and is used by the relationship board. The dark forensic-workstation look is being rolled out page by page (see the roadmap).
+Stack: Python, FastAPI, SQLModel/SQLite, sentence-transformers, scikit-learn, VADER. The frontend is plain HTML/CSS/JS with one shared design system (`static/theme.css`) and a workstation bar (`static/shell.js`) whose indicators read live state from `GET /status`; D3 v7 (loaded from a CDN) is its only external library and is used by the relationship board. All seven pages use the dark forensic-workstation look.
 
 ### Data model
 
@@ -328,13 +328,13 @@ To analyse your own chats, create a case and upload an export. In WhatsApp use *
 
 ```bash
 pip install pytest
-python -m pytest -q          # 332 passed, 2 xfailed once the model is built (under a minute)
+python -m pytest -q          # 363 passed, 2 xfailed once the model is built (about a minute)
 python eval_attribution.py   # attribution accuracy / coverage / precision per case, mean ± sd over 5 splits (--splits 1 = quick)
 python eval_sentiment.py     # sentiment model vs VADER on the held-out sets
 python eval_identity.py      # regression fixture for the (disabled) soft identity tier
 ```
 
-**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 305 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
+**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 336 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
 
 ---
 
@@ -366,7 +366,7 @@ Interactive docs are available at `/docs` while the server runs. All case data i
 ```
 server.py                 FastAPI dev server: thin routes, serves the UI pages
 ui_static.py              Static-file policy: top-level .html pages and static/ assets only
-static/                   theme.css (design system) and shell.js (workstation bar)
+static/                   theme.css (design system), shell.js (workstation bar), dossier.js/css (shared dossier panels)
 status.py                 GET /status: real state for the bar's indicators
 judge.py                  Placeholder judge interface for contradiction detection (Gemini; off, unimplemented)
 models.py  db.py          SQLModel tables; SQLite engine + small column-migration list
@@ -413,11 +413,12 @@ CLAUDE.md                 Detailed project notes and design history
 | 5 | Workspace: timestamps, search, timeline, pins, import polish | Done (Postgres/Celery move deferred until usage justifies it) |
 | Improvement | Evaluation harnesses; Hinglish sentiment | In progress. Next: fit signal weights and thresholds on labeled data; replace the rule-based syntax signal with a POS tagger |
 | 6 | **Contradiction detection**: statements that conflict with themselves, across group and DM, with other people, or with timestamps and records. Every finding must cite both statements, say *why* they conflict, wait for a human to confirm, never assert guilt, and be able to say "uncertain" (decoys such as a self-corrected memory slip must *not* be scored as lies) | Being designed. `judge.py` is a placeholder for an optional, off-by-default Gemini judge (it raises `NotImplementedError` and sends nothing). Will be evaluated against `sample_leak_case_key.json` |
-| 7 | Investigator-style presentation: a dark digital-forensics workstation look with a colour contract (red only for suspicious/high-risk) | In progress: design system, shell and the case page (`cases.html`) are done; the other six pages follow one at a time |
+| 7 | Investigator-style presentation: a dark digital-forensics workstation look with a colour contract (red only for suspicious/high-risk) | Done for all seven pages. One item is deliberately left: the blue/red sentiment and tone colours, which still use red for negative (deferred by the owner) |
 
 ## Security and responsible use
 
 - **Keep it on localhost; there is no authentication.** Every API route is open to anything that can reach the port, so whoever can would be able to read every case. It binds to `127.0.0.1` by default; do **not** expose it to a network or the internet, or run it with `--host 0.0.0.0`, while it holds real chats. Two specifics. The static file server only serves the top-level `.html` pages and files directly inside `static/`, and the database, uploads, source and `.git` are refused (`test_ui_static.py` covers this). CORS is currently wide open (`allow_origins=["*"]`), so in principle a web page open in the same browser could try to call the local API; browsers restrict that for localhost to varying degrees and it has not been tested here. Restricting origins and checking the `Host` header is tracked as `S-2` in [`BACKLOG.md`](BACKLOG.md) and should land before any shared use.
+- **A chat export is untrusted input.** Sender names, source labels and case names come from files you upload, and every page escapes them before display. Four stored cross-site-scripting holes of exactly this kind were found on four pages while building the current UI (a crafted export ran script in the page); each was reproduced in a real browser on the old page and re-tested after the fix. See `S-3` and `S-4` in [`BACKLOG.md`](BACKLOG.md). Because the API itself is still open (`S-2`), escaping on output is the only defence, so any new page that shows names must be checked with a hostile export.
 - **Planned, and not built yet: an optional Gemini judge** for contradiction detection. When it exists it will be off by default and will send the two statements being compared (plus a little context) to Google. Google's terms for the **free** Gemini API tier say submitted content may be used to improve its products and read by human reviewers, and tell you not to submit personal information; the paid tier is not used that way. The maintainer's decision is to use it on the bundled synthetic cases only: real chats will not be sent to it.
 - **Your chat content stays local.** Today it is never sent anywhere. The app does contact Hugging Face to fetch and check the embedding model (and, for `--retrain`, to download the public datasets), and the relationship board loads D3 from a CDN, so that page needs internet access.
 - **Uploads are stored on disk** under `uploads/` (git-ignored) and in `detective.db` (git-ignored).

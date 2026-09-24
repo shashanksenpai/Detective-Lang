@@ -171,8 +171,8 @@ page) with Search / Timeline / Evidence tabs, and the pipeline underneath now ke
   changed, 18 captioned ones stayed text). Only WhatsApp is classified; Instagram/Telegram media entries are dropped by their parsers.
 - **Tests:** `conftest.py` points every pytest run at a throwaway DB (`DETECTIVE_DATABASE_URL`) so the suite can never touch
   `detective.db`; `test_whatsapp_formats.py` (F-01/F-02) and `test_message_kinds.py` (F-03, through the real ingestion path).
-  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 332 passed,
-  2 xfailed with the model built (after the Phase 7 pilot's tests); a fresh clone without it: 305 passed, 29 skipped.
+  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 363 passed,
+  2 xfailed with the model built (after the Phase 7 work); a fresh clone without it: 336 passed, 29 skipped.
 - **The Paper Leak eval moved after F-03, and it was not an improvement - now fixed (E-1, 2026-09-24):** removing 4 media
   placeholders changed top-1 from 44.1% to 47.2% (model) and 46.9% to 53.5% (VADER fallback), because `eval_attribution.py`
   shuffled every sender's messages with one shared RNG, so a change to one sender's list could re-draw other senders' held-out
@@ -420,13 +420,23 @@ giant rounded cards, glassmorphism and the generic AI-dashboard look.
   `-dim` accent is used as text, or if red is used outside an explicit `.red` state. `static/shell.js` builds the workstation
   bar: brand, case crumb, case-scoped nav, and live indicators (API, NLP scorer, external-LLM switch, stored messages, pending
   identity-review badge). Fonts: Chakra Petch (display), IBM Plex Sans (body), IBM Plex Mono (data), from Google Fonts.
-- **Done:** design system + shell + `/status` + `cases.html` as the pilot (checked in a headless browser at 1440 and 390 px,
-  and the whole create / import / fail / remove flow re-tested against a real server).
-- **To do, one page at a time:** `workspace.html` (the timeline's mood scale and the hatched "no text" cell must move to the
-  contract - use the dataviz skill), `investigation_board.html` ("tense" links must stop being red; animate the links),
-  `detective_lang.html`, `person.html`, `combined_dossier.html`, `merge_review.html` (accepted = green, pending = amber).
-  Pages not migrated yet still carry their own old CSS and no bar. The old noir direction (Special Elite, amber, corkboard) is
-  superseded.
+- **Done (2026-09-24): all seven pages** - `cases`, `workspace`, `investigation_board`, `detective_lang`, `person`,
+  `combined_dossier`, `merge_review` - are on the theme and the bar, each verified in headless Chromium at 1440 and 390 px with
+  its real interaction flows and a final sweep (0 console errors, 0 failed requests); `test_ui_pages.py` pins the structure. The
+  old noir direction (Special Elite, amber, corkboard) is superseded. Additions from the brief: packets flowing along a hovered or
+  selected board link and a rotating target-lock reticle on selected people (both off under reduced motion), a full-screen board
+  that starts below the bar, and the ranking page showing all six signals with the weights actually used.
+- **Deliberately left (owner: "ignore it for now"): the blue/red sentiment and tone colours** - the timeline's `--mood-*`
+  ramp, the board's `--warm-*` / `--tense-*` lasers and the dossier `--sent-*` bar still use red for negative, which the
+  contract forbids. BACKLOG C-1 has my proposal (blue positive / violet negative / gray neutral, validated with dataviz).
+- **`.wb-main button`, `.empty-note`, `.error-note`, `input[type=date]` etc. are themed by default** so JS-built markup does not need
+  re-classing. Errors are amber, never red. Shared dossier rendering lives in `static/dossier.js` + `static/dossier.css`.
+- **Lessons from building it (keep):** (1) *look at the pixels*: the segmented meters never drew their fill (the CSS filled
+  `.meter > i`, which no template creates) and every DOM check passed; measure rendered widths, then look. (2) *Untrusted text*:
+  see BACKLOG S-3/S-4 - four stored-XSS vectors existed on four pages, each proven on the old page with a crafted export before
+  being fixed. Any page that renders sender names, source labels, case names or words must escape them (`esc()`), never splice a
+  name into an inline handler, and be checked with a hostile export in a browser. (3) A long unbroken name must wrap, not widen
+  the page.
 
 ## Core design principles (keep these across the codebase)
 - Never silently auto-merge identities — across sources within a case, or across cases — always
@@ -501,8 +511,10 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   `detective.db`, `uploads/`, the source and `.git/` (fixed 2026-09-24, BACKLOG S-1); `test_ui_static.py` pins it (light:
   no ML imports). It also pins the MIME types, since Windows can serve `.js` as `text/plain`
 - `static/theme.css`, `static/shell.js` — the Phase 7 design system and the workstation bar (see Phase 7 above);
-  `status.py` — `GET /status` (sentiment scorer really loaded, external-LLM switch, counts) for the bar's indicators;
-  `test_status.py`, `test_theme_contrast.py`
+  `static/dossier.js` + `static/dossier.css` — the dossier rendering (and its escaping) shared by `person.html` and
+  `combined_dossier.html`; `status.py` — `GET /status` (sentiment scorer really loaded, external-LLM switch, counts) for the bar's
+  indicators; `test_status.py`, `test_theme_contrast.py`, `test_ui_pages.py` (every page on the theme and shell, every referenced
+  asset servable, one shared dossier renderer)
 - `judge.py` — Phase 6 placeholder (BACKLOG N-1): `Judge` interface, provisional `Statement`/`StatementPair`/`Verdict`
   types and `GeminiJudge`, which checks its config (`DETECTIVE_ALLOW_EXTERNAL_LLM=1`, `GEMINI_API_KEY`,
   `DETECTIVE_GEMINI_MODEL`) and then raises `NotImplementedError` - it sends nothing and never invents a verdict.

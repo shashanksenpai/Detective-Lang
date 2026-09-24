@@ -24,8 +24,9 @@ Autonomous work goes first; anything that needs a human decision stops for it.
    placeholder); see N-1 below for the design so far and the open privacy question.
 4. **N-1 slice 6a** (candidate generation + `eval_contradictions.py`, judge-agnostic), then the judge, then **N-2 chat
    reader** (needs step 2).
-5. **N-3 (Phase 7 UI)** - the owner's brief arrived 2026-09-24; design system + shell + `cases.html` pilot done, then one
-   page per unit after the owner's checkpoint.
+5. **N-3 (Phase 7 UI)** - the owner's brief arrived 2026-09-24; **all seven pages are done** (theme, shell, `/status`,
+   `cases`, `workspace`, `board`, `investigate`, `dossier`, `combined dossier`, `identity review`). Left: C-1 (the
+   blue/red colours, deferred by the owner) and the follow-ups under N-3.
 
 ---
 
@@ -76,16 +77,17 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   rows so the reader can show the original.
   Also keep the original file reachable from the source (uploads are kept; the seeded demos point at the
   bundled samples).
-- [ ] **N-3 · Investigator-style presentation (roadmap Phase 7).** *In progress.* The owner gave the direction on
-  2026-09-24 (a cyberpunk digital-forensics workstation; the full brief and the colour contract are in CLAUDE.md, Phase 7).
-  **Done:** shared design system `static/theme.css`, the workstation bar `static/shell.js` with real indicators
-  (`GET /status`), and `cases.html` as the pilot. **Remaining, one page per unit, each checked in a real browser:**
-  U2 `workspace.html`, U3 `investigation_board.html`, U4 `detective_lang.html`, U5 `person.html` + `combined_dossier.html`,
-  U6 `merge_review.html`. **Recolouring tasks the contract forces** (red is suspicious/high-risk only): the timeline mood
-  scale and the board's "tense" links are red today. Pending the owner's look at the pilot before U2.
-  - *Follow-ups:* the shell hardcodes the API address like every page (S-2 will change that); the bar scrolls sideways on a
-    phone rather than collapsing (case-scoped links are reachable but not obvious); Google Fonts need internet (the system
-    fallbacks work offline but look different); no light theme by design.
+- [ ] **N-3 · Investigator-style presentation (roadmap Phase 7)** - *all seven pages are on the workstation theme* (see
+  Done, 2026-09-24). **What is left:** **C-1** below (the blue/red sentiment colours, deferred by the owner) and these
+  follow-ups: the shell hardcodes the API address like every page (S-2 will change that); the bar scrolls sideways on a
+  phone rather than collapsing (case-scoped links are reachable but not obvious); Google Fonts need internet (system
+  fallbacks work offline but look different); no light theme by design; the pages have been checked in headless Chromium
+  only (not Firefox or Safari) and not on a real phone.
+- [ ] **C-1 · The blue/red sentiment and tone colours break the colour contract - deferred by the owner ("ignore it for
+  now", 2026-09-24).** Red is meant to mean suspicious / high-risk only, but negative mood and "tense" are red today. They were
+  kept exactly as they were, in three places: the timeline's `--mood-*` ramp (`workspace.html`), the board's laser tones
+  `--warm-*` / `--tense-*` (`investigation_board.html`) and the sentiment bar `--sent-*` (`static/dossier.css`). My proposal
+  when it is picked up: blue for positive, violet for negative, gray for neutral, validated with the dataviz skill.
 
 ---
 
@@ -214,15 +216,12 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 - [ ] **H-3 · README figures are copied by hand** from `eval_*.py` / `sentiment_metrics.json`. Re-check them after
   any change to the signals, weights, thresholds or the sentiment model (a stale figure already turned up: F-16).
 
-- [ ] **S-3 · Untrusted text must never reach `innerHTML` unescaped.** Found 2026-09-24 while migrating
-  `detective_lang.html`: sender names from an uploaded chat export were put into `innerHTML` raw, so a crafted export
-  (`Mal<img src=x onerror=...>: hi`) ran script on the attribution page - **proven in a real browser on the old page**
-  (a script side effect, an injected `<img>`), then fixed with `esc()` and re-checked (0 injected elements, name shown as
-  text). It matters more here than usual: importing exports from third parties is the tool's whole job, the API is
-  unauthenticated (S-2) and CORS is open, so injected script could read or change any case. `cases.html`, `workspace.html`,
-  the board and `shell.js` already escape. **Still to audit page by page during the Phase 7 migration:** `person.html`,
-  `combined_dossier.html`, `merge_review.html`. A guard that fails on an unescaped `${...}` in an `innerHTML` template would
-  be brittle; the browser check with a hostile sender name is the reliable test (keep it for every page that renders names).
+- [ ] **S-4 · Keep the hostile-name check for every new page that renders names.** The standing rule from S-3 (see Done):
+  anything that originates in an uploaded file - sender names, source labels, case names, words - reaches `innerHTML` only
+  through `esc()`. `test_ui_pages.py` only checks that a page *has* an escape helper; whether every template uses it is
+  verified in a browser with a hostile export (a guard for unescaped `${...}` would be brittle). Also worth a look: the
+  server does not validate or sanitise names at import, which is right (store faithfully, escape on output), but the API
+  is open (S-2), so output escaping is the only defence.
 
 ### Infrastructure (deferred by the roadmap)
 - [ ] **I-1 · SQLite → Postgres + pgvector, thread pool → Celery + Redis** — only if real usage volume
@@ -269,6 +268,29 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   with the instruction to run `python eval_sentiment.py --retrain` (fresh clone: 154 passed, 29 skipped; with the model:
   181 passed, 2 xfailed). A model file with the wrong feature version still fails rather than skips (verified).
 - 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): the 49.7% first recorded for paper-leak top-1 was stale; see F-16 / E-1 for the current, noisy figures.
+- 2026-09-24 · **N-3 · every page on the workstation theme** (workspace, board, investigate, dossier, combined dossier, identity
+  review; `cases.html` was the pilot). Verified page by page in headless Chromium against a scratch server: real interaction
+  flows (search / context / pin / timeline / evidence; select / hover / filter / drag / full screen / pair read on the board;
+  ranking, keyboard, no-case; picker, Back, group-vs-DM; reject and accept a merge with the server confirming), a final sweep of
+  all 7 pages at 1440 and 390 px (bar present, right nav item current, no horizontal scroll, **0 console errors, 0 failed
+  requests**), and `test_ui_pages.py` (30 tests, mutation-checked). Additions from the brief: packets flowing along a hovered or
+  selected board link and a rotating target-lock reticle on selected people (both off under reduced motion); full-screen board now
+  starts below the bar; the ranking page shows all six signals with the weights actually used ("off" = the engine switched that
+  signal off); `static/dossier.js` + `static/dossier.css` share the two dossier pages' rendering. The blue/red sentiment colours
+  were left as they were on request (C-1).
+- 2026-09-24 · **S-3 · Stored XSS from untrusted chat text - found, proven, fixed on every page.** Four vectors on four pages, each
+  **proven in a real browser on the old page** with a crafted export (a script side effect and injected elements) and re-run on the
+  fixed page (0 side effects, 0 injected elements, the hostile string shown as text): `detective_lang.html` (sender names into
+  `innerHTML`); `person.html` (person names into `innerHTML` *and* into an inline `onclick="selectPerson('...')"`, plus the source
+  label typed at upload); `combined_dossier.html` (the same source label / case name); `merge_review.html` (person names, case names
+  and the raw compared names, 40 suggestions). Importing third-party exports is the tool's whole job and the API is unauthenticated
+  with open CORS (S-2), so injected script could read or change any case. `cases.html`, `workspace.html`, the board and `shell.js`
+  already escaped. Fixed with `esc()` everywhere, the id/name moved out of handler strings into data attributes and delegated
+  listeners, and one shared renderer for the dossiers. The standing rule is S-4.
+- 2026-09-24 · **Empty meters (a bug in my own pilot).** The segmented meters never drew their fill (the theme filled `.meter > i`,
+  which no template creates); found by looking at a screenshot, not by the DOM checks. Now a `::before`, verified by measuring
+  rendered widths, with a test that fails on the old CSS. Also fixed: a long unbroken name or label widened the page to 526 px in a
+  390 px viewport (headings now wrap).
 - 2026-09-24 · **N-3 pilot · workstation design system, shell and `cases.html`.** `static/theme.css` (tokens with a colour
   contract, panels, tags, meters, dense tables, atmosphere layers), `static/shell.js` (bar with real indicators from the new
   `GET /status`; case-scoped navigation replaces the per-page button rows), `cases.html` restyled with its behaviour intact.
