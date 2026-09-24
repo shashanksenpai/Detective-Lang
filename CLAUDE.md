@@ -142,12 +142,41 @@ page) with Search / Timeline / Evidence tabs, and the pipeline underneath now ke
   polling, and now escapes all user/file-derived text (it used to put labels into innerHTML raw)
 - **Deliberately not done**: the Postgres+pgvector / Celery+Redis migration (the roadmap makes it
   conditional on real usage volume, and there is none yet); removing ready sources; semantic
-  (embedding) search; a per-case timezone. **Gaps in the WhatsApp parser that predate Phase 5 but
-  matter more now that dates do**: its line regex only accepts the en-US export style (`H:MM AM/PM`
-  upper-case, no seconds, `-` separator), so other locales' exports fail with "No messages parsed",
-  and continuation lines of a multi-line message are dropped
+  (embedding) search; a per-case timezone. **The WhatsApp parser's gaps (en-US-only line regex, dropped
+  continuation lines, media placeholders counted as speech) were closed on 2026-09-24 - F-01/F-02/F-03,
+  see "Parser fidelity" below**
 - Tests: `test_timestamps.py` (pytest) pins the date-order inference, the 12-hour clock edges, and
-  that the capture-group line regex accepts exactly the lines the old one did
+  that the parser reads exactly the lines the old en-US-only matcher did (`MSG_RE` is kept for that)
+
+**Parser fidelity** (2026-09-24, BACKLOG F-01/F-02/F-03) - what real exports do, and the rules chosen:
+- **Layouts (F-01):** `parsers/whatsapp.py` reads Android (`25/12/2023, 9:14 pm - Name: text`: 12- or 24-hour, upper/lower-case
+  am/pm, narrow no-break space before it, `/` `.` `-` separators, 2/4-digit or year-first years) and iOS
+  (`[25/12/23, 21:14:05] Name: text`, seconds, invisible LRM marks, BOM). When a short export can't settle DD/MM vs MM/DD,
+  **only the classic en-US layout (upper-case AM/PM with `/`) is read month-first**, as before; every other layout is read
+  day-first (an Indian-locale `dd/mm/yyyy, h:mm pm` phone is the likely first real export) and says so in a note. No note
+  is raised when both orders read every line identically. Old behaviour is pinned: the 112 pre-existing parser tests pass unchanged.
+- **Multi-line messages and system lines (F-02):** a line with no date header continues the previous message; a header with
+  no `Name: ` (joined, left, encryption notice) is a system event, ends the current message and is skipped - not kept as a
+  row. Message count/order for single-line exports is unchanged, so `seq` and pins are safe. **Old sources keep the (possibly
+  truncated) text they were ingested with; re-upload to get full multi-line text.** `backfill_timestamps` still skips a source
+  whose re-parse no longer matches its stored text exactly, so an old undated source with multi-line messages is skipped
+  with a warning (safe, not half-updated).
+- **Media / deleted (F-03):** `Message.kind` = `text` | `media` | `deleted` (`parsers.whatsapp.classify_text`; only a message that
+  is *entirely* a placeholder - a caption next to `<Media omitted>` stays text). Rows are kept (same ids/seq); `load_case_sources`,
+  `combined_profile` and `identity_resolution` read text only, so engine, profiles, sentiment, graph and eval never see them
+  (a photo sent as a reply is not counted as a turn or exchange - a deliberate trade-off for one rule at one choke point).
+  The timeline counts every message but scores mood from text only: a media-only/deleted-only person-day has `mood: null` and is
+  drawn hatched. Existing installs: the column is added by `_COLUMN_MIGRATIONS` and `ingestion.backfill_message_kinds()`
+  re-labels old WhatsApp rows at startup (verified on a copy of the real DB: exactly the 4 pure `<Media omitted>` rows
+  changed, 18 captioned ones stayed text). Only WhatsApp is classified; Instagram/Telegram media entries are dropped by their parsers.
+- **Tests:** `conftest.py` points every pytest run at a throwaway DB (`DETECTIVE_DATABASE_URL`) so the suite can never touch
+  `detective.db`; `test_whatsapp_formats.py` (F-01/F-02) and `test_message_kinds.py` (F-03, through the real ingestion path).
+  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 231 passed,
+  2 xfailed with the model built; a fresh clone without it: 204 passed, 29 skipped.
+- **The Paper Leak eval moved, and it is not an improvement:** removing 4 media placeholders changed top-1 from 44.1% to 47.2%
+  (model) and 46.9% to 53.5% (VADER fallback), because `eval_attribution.py` shuffles every sender's messages with one shared
+  RNG, so any change to one sender's list re-draws the held-out set of every later sender (BACKLOG E-1). Treat single-split
+  accuracy as roughly +-5 points.
 
 **Demo: The Paper Leak** - a fourth seeded case built for the investigation phases (6 and 7 below): nine
 people and ~730 messages over Sep 1 - Nov 17 2025 - the class group (480 msgs) plus five DMs, two of them
@@ -167,9 +196,10 @@ inconsistency) that a detector should *not* score as the suspect lying. Every re
 timestamp + sender + quote, and `test_leak_case.py` checks each one really exists in the chats (and that every
 line of every sample parses - the parser silently drops non-matching lines). Dates are settled by the data
 (no ambiguity note). Baseline on this case, untouched: attribution top-1 accuracy 49.7% when first recorded;
-**re-measured 2026-09-24 on a fresh clone: 46.9% with the VADER fallback, 44.1% with the Hinglish model** (chance is
-11%; the drift from 49.7% is not bisected - the engine and sentiment scorer both changed since) but
-coverage 0.7% (fallback) / 0.0% (model) - the engine commits on 1 of 143 test messages at best, because the "uncertain" thresholds were set
+**latest measurement 2026-09-24 (after F-03): 53.5% with the VADER fallback, 47.2% with the Hinglish model** on 142 test
+messages (chance is 11%). It has read 44.1%-53.5% across recent commits: the differences are the fixed-seed split being
+re-drawn (BACKLOG E-1), not real change - treat it as roughly +-5 points. Coverage is 0.0% on 142 messages (0.7% before
+F-03 with the fallback) - the engine commits on essentially none, because the "uncertain" thresholds were set
 for 3-person cases and nine speakers dilute the softmax. That is honest behaviour and is more evidence for
 Improvement Stage item (1), fitting weights/thresholds; it is recorded, not tuned. Ingesting this case
 exposed a real inefficiency: `identity_resolution.score_pair` re-embedded every person once per *pair*
@@ -414,12 +444,13 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   `infer_relationship`), entirely derived from signals the engine already computes; case-scoped. Also owns
   the tone rules (`tone_for`) and counts exchanges per source
 - `models.py` — Case/Source/Person/PersonCase/Identifier/Message/MergeSuggestion/Pin/BoardLayout SQLModel tables
-  (Phase 5: `Message.sent_at` is now filled, `Source.date_note` and `Pin` are new)
+  (Phase 5: `Message.sent_at` is now filled, `Source.date_note` and `Pin` are new; F-03: `Message.kind` text/media/deleted)
 - `db.py` — SQLite engine/session setup; `_COLUMN_MIGRATIONS` adds columns introduced after a DB was
   first created (`create_all` only creates missing tables)
 - `parsers/` — parser registry, all three implemented: `whatsapp.py` (Phase 1), `instagram.py` /
   `telegram.py` (Phase 3 - see the Roadmap entry above for each format's quirks). Contract (Phase 5):
-  `parser(path, notes=None) -> [{sender, text, sent_at}]`; caveats about how dates were read go to `notes`
+  `parser(path, notes=None) -> [{sender, text, sent_at, kind?}]`; caveats about how dates were read go to `notes`;
+  `kind` (F-03, WhatsApp only today) defaults to "text"
 - `ingestion.py` — background ingestion of an uploaded source into Identifier/Person/Message rows;
   case-scoped exact-name person resolution; triggers `identity_resolution.scan_for_matches` after a
   successful ingest (best-effort - a matching failure doesn't undo the ingestion). Phase 5: stores

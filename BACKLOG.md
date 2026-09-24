@@ -15,8 +15,9 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 
 1. **Hygiene** - S-1 static-mount exposure (done), tests skip without the model (done), docs kept honest (done).
    Still open and waiting on the owner: **H-1 LICENSE**, **S-2 CORS / no auth** (compatibility call).
-2. **Parser fidelity - F-01, F-02, F-03.** Everything downstream (the chat reader, contradictions on real chats)
-   is only as good as the import, and real exports hit these first. No sign-off needed.
+2. **Parser fidelity - F-01, F-02, F-03.** *Done 2026-09-24* (see Done). Everything downstream (the chat reader,
+   contradictions on real chats) is only as good as the import; follow-ups F-31 to F-35 remain, mainly validating
+   against a real phone export.
 3. **N-1 design** - a plan for approval, not code: the method is deliberately undesigned (CLAUDE.md, Phase 6).
 4. **N-1 implementation**, then **N-2 chat reader** (needs step 2).
 5. **N-3** waits for the owner's specifics.
@@ -34,10 +35,10 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   view: every message in order, day separators, sender names, timestamps, jump-to-date, in-chat search,
   pinned messages marked in the margin, reachable from the workspace and from any message anywhere (search
   hit, timeline day, pin, contradiction, board).
-  **Depends on parser fidelity — "as it is" is not possible today:** the WhatsApp parser drops continuation
-  lines of multi-line messages (F-02) and drops system lines (joined/left/encryption notice/deleted
-  message), and `<Media omitted>` is stored as if it were a spoken message (F-03). Decide first whether to
-  keep every raw line (including system events, as non-message rows) so the reader can show the original.
+  **Parser fidelity, mostly done:** multi-line messages are now joined (F-02) and media/deleted messages are kept
+  and flagged with `kind` (F-03), so the reader can show them. **Still not "exactly as it was":** system lines
+  (joined/left/encryption notice) are dropped, not stored (F-33). Decide first whether to keep them as non-message
+  rows so the reader can show the original.
   Also keep the original file reachable from the source (uploads are kept; the seeded demos point at the
   bundled samples).
 - [ ] **N-3 · Investigator-style presentation (roadmap Phase 7).** Details to come from the user; do not
@@ -48,16 +49,21 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 ## Fine-tunings for features not fully checked
 
 ### Import / parsers
-- [ ] **F-01 · WhatsApp export formats.** The line regex only accepts the en-US style (`H:MM AM/PM`
-  upper-case, 2- or 4-digit year, ` - ` separator). Other locales (24-hour, lower-case am/pm, narrow
-  no-break space before AM/PM on newer exports, `[dd/mm/yy, hh:mm:ss]` iOS style, `dd.mm.yy`) fail with
-  "No messages parsed". Real exports from an Indian-locale phone are the likely first thing to break.
-- [ ] **F-02 · Multi-line WhatsApp messages.** Continuation lines are dropped (only the first line of the
-  message is kept). Changing this must keep `seq` stable for existing sources (pins and the timestamp
-  backfill match by message id / `seq`).
-- [ ] **F-03 · Media, system and deleted lines.** `<Media omitted>` counts as a message in profiles,
-  attribution, sentiment, search and the timeline. It should be flagged and excluded from stylometry,
-  embeddings and mood. Same for "This message was deleted" and similar.
+- F-01, F-02, F-03 (export layouts, multi-line messages, media/deleted lines): **done 2026-09-24**, see Done.
+- [ ] **F-31 · Not validated on a real phone export.** F-01 to F-03 were checked against the synthetic samples and
+  hand-written files in each layout (en-IN 12-hour, 24-hour, dotted, iOS, year-first), not a real export. The
+  layouts come from knowledge of how WhatsApp writes them; the first real Indian-locale file is the real test.
+- [ ] **F-32 · Old sources keep their old text.** A source ingested before F-02 keeps its truncated multi-line
+  messages; only re-uploading the file fixes it. A "re-import from the stored file" action would need to preserve
+  message ids (pins) - `backfill_timestamps` already matches by `seq` and skips a source whose text differs.
+- [ ] **F-33 · System events are dropped, not stored** (joined / left / encryption notice / missed call). The chat
+  reader (N-2) may want them as non-message rows.
+- [ ] **F-34 · Only WhatsApp classifies non-text.** Instagram and Telegram drop media-only entries in their
+  parsers, so they are invisible rather than flagged.
+- [ ] **F-35 · Two known parser edge cases.** A system line whose text contains `": "` (e.g. *You changed the
+  subject from "A: b"*) parses as a message from a sender named `You changed the subject from "A` - the original
+  matcher did the same. And a photo sent as a reply no longer counts as a turn or an exchange (deliberate: one rule
+  at one choke point, `load_case_sources`) - revisit if media replies matter for turn-taking.
 - [ ] **F-04 · Ambiguous WhatsApp date order** is read month-first with a visible note; there is no way to
   say "these are day-first" on upload.
 - [ ] **F-05 · Timezones.** Instagram times are UTC, WhatsApp/Telegram are the device's local time, so a
@@ -82,13 +88,22 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 - [ ] **F-14 · Evidence.** Only messages can be pinned — not a contradiction, an attribution result or a
   board relationship. No export / print of the evidence list. Notes have no history.
 - [ ] **F-15 · Automated API tests.** Pins, search, context, timeline, board layout and source removal were
-  verified by hand against a scratch server; there are no API tests. Needs DB isolation (make
-  `DATABASE_URL` overridable) and pytest fixtures.
+  verified by hand against a scratch server; there are no API tests. DB isolation is done (2026-09-24:
+  `DETECTIVE_DATABASE_URL` + `conftest.py`; `test_message_kinds.py` already drives ingestion and the workspace
+  queries through it); what is left is route-level tests with a test client and fixtures.
 
 ### Attribution / identity
 - [ ] **F-16 · Uncertainty thresholds are calibrated for 3-person cases.** On the 9-person paper-leak case
-  top-1 accuracy is 46.9% (VADER fallback) / 44.1% (Hinglish model) - re-measured 2026-09-24, the 49.7% first
-  recorded here is stale - and the engine commits on 0.7% / 0.0% of test messages. (Improvement Stage item 1.)
+  top-1 accuracy read 53.5% (VADER fallback) / 47.2% (Hinglish model) at the last measurement (2026-09-24, after
+  F-03) - it has ranged 44.1%-53.5% across recent commits, which is split noise (E-1), not change - and the
+  engine commits on 0 of 142 test messages. (Improvement Stage item 1.)
+- [ ] **E-1 · The attribution eval's single split is fragile.** `eval_attribution.py` shuffles every sender's
+  messages with ONE shared `random.Random(42)`, so changing any one sender's list (dropping 4 media placeholders
+  did it) re-draws the held-out set of every later sender: the paper-leak top-1 moved 44.1% -> 47.2% (model) and
+  46.9% -> 53.5% (fallback) with no change to the engine. Small cases have only 18-21 test messages. Fix: a
+  per-sender RNG (`random.Random(f"{SEED}:{sender}")`) so unrelated changes don't re-draw other senders, and
+  report mean +- sd over several repeated splits (or k-fold), keeping the single split as a quick mode. Do this
+  before fitting any weights or thresholds (F-16, F-17) - otherwise every "improvement" is unmeasurable.
 - [ ] **F-17 · spaCy syntax signal** (Improvement Stage item 2).
 - [ ] **F-18 · `DetectiveEngine` treats the last message of one source and the first of the next as
   adjacent** when it counts turn-taking (`transition_counts`). The board's exchange counting had the same
@@ -206,4 +221,17 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 - 2026-09-24 · **Fresh clone failed 16 tests** because the model is not committed - the 13 model-behaviour tests now skip
   with the instruction to run `python eval_sentiment.py --retrain` (fresh clone: 154 passed, 29 skipped; with the model:
   181 passed, 2 xfailed). A model file with the wrong feature version still fails rather than skips (verified).
-- 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): paper-leak top-1 is 46.9% / 44.1%, not 49.7%.
+- 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): the 49.7% first recorded for paper-leak top-1 was stale; see F-16 / E-1 for the current, noisy figures.
+- 2026-09-24 · **DB isolation for tests** (F-15, part): `DETECTIVE_DATABASE_URL` + `conftest.py` - a full suite run leaves the real
+  `detective.db` byte-identical (verified by size and mtime).
+- 2026-09-24 · **F-01 · WhatsApp export layouts.** `parsers/whatsapp.py` reads Android 12/24-hour (upper/lower-case am/pm, narrow
+  no-break space), `/` `.` `-` separators, 2/4-digit and year-first years, and iOS `[date, time:sec]` with LRM marks and BOM. Ambiguous
+  DD/MM vs MM/DD defaults to day-first for every layout except classic en-US, with its own note. Old behaviour pinned (112 existing
+  parser tests unchanged; all 12 demo sources ingest identically). 21 new tests, mutation-checked; en-IN / 24-hour dotted / iOS files
+  uploaded to a real server as `ready` with correct times. **Only validated on synthetic and hand-written files: F-31.**
+- 2026-09-24 · **F-02 · Multi-line messages.** A headerless line continues the previous message; a header with no sender is a system
+  event that ends it (and is skipped, F-33). Message count and order unchanged, so `seq` and pins are safe.
+- 2026-09-24 · **F-03 · Media / deleted messages.** `Message.kind` (`text`/`media`/`deleted`), classified by `classify_text`; kept in the
+  record but excluded from the engine, profiles, sentiment, graph, identity evidence and timeline mood. The timeline still counts
+  them and draws a media-only person-day hatched. Migration + startup backfill verified on a copy of the real DB (exactly the 4 pure
+  `<Media omitted>` rows changed). 29 new tests through the real ingestion path, mutation-checked; checked visually in a headless browser.

@@ -101,7 +101,7 @@ Defined in [`models.py`](models.py).
 | `Person` | A real-world person. **Global, not case-scoped**, so a later cross-case merge does not require restructuring the schema. |
 | `PersonCase` | Which cases a person belongs to. |
 | `Identifier` | One raw sender string (a name or a phone number) within one source, pointing at a `Person`. |
-| `Message` | Text, `sent_at` (nullable), and `seq` (its position in the source). |
+| `Message` | Text, `sent_at` (nullable), `seq` (its position in the source) and `kind`: `text` (something a person wrote), `media` (a photo/video/sticker placeholder) or `deleted` (a deleted-message notice). Non-text rows stay in the record but are not analysed as speech. |
 | `MergeSuggestion` | A candidate cross-case match: tier (`hard`/`fuzzy`/`soft`), confidence, JSON evidence, and `pending`/`accepted`/`rejected` status. |
 | `Pin` | One evidence pin per message, with a free-text note. |
 | `BoardLayout` | Where you dragged each person on a case's relationship board. |
@@ -110,9 +110,11 @@ Person identity is **case-scoped on ingest**: within one case a repeated sender 
 
 ### Ingestion and parsers
 
-Parsers live in [`parsers/`](parsers/) behind a registry (`PARSERS`). The contract is `parser(path, notes=None) -> [{sender, text, sent_at}]` in chronological order. Anything the parser had to assume is appended to `notes` and stored on the `Source`, so the UI shows the assumption instead of hiding it.
+Parsers live in [`parsers/`](parsers/) behind a registry (`PARSERS`). The contract is `parser(path, notes=None) -> [{sender, text, sent_at, kind?}]` in chronological order (`kind` defaults to `text`). Anything the parser had to assume is appended to `notes` and stored on the `Source`, so the UI shows the assumption instead of hiding it.
 
-- **WhatsApp** (`parsers/whatsapp.py`). The hard problem is the date: an export's day/month order follows the *phone's locale*, so `12/01/23` is either 1 December or 12 January and nothing on the line says which. The parser settles it from the file itself where the data allows: a day above 12 rules an order out, and a chronological export rules out an order that would run backwards. Only when a short export is genuinely ambiguous (every date ≤ 12) does it read month-first and **say so** in the source's date note. A file whose dates can't be read at all is stored undated, never guessed.
+- **WhatsApp** (`parsers/whatsapp.py`). The hard problem is the date: an export's day/month order follows the *phone's locale*, so `12/01/23` is either 1 December or 12 January and nothing on the line says which. The parser settles it from the file itself where the data allows: a day above 12 rules an order out, and a chronological export rules out an order that would run backwards. Only when a short export is genuinely ambiguous (every date ≤ 12) does it fall back to a default and **say so** in the source's date note: month-first for the classic en-US layout (upper-case AM/PM with `/`), day-first for every other layout. A file whose dates can't be read at all is stored undated, never guessed.
+
+  It reads the layouts real phones write: Android with 12-hour (upper- or lower-case am/pm, including the narrow no-break space newer exports put before it) or 24-hour clocks, `/`, `.` or `-` separators, 2- or 4-digit or year-first years, and iOS's `[date, time:seconds] Name: text` with its invisible marks and byte-order mark. A line with no date header continues the previous message, so **multi-line messages are joined**; a header with no sender (someone joined, the encryption notice) is a system event and is skipped. Messages that are *entirely* a placeholder (`<Media omitted>`, `<attached: …>`, `image omitted`, `This message was deleted`) are stored with `kind` `media` or `deleted`, so they stay visible but are excluded from profiles, sentiment, embeddings, turn-taking and the relationship graph. These layouts were checked against synthetic and hand-written files in each format, **not against a real phone export**.
 - **Instagram** (`parsers/instagram.py`). Meta exports messages newest-first, so they are reversed to chronological order. It also repairs Meta's well-known encoding bug (UTF-8 bytes mis-decoded as Latin-1, which corrupts emoji and non-ASCII text). Instagram times are UTC while WhatsApp/Telegram are device-local; that mismatch is flagged in the source note rather than silently "corrected".
 - **Telegram** (`parsers/telegram.py`). Skips non-message entries (joins, pins, …), flattens the mixed string/entity list Telegram uses for formatted text, and skips entries with no sender or no text.
 
@@ -229,7 +231,7 @@ The page ([`investigation_board.html`](investigation_board.html)) uses a **place
 [`workspace.py`](workspace.py) holds the query logic and `server.py` the thin routes.
 
 - **Search.** Every word must match; `"quoted"` matches an exact phrase; case-insensitive; optional sender / source / date filters. Matching is Python-side `re.IGNORECASE` rather than SQL `LIKE`, since `LIKE` is only case-insensitive for ASCII. Highlight segments are pre-split on the server because Python indexes by code point and JavaScript by UTF-16 unit, so raw offsets would drift after an emoji. With no query it is a plain filtered browse. A message opens in context (± 5 neighbours in its source). Everything is case-scoped: another case's message id is a 404.
-- **Timeline.** Per day, messages per person and their average sentiment, drawn as activity bars over a person × day mood grid (blue positive / red negative / gray neutral, equal steps per arm), with a table view and click-through to that day's messages. Silent days between the first and last dated day are drawn as empty cells, not skipped. The page says plainly that it reads wording, not sarcasm or subtext.
+- **Timeline.** Per day, messages per person and their average sentiment, drawn as activity bars over a person × day mood grid (blue positive / red negative / gray neutral, equal steps per arm), with a table view and click-through to that day's messages. Silent days between the first and last dated day are drawn as empty cells, not skipped. Every message counts towards the activity numbers (so they match the day view), but mood is scored from text only: a person whose only messages that day were media or deleted notices gets a hatched cell, not a neutral one. The page says plainly that it reads wording, not sarcasm or subtext.
 - **Evidence pins.** One pin per message plus a free-text note; pinning is idempotent; notes save when the box loses focus; the Evidence tab lists pins in the order the messages were sent.
 
 ---
@@ -257,18 +259,18 @@ Reproduce the attribution numbers with `python eval_attribution.py`. For each ca
 |---|---:|---:|---:|---:|---:|---|---|
 | Study Group | 3 | 18 | 33% | 44.4% | 44.4% | 38.9% / 44.4% | 42.9% / 50.0% |
 | Housemates | 3 | 21 | 33% | 57.1% | 57.1% | 47.6% / 47.6% | 60.0% / 60.0% |
-| The Paper Leak | 9 | 143 | 11% | 46.9% | 44.1% | 0.7% / 0.0% | 0 of 1 / no commits |
+| The Paper Leak | 9 | 142 | 11% | 53.5% | 47.2% | 0.0% / 0.0% | no commits |
 
 **How to read this honestly:**
 
 - The engine is **clearly better than chance but not a reliable classifier.** With 3 speakers, "precision when confident" is only 43–60% against a 33% chance level.
-- **The uncertainty thresholds (35% / 8 pts) were set for 3-person chats.** With nine speakers the softmax spreads out and the engine declines almost everything: it commits on 1 of 143 messages (fallback) or 0 of 143 (model). That is honest behaviour, but it means the thresholds need refitting, and this is the strongest evidence for fitting the weights and thresholds against labeled data.
-- The small cases have only 18–21 test messages, so treat differences of several points as noise. The Hinglish model changes attribution accuracy by no more than that (a paired comparison over 5 splits × 3 cases gave 48.6% vs 47.7%).
+- **The uncertainty thresholds (35% / 8 pts) were set for 3-person chats.** With nine speakers the softmax spreads out and the engine declines everything: it commits on none of the 142 test messages, with either scorer. That is honest behaviour, but it means the thresholds need refitting, and this is the strongest evidence for fitting the weights and thresholds against labeled data.
+- **Treat single-split accuracy as roughly ±5 points.** The small cases have only 18–21 test messages. The Paper Leak figure has read anywhere from 44% to 54% across recent commits, including a change as small as dropping four media placeholders, because the eval shuffles every sender's messages with one shared random generator: changing one sender's list re-draws the held-out messages of every later sender. That is a test-harness weakness (tracked as `E-1` in [`BACKLOG.md`](BACKLOG.md)), not the engine changing. Likewise the Hinglish model changes attribution accuracy by no more than that (a paired comparison over 5 splits × 3 cases gave 48.6% vs 47.7%).
 - Everything here is on **synthetic** chats. Nothing has been validated on real conversations.
 
 **Known limitations**, tracked in [`BACKLOG.md`](BACKLOG.md):
 
-- **Import formats.** The WhatsApp parser only accepts the en-US export style (`M/D/YY, H:MM AM - Name: text`). Other locales (24-hour, iOS-style brackets, `dd.mm.yy`, …) fail with "No messages parsed". Continuation lines of multi-line messages are dropped, and `<Media omitted>` is counted as a message. The Instagram and Telegram parsers have only been exercised on hand-written samples, never a real export.
+- **Import formats.** The WhatsApp layouts above have not been checked against a real phone export, only synthetic and hand-written files, so an unusual locale can still fail with "No messages parsed". System events (someone joined, the encryption notice) are dropped rather than stored. Sources imported before multi-line support keep their old truncated text until re-uploaded. Only WhatsApp media is flagged; the Instagram and Telegram parsers drop media-only entries, and have only been exercised on hand-written samples, never a real export.
 - **Timestamps.** Instagram is UTC while WhatsApp/Telegram are device-local, so a cross-platform case is off by the UTC offset (flagged, not corrected). One unreadable date line undates a whole WhatsApp file.
 - **Sentiment.** Reads wording only: no sarcasm, no Devanagari script, and a cold accusation with no negative words reads neutral, so the board's "tense" tone can't see it. Known misses on plain Hinglish remain (two are marked `xfail` in the tests).
 - **Board.** An "exchange" has no time limit (a reply next morning counts like one seconds later); group and DM exchanges are pooled; it is case-scoped only and has been checked with 3 and 9 people, not 20+.
@@ -325,13 +327,13 @@ To analyse your own chats, create a case and upload an export. In WhatsApp use *
 
 ```bash
 pip install pytest
-python -m pytest -q          # 181 passed, 2 xfailed once the model is built (under a minute)
+python -m pytest -q          # 231 passed, 2 xfailed once the model is built (under a minute)
 python eval_attribution.py   # attribution accuracy / coverage / precision per case
 python eval_sentiment.py     # sentiment model vs VADER on the held-out sets
 python eval_identity.py      # regression fixture for the (disabled) soft identity tier
 ```
 
-**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 154 pass. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
+**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 204 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
 
 ---
 
@@ -381,7 +383,8 @@ cases.html  detective_lang.html  person.html  combined_dossier.html
 merge_review.html  investigation_board.html  workspace.html      The UI pages
 
 eval_attribution.py  eval_sentiment.py  eval_identity.py        Evaluation harnesses
-test_*.py                 pytest suites (timestamps, graph rules, sentiment, leak-case key)
+test_*.py  conftest.py    pytest suites (parsers, message kinds, graph rules, sentiment, static policy,
+                          leak-case key); conftest.py points them at a throwaway database
 sample_*.txt / *.json     Synthetic chats, training lines, labeled sets, answer key
 sentiment_metrics.json    Last recorded sentiment evaluation
 BACKLOG.md                Agreed next work and every known rough edge
