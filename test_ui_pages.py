@@ -72,3 +72,23 @@ def test_pages_that_render_names_define_or_share_an_escape_helper(page):
     if "innerHTML" in src:
         assert ("function esc(" in src) or ("Dossier.esc" in src) or ('src="static/dossier.js"' in src), \
             f"{page} sets innerHTML but has no escape helper"
+
+
+def test_the_investigate_page_escapes_everything_the_learned_engine_returns():
+    """The learned engine echoes back words, phrases and notes taken from the chat, and sender names come from
+    the export (BACKLOG S-3): none of them may reach markup except through esc(). Verified in a real browser with
+    a hostile export too; this catches the regression a refactor would introduce."""
+    src = _read("detective_lang.html")
+    body = src[src.index("function reliabilityNote"):src.index("(async function init()")]
+    for raw in ("${i.label}", "${n}", "${ev['for']}", "${ev.against}", "${t.text}", "${oddsText}"):
+        assert raw not in src, f"{raw} is spliced into markup without esc()"
+    assert "esc(i.label)" in body and "esc(ev['for'])" in body and "esc(ev.against)" in body
+    assert "<div class=\"suspect-name\">${esc(r.sender)}</div>" in src
+    assert ".map(n => `<div class=\"note\">${esc(n)}</div>`)" in src
+
+
+def test_the_investigate_page_offers_both_engines_and_sends_the_choice():
+    src = _read("detective_lang.html")
+    assert "setEngine('learned')" in src and "setEngine('legacy')" in src
+    assert "engine: ENGINE" in src, "the chosen engine must be sent with the request"
+    assert "st.attribution" in src, "the initial choice must follow the server's default (/status)"

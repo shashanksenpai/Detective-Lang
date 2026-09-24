@@ -44,11 +44,23 @@
   .confidence{font:600 17px/1 var(--f-mono); color:var(--text-dim); width:74px; text-align:right; flex:none;}
   .suspect.lead .confidence{color:var(--cyan);}
 
-  .tells .tbl td:first-child{max-width:34ch;}
+  .tells .tbl td:first-child{max-width:34ch; overflow-wrap:anywhere;}
   .tells .tbl tr.off td{color:var(--text-faint);}
+  .tells .tbl tr.total td{border-top:1px solid var(--line-3); color:var(--text); font-weight:500;}
+  .tells .tbl .kind{font:400 10px/1 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-faint); margin-left:8px; white-space:nowrap;}
+  .tells .tbl .toward{overflow-wrap:anywhere;}
   .tells .foot{padding:10px 14px; border-top:1px solid var(--line);}
+  .engine-row{display:flex; align-items:center; gap:14px; margin:16px 0 0; flex-wrap:wrap;}
+  .engine-row .tabs{border-bottom:none; border:1px solid var(--line-2);}
+  .engine-row .tabs [role=tab]{padding:8px 14px; margin-bottom:0; border-bottom:none;}
+  .engine-row .tabs [role=tab][aria-selected=true]{background:var(--cyan-bg);}
+  .engine-blurb{font:400 11px/1.5 var(--f-mono); color:var(--text-dim); flex:1; min-width:220px;}
+  #engineNotes{display:flex; flex-direction:column; gap:6px; margin:0 0 14px;}
+  #engineNotes:empty{display:none;}
+  #reliability{margin:0 0 14px;}
+  #reliability:empty{display:none;}
   footer{margin-top:26px; text-align:center;}
-  @media (max-width:560px){ .query-box{flex-direction:column;} .wb-main button.investigate{padding:12px 22px;} .suspect.lead::after{display:none;} }
+  @media (max-width:560px){ .tells .tbl td:first-child{min-width:104px;} .tells .tbl th, .tells .tbl td{padding-left:8px; padding-right:8px;} .tells .tbl .meter{width:44px;} .tells .tbl .kind{display:block; margin:4px 0 0;} .query-box{flex-direction:column;} .wb-main button.investigate{padding:12px 22px;} .suspect.lead::after{display:none;} }
 </style>
 </head>
 <body>
@@ -74,6 +86,15 @@
         <button class="investigate" onclick="investigate()">Investigate</button>
       </div>
 
+      <div class="engine-row">
+        <span class="lbl plain">Engine</span>
+        <div class="tabs" role="tablist" aria-label="Attribution engine">
+          <button type="button" role="tab" id="engTabLearned" aria-selected="true" onclick="setEngine('learned')">Learned</button>
+          <button type="button" role="tab" id="engTabLegacy" aria-selected="false" onclick="setEngine('legacy')">Legacy</button>
+        </div>
+        <span class="engine-blurb" id="engineBlurb"></span>
+      </div>
+
       <div class="context-toggle" onclick="toggleContext()" id="contextToggle" role="button" tabindex="0">+ add what was said just before (optional)</div>
       <div class="context-box" id="contextBox" style="display:none;">
         <textarea id="contextInput" rows="2" aria-label="Prior messages" placeholder="One line per prior message, oldest first — e.g.&#10;Karan: agreed, the plot twist caught me off guard"></textarea>
@@ -97,8 +118,10 @@
         <div class="verdict-sentence">Evidence: <span id="echoedSentence"></span></div>
         <div id="caseTags"></div>
         <div id="uncertainBanner" class="uncertain-banner" style="display:none;">
-          &#x26A0; Confidence too low to name a top match — this may be a speech pattern not yet on file.
+          &#x26A0; <span id="uncertainText">Confidence too low to name a top match — this may be a speech pattern not yet on file.</span>
         </div>
+        <div id="engineNotes"></div>
+        <div id="reliability"></div>
         <div id="errorBanner" class="uncertain-banner" style="display:none;">
           &#x26A0; <span id="errorBannerText">Can't reach the attribution engine — start it with <code>python server.py</code>.</span>
         </div>
@@ -107,12 +130,12 @@
     </section>
 
     <section class="panel tells">
-      <div class="panel__hd"><span class="lbl plain">Why this ranking</span><span class="meta">the top match's six signals</span></div>
+      <div class="panel__hd"><span class="lbl plain">Why this ranking</span><span class="meta" id="whyMeta">the top match's six signals</span></div>
       <div id="tellsList"></div>
     </section>
   </div>
 
-  <footer class="lbl plain">scores blend six weighted signals &middot; a weight of "off" means that signal had nothing to say for this message</footer>
+  <footer class="lbl plain" id="footNote">scores blend six weighted signals &middot; a weight of "off" means that signal had nothing to say for this message</footer>
 </main>
 
 <script src="static/shell.js"></script>
@@ -123,6 +146,20 @@
 // whichever case is active (?case_id= in the URL, set from cases.html).
 const API_BASE = 'http://127.0.0.1:8000';
 const CASE_ID = new URLSearchParams(window.location.search).get('case_id');
+
+// Which attribution engine answers: the server's default until the user picks one (see setEngine).
+let ENGINE = 'learned';
+const ENGINE_BLURB = {
+  learned: "Learns each person's wording and spelling from their own messages, and says uncertain when its own held-out checks say it can't be trusted.",
+  legacy: "Six hand-weighted signals: topic, style, emotion, domain, sentence form, turn-taking.",
+};
+function setEngine(kind){
+  ENGINE = kind === 'legacy' ? 'legacy' : 'learned';
+  document.getElementById('engTabLearned').setAttribute('aria-selected', String(ENGINE === 'learned'));
+  document.getElementById('engTabLegacy').setAttribute('aria-selected', String(ENGINE === 'legacy'));
+  document.getElementById('engineBlurb').textContent = ENGINE_BLURB[ENGINE];
+  if(document.getElementById('results').classList.contains('show') && document.getElementById('sentenceInput').value.trim()) investigate();
+}
 
 // Sender names come from someone else's chat export, so they are untrusted: nothing that
 // originates in a file may reach innerHTML except through esc().
@@ -182,7 +219,7 @@ async function investigate(){
     const resp = await fetch(API_BASE + '/cases/' + CASE_ID + '/investigate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({sentence: text, context}),
+      body: JSON.stringify({sentence: text, context, engine: ENGINE}),
     });
     if(!resp.ok){
       const body = await resp.json().catch(() => ({}));
@@ -198,6 +235,8 @@ async function investigate(){
     document.getElementById('uncertainBanner').style.display = 'none';
     document.getElementById('suspectList').innerHTML = '';
     document.getElementById('caseTags').innerHTML = '';
+    document.getElementById('engineNotes').innerHTML = '';
+    document.getElementById('reliability').innerHTML = '';
     document.getElementById('rankMeta').textContent = '';
     document.getElementById('tellsList').parentElement.style.display = 'none';
     document.getElementById('echoedSentence').textContent = '"' + text + '"';
@@ -206,7 +245,19 @@ async function investigate(){
   }
 
   document.getElementById('echoedSentence').textContent = '"' + result.sentence + '"';
-  document.getElementById('uncertainBanner').style.display = result.uncertain ? 'flex' : 'none';
+  const engine = result.engine === 'learned' ? 'learned' : 'legacy';
+  const ranking = result.ranking || [];
+  const top = ranking[0], second = ranking[1];
+
+  // The banner and notes: every string here can contain names or words from the chat, so text goes in via textContent/esc.
+  const ub = document.getElementById('uncertainBanner');
+  ub.style.display = result.uncertain ? 'flex' : 'none';
+  const could = (result.plausible_senders || []).slice(0, 6);
+  document.getElementById('uncertainText').textContent = engine === 'learned'
+    ? 'Not confident enough to name one person.' + (could.length > 1 ? ' It could be: ' + could.join(', ') + '.' : '')
+    : 'Confidence too low to name a top match — this may be a speech pattern not yet on file.';
+  document.getElementById('engineNotes').innerHTML = (result.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join('');
+  document.getElementById('reliability').innerHTML = reliabilityNote(result);
 
   const tags = document.getElementById('caseTags');
   tags.innerHTML = [result.dominant_category, result.sentence_type]
@@ -215,14 +266,13 @@ async function investigate(){
     .join('') + (result.context_used ? `<span class="tell-chip">+${esc(result.context_used)} prior msg</span>` : '');
 
   // real numbers only: how many candidates, and the lead over the runner-up
-  const top = result.ranking[0], second = result.ranking[1];
-  document.getElementById('rankMeta').textContent = result.ranking.length + ' candidates' +
+  document.getElementById('rankMeta').textContent = engine + ' engine · ' + ranking.length + ' candidates' +
     (second ? ' · lead ' + (top.confidence - second.confidence).toFixed(1) + ' pts' : '') +
     (result.uncertain ? ' · uncertain' : '');
 
   const list = document.getElementById('suspectList');
   list.innerHTML = '';
-  result.ranking.forEach((r, idx) => {
+  ranking.forEach((r, idx) => {
     const lead = idx === 0 && !result.uncertain;
     const el = document.createElement('div');
     el.className = 'suspect' + (lead ? ' lead' : '');
@@ -244,22 +294,64 @@ async function investigate(){
     list.appendChild(el);
   });
 
-  // The "why" panel is built from the top match's actual signal breakdown and the weights the
-  // engine really used. A weight of 0 means the engine switched that signal off for this message.
-  const weights = result.weights_used || {};
-  const signals = Object.entries(top.signals).sort((a, b) => b[1] - a[1]);
-  document.getElementById('tellsList').innerHTML =
-    `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Signal</th><th>Match</th><th class="r">Score</th><th class="r">Weight</th></tr></thead><tbody>` +
-    signals.map(([k, v]) => {
-      const w = weights[k];
-      return `<tr class="${w === 0 ? 'off' : ''}"><td>${esc(SIGNAL_LABELS[k] || k)}</td>` +
-        `<td class="nw"><span class="meter" style="--v:${Math.max(0, Math.min(1, v))}"></span></td>` +
-        `<td class="r num">${Math.round(v * 100)}%</td>` +
-        `<td class="r num">${w === 0 ? 'off' : (w == null ? '—' : Math.round(w * 100) + '%')}</td></tr>`;
-    }).join('') + `</tbody></table></div>`;
-  document.getElementById('tellsList').parentElement.style.display = result.uncertain ? 'none' : 'block';
+  const why = document.getElementById('tellsList');
+  if(engine === 'learned'){
+    document.getElementById('whyMeta').textContent = result.evidence ? 'why ' + result.evidence['for'] + ' over ' + result.evidence.against : 'nothing to weigh';
+    why.innerHTML = learnedEvidence(result.evidence);
+    why.parentElement.style.display = result.evidence ? 'block' : 'none';
+    document.getElementById('footNote').textContent =
+      "learned from each person's own messages · the contributions add up exactly to the odds shown · it says uncertain when its own held-out checks say it can't be trusted";
+  }else{
+    // The "why" panel is built from the top match's actual signal breakdown and the weights the
+    // engine really used. A weight of 0 means the engine switched that signal off for this message.
+    document.getElementById('whyMeta').textContent = "the top match's six signals";
+    const weights = result.weights_used || {};
+    const signals = Object.entries((top && top.signals) || {}).sort((a, b) => b[1] - a[1]);
+    why.innerHTML =
+      `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Signal</th><th>Match</th><th class="r">Score</th><th class="r">Weight</th></tr></thead><tbody>` +
+      signals.map(([k, v]) => {
+        const w = weights[k];
+        return `<tr class="${w === 0 ? 'off' : ''}"><td>${esc(SIGNAL_LABELS[k] || k)}</td>` +
+          `<td class="nw"><span class="meter" style="--v:${Math.max(0, Math.min(1, v))}"></span></td>` +
+          `<td class="r num">${Math.round(v * 100)}%</td>` +
+          `<td class="r num">${w === 0 ? 'off' : (w == null ? '—' : Math.round(w * 100) + '%')}</td></tr>`;
+      }).join('') + `</tbody></table></div>`;
+    why.parentElement.style.display = result.uncertain ? 'none' : 'block';
+    document.getElementById('footNote').textContent =
+      'scores blend six weighted signals · a weight of "off" means that signal had nothing to say for this message';
+  }
 
   document.getElementById('results').classList.add('show');
+}
+
+// How far this engine's answer can be trusted on THIS case: what its own held-out checks found.
+function reliabilityNote(result){
+  const c = result.calibration;
+  if(result.engine !== 'learned' || !c || !c.calibrated || c.commit_threshold == null) return '';
+  return `<div class="note cyan">Held-out check on this case: when it was at least ${Math.round(c.commit_threshold * 100)}% sure it was right ` +
+    `${Math.round(c.checked_precision_at_threshold * 100)}% of the time, and it was that sure for ${Math.round(c.checked_share_answered * 100)}% of messages ` +
+    `(${esc(c.checked_messages)} messages checked).</div>`;
+}
+
+// Signed evidence, in log-odds (how many times more likely, on a log scale). Bars are scaled to the largest item.
+function signed(v){ return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1); }
+function learnedEvidence(ev){
+  if(!ev) return '<div class="empty-note">Nothing in this message matches anything in the chat, so there is no evidence to weigh.</div>';
+  // items too small to show (under 0.05) are folded into "everything else", so the rows still add up to the total
+  const big = ev.terms.filter(t => Math.abs(t.log_odds) >= 0.05);
+  const rest = ev.other_terms + ev.terms.filter(t => Math.abs(t.log_odds) < 0.05).reduce((a, t) => a + t.log_odds, 0);
+  const items = big.map(t => ({label: t.text, kind: t.kind, v: t.log_odds}));
+  if(Math.abs(rest) >= 0.05) items.push({label: 'everything else in the message', kind: '', v: rest});
+  if(Math.abs(ev.base_rate) >= 0.05) items.push({label: 'starting lean', kind: '', v: ev.base_rate, hint: "the model's built-in lean before it reads the message"});
+  const scale = Math.max(0.001, ...items.map(i => Math.abs(i.v)));
+  const odds = Math.exp(ev.log_odds);
+  const oddsText = odds >= 1000 ? 'over 1000 : 1' : odds >= 10 ? Math.round(odds) + ' : 1' : odds.toFixed(1) + ' : 1';
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Evidence</th><th>Weight</th><th class="r">Log-odds</th><th>Points to</th></tr></thead><tbody>` +
+    items.map(i => `<tr><td${i.hint ? ` title="${esc(i.hint)}"` : ''}>${esc(i.label)}${i.kind === 'phrase' ? '<span class="kind">phrase</span>' : ''}</td>` +
+      `<td class="nw"><span class="meter ${i.v >= 0 ? '' : 'faint'}" style="--v:${Math.min(1, Math.abs(i.v) / scale)}"></span></td>` +
+      `<td class="r num">${signed(i.v)}</td><td class="toward">${esc(i.v >= 0 ? ev['for'] : ev.against)}</td></tr>`).join('') +
+    `<tr class="total"><td>Total: ${esc(ev['for'])} over ${esc(ev.against)}</td><td></td><td class="r num">${signed(ev.log_odds)}</td>` +
+    `<td>${esc(oddsText)}</td></tr></tbody></table></div>`;
 }
 
 (async function init(){
@@ -275,6 +367,12 @@ async function investigate(){
     document.getElementById('caseNameLabel').textContent = caseData.name;
   }catch(err){
     document.getElementById('caseNameLabel').textContent = 'unknown case';
+  }
+  try{
+    const st = await (await fetch(API_BASE + '/status')).json();
+    setEngine(st.attribution && st.attribution.engine);
+  }catch(err){
+    setEngine(ENGINE);
   }
 })();
 </script>
