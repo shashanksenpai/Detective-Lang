@@ -171,8 +171,8 @@ page) with Search / Timeline / Evidence tabs, and the pipeline underneath now ke
   changed, 18 captioned ones stayed text). Only WhatsApp is classified; Instagram/Telegram media entries are dropped by their parsers.
 - **Tests:** `conftest.py` points every pytest run at a throwaway DB (`DETECTIVE_DATABASE_URL`) so the suite can never touch
   `detective.db`; `test_whatsapp_formats.py` (F-01/F-02) and `test_message_kinds.py` (F-03, through the real ingestion path).
-  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 231 passed,
-  2 xfailed with the model built; a fresh clone without it: 204 passed, 29 skipped.
+  Each new behaviour was mutation-checked (a deliberate breakage fails exactly the tests aimed at it). Full suite: 244 passed,
+  2 xfailed with the model built (231 before the `judge.py` placeholder's 13 tests); a fresh clone without it: 217 passed, 29 skipped.
 - **The Paper Leak eval moved, and it is not an improvement:** removing 4 media placeholders changed top-1 from 44.1% to 47.2%
   (model) and 46.9% to 53.5% (VADER fallback), because `eval_attribution.py` shuffles every sender's messages with one shared
   RNG, so any change to one sender's list re-draws the held-out set of every later sender (BACKLOG E-1). Treat single-split
@@ -380,8 +380,10 @@ polish - plus the timestamp capture they depended on. Still open, on purpose: mi
 Postgres+pgvector and thread pool → Celery+Redis **if real usage volume justifies it** — the schema
 in `models.py` was written to make that swap a connection-string/column-type change, not a rewrite.
 
-**Phase 6 — Contradiction detection.** Planned, requested, not started; the method is deliberately not
-designed yet (plan it properly when we get here). Given a person of interest, surface statements that
+**Phase 6 — Contradiction detection.** Planned, requested, not started; the method is being designed with the owner
+(see BACKLOG N-1 for the design so far: local candidate generation and structured checks, **Gemini as the semantic
+judge** behind the `judge.py` placeholder - off by default, `NotImplementedError` until built - and Google's free-tier
+terms forbidding personal data, which makes the opt-in and what-gets-sent preview central). Given a person of interest, surface statements that
 conflict: with themselves over time in one chat; across contexts (group vs DM, and across platforms once
 cases are linked); with what other people say; with timestamps and records (a message sent while they claim
 to be asleep, a gate register, a photo's time); knowledge they shouldn't have (a slip); and an explanation of
@@ -468,6 +470,10 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
 - `ui_static.py` — static-file policy for the UI: serves only top-level `*.html` pages. The server used to mount the
   whole project directory, which exposed `detective.db`, `uploads/`, the source and `.git/` (fixed 2026-09-24, BACKLOG
   S-1); `test_ui_static.py` pins it (light: no ML imports)
+- `judge.py` — Phase 6 placeholder (BACKLOG N-1): `Judge` interface, provisional `Statement`/`StatementPair`/`Verdict`
+  types and `GeminiJudge`, which checks its config (`DETECTIVE_ALLOW_EXTERNAL_LLM=1`, `GEMINI_API_KEY`,
+  `DETECTIVE_GEMINI_MODEL`) and then raises `NotImplementedError` - it sends nothing and never invents a verdict.
+  Light (no google-genai or ML import); `test_judge.py` pins the off-by-default behaviour
 - `sample_chat.txt` / `sample_dm_riya_karan.txt` — synthetic WhatsApp exports for "Demo: Study Group"
 - `sample_housemates.txt` / `sample_dm_meera_dev.txt` — synthetic WhatsApp exports for "Demo:
   Housemates", the emotionally-varied case (day-over-day arc + group-vs-DM contrast)

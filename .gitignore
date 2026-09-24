@@ -4,3 +4,4 @@ detective.db
 uploads/
 .pytest_cache/
 .sentiment_cache/
+.env

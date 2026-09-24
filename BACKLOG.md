@@ -32,6 +32,31 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   statements, how it says "uncertain", and how a human confirms it (a confirmed pair could be pinned as
   evidence). Evaluate against `sample_leak_case_key.json` — recall on the high-severity items C01–C16,
   precision against the decoys D01–D05. Constraints are in the CLAUDE.md roadmap entry.
+  **Design so far (2026-09-24, with the owner):** no paid API, and local-only was rejected as too weak, so the
+  *semantic* judge will be **Gemini** (the owner has access). `judge.py` is the placeholder: a `Judge` interface,
+  `Statement`/`StatementPair`/`Verdict` types (provisional) and a `GeminiJudge` that checks its configuration and
+  then raises `NotImplementedError` - it never returns an invented verdict. Off unless `DETECTIVE_ALLOW_EXTERNAL_LLM=1`;
+  needs `GEMINI_API_KEY` and `DETECTIVE_GEMINI_MODEL` (deliberately no default: model IDs change).
+  - *Two classes of conflict* (my reading of the 16, unmeasured): **structured** ones - a time/number/name claim vs hard
+    evidence (C01, C02, C07, C12-C15: "asleep by 11" vs messages at 12:20 am, a denial in the group vs the DM) - are
+    findable locally by shared rare entities across contexts; **semantic** ones (C03-C06, C09-C11, C16) need a language
+    judge. Local candidate generation + local structured checks + Gemini for the semantic pairs.
+  - *Privacy is the binding constraint.* Google's terms (checked 2026-09-24): on the **free tier** submitted content and
+    responses are used to improve Google's products, human reviewers may read them, and "Do not submit sensitive,
+    confidential, or personal information to the Unpaid Services"; the **paid** tier does not use them that way. Real
+    chats are personal information. So: opt-in per case (env switch now, UI later), show exactly what will be sent, and on
+    the free tier use synthetic/consented data only. Open question for the owner: free tier + synthetic data only, a paid
+    project, or pseudonymising names before sending (which can hurt name-based reasoning such as "Lalit").
+  - *Engine consequences of an external, rate-limited, non-deterministic judge:* local candidate generation keeps the calls
+    few (free-tier limits are not published; only visible in AI Studio); a **record/replay cache** keyed on (model, prompt
+    version, pair hash) so the eval is reproducible and tests never call the API; any API failure, quota error or safety
+    block becomes `uncertain`, never a guess (how they surface is undocumented - discover it against the real API);
+    structured JSON output (needs a Gemini 3-series model); prompts versioned; dev/test split C01-C08 / C09-C16 on the key.
+  - *Call shape per the docs on 2026-09-24* (re-check before building): `pip install google-genai`, `from google import
+    genai; genai.Client()` (reads `GEMINI_API_KEY`), `client.interactions.create(model=..., input=..., response_format={
+    "type": "text", "mime_type": "application/json", "schema": ...})`, answer in `interaction.output_text`.
+  - *First slice (6a)* is judge-agnostic: candidate generation + `eval_contradictions.py` (recall@K of candidate pairs
+    against the key) - it needs no API and says how much of the key is even reachable before any judging.
 - [ ] **N-2 · Chat reader — read any imported chat in full, exactly as it was.** A per-source transcript
   view: every message in order, day separators, sender names, timestamps, jump-to-date, in-chat search,
   pinned messages marked in the margin, reachable from the workspace and from any message anywhere (search
