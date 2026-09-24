@@ -1,9 +1,14 @@
 """SQLite engine/session setup - swaps to Postgres+pgvector by changing
 DATABASE_URL once volume justifies it (see CLAUDE.md roadmap, Phase 5).
 """
+import os
+
 from sqlmodel import Session, SQLModel, create_engine
 
-DATABASE_URL = "sqlite:///detective.db"
+# DETECTIVE_DATABASE_URL lets a test run or a scratch server use its own database
+# (conftest.py sets it, so the suite can never touch detective.db); unset, it is the
+# same relative detective.db as always.
+DATABASE_URL = os.environ.get("DETECTIVE_DATABASE_URL", "sqlite:///detective.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 # Columns added to an existing table after a database was first created.
