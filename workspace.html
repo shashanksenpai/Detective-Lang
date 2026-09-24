@@ -4,229 +4,117 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Detective Lang — Workspace</title>
+<link rel="stylesheet" href="static/theme.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
-
+  /* page-specific only; the design system lives in static/theme.css */
   :root{
-    --bg:#14161C;
-    --panel:#1B1E27;
-    --panel-raised:#232733;
-    --hairline:#2E3340;
-    --amber:#E8A33D;
-    --amber-dim:#8A6526;
-    --red-tape:#B5453D;
-    --text:#E8E6E0;
-    --text-muted:#8B8F9C;
-    --text-faint:#565B69;
-    --good:#7CB88F;
-    --bad:#C77B72;
-    /* diverging sentiment ramp: equal steps per arm, neutral gray midpoint */
+    /* diverging sentiment ramp, kept exactly as it was (owner: leave the blue/red mood scale for now) */
     --mood-n3:#e66767; --mood-n2:#aa5956; --mood-n1:#704a46;
     --mood-z:#383835;
     --mood-p1:#3d536c; --mood-p2:#3d6da7; --mood-p3:#3987e5;
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    padding:40px 20px 80px;
-    background-image:radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
-  }
-  .wrap{max-width:860px; margin:0 auto;}
-  a{color:var(--amber-dim); text-decoration:none;}
-  a:hover{color:var(--amber);}
-  .back-link{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px;
-    text-transform:uppercase; display:inline-block; margin-bottom:22px;
-  }
-  header{text-align:center; margin-bottom:26px;}
-  .eyebrow{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
-    color:var(--amber-dim); margin-bottom:10px;
-  }
-  h1{font-family:'Special Elite',monospace; font-size:38px; font-weight:400;}
-  .subtitle{color:var(--text-muted); font-size:13.5px; margin-top:8px;}
+  section.panel{margin-bottom:18px;}
+  #sourceStrip{display:flex; flex-wrap:wrap; gap:6px;}
+  .source-notes{flex-basis:100%; margin-top:6px; display:flex; flex-direction:column; gap:6px;}
+  .source-notes div{font:400 12px/1.5 var(--f-mono); color:var(--amber); padding:7px 10px; border-left:2px solid var(--amber); background:var(--amber-bg);}
+  .source-notes b{font-weight:600;}
+  /* a source chip: label and facts are user data, so no uppercasing */
+  .chip{display:inline-flex; gap:6px; align-items:center; font:400 11px/1.3 var(--f-mono); color:var(--text-dim); border:1px solid var(--line-3); padding:5px 9px; background:var(--bg-2);}
+  .chip.warn{color:var(--amber); border-color:var(--amber-dim); background:var(--amber-bg);}
+  .chip.warn::before{content:"\26A0\00A0";}
 
-  .tabs{
-    display:flex; gap:4px; border-bottom:1px solid var(--hairline); margin-bottom:22px;
-    overflow-x:auto;
-  }
-  .tab{
-    background:none; color:var(--text-muted); border:none; border-bottom:2px solid transparent;
-    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:1.5px;
-    text-transform:uppercase; padding:10px 16px; cursor:pointer; white-space:nowrap;
-  }
-  .tab:hover{color:var(--text); filter:none;}
-  .tab.active{color:var(--amber); border-bottom-color:var(--amber);}
-  .tab .count{color:var(--text-faint); margin-left:6px;}
+  .tabs .count{color:var(--blue); margin-left:8px; font-size:10px;}
+  .tabs .count:empty{display:none;}
+  #tabBody{margin-top:18px;}
 
-  section{
-    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
-    padding:20px 22px; margin-bottom:18px; position:relative;
-  }
-  section::before{
-    content:attr(data-label);
-    position:absolute; top:-9px; left:16px;
-    background:var(--bg); padding:0 8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
-    letter-spacing:2px; color:var(--amber-dim); text-transform:uppercase;
-  }
-
-  .field-row{display:flex; gap:10px; flex-wrap:wrap;}
-  input[type=text], input[type=date], select{
-    background:var(--panel-raised); border:1px solid var(--hairline); color:var(--text);
-    font-family:'Inter',sans-serif; font-size:14px; padding:9px 11px; border-radius:3px;
-    outline:none; color-scheme:dark;
-  }
-  input[type=text]:focus, input[type=date]:focus, select:focus{border-color:var(--amber-dim);}
-  input.grow{flex:1; min-width:200px;}
-  .hint{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-faint); margin-top:9px;}
-
-  button{
-    background:var(--amber); color:#14161C; border:none;
-    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px;
-    letter-spacing:1px; text-transform:uppercase;
-    padding:10px 18px; border-radius:2px; cursor:pointer;
-  }
-  button:hover{filter:brightness(1.12);}
-  button:disabled{opacity:0.4; cursor:default;}
-  button.secondary{background:var(--panel-raised); color:var(--text-muted); border:1px solid var(--hairline);}
-  .btn-mini{
-    background:none; color:var(--text-faint); border:1px solid var(--hairline);
-    font-size:10px; padding:3px 9px; letter-spacing:1px; font-weight:500;
-  }
-  .btn-mini:hover{color:var(--amber); border-color:var(--amber-dim); filter:none;}
-  .btn-mini.on{color:var(--amber); border-color:var(--amber-dim);}
-
-  .result-line{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted);
-    letter-spacing:.5px; margin:4px 2px 12px;
-  }
-  .empty-note{color:var(--text-faint); font-size:13px; font-style:italic; padding:6px 2px;}
-  .error-note{color:var(--bad); font-size:13px; padding:6px 2px;}
-
-  .msg{
-    background:var(--panel-raised); border:1px solid var(--hairline);
-    border-left:3px solid var(--hairline); border-radius:3px;
-    padding:11px 14px; margin-bottom:8px;
-  }
+  /* message rows */
+  .msg{background:var(--bg-1); border:1px solid var(--line); border-left:2px solid var(--line-3); padding:11px 14px; margin-bottom:8px; position:relative;}
+  .msg.pinned{border-left-color:var(--cyan); background:linear-gradient(90deg, var(--cyan-bg), transparent 40%), var(--bg-1);}
   .msg-head{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
-  .msg-sender{color:var(--amber); font-weight:600; font-size:13px;}
-  .msg-meta{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-faint);}
+  .msg-sender{color:var(--text); font-weight:600; font-size:13px;}
+  .msg-meta{font:400 10.5px/1.4 var(--f-mono); color:var(--text-faint); letter-spacing:.03em;}
   .msg-actions{margin-left:auto; display:flex; gap:6px;}
-  .msg-text{margin-top:6px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; line-height:1.5;}
-  .msg.pinned{border-left-color:var(--amber);}
-  .note-box{
-    width:100%; margin-top:10px; min-height:54px; resize:vertical;
-    background:var(--bg); border:1px solid var(--hairline); color:var(--text);
-    font-family:'Inter',sans-serif; font-size:13px; padding:8px 10px; border-radius:3px; outline:none;
-  }
-  .note-box:focus{border-color:var(--amber-dim);}
-  .note-status{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); display:block; min-height:14px; margin-top:3px;}
-  .note-status.err{color:var(--bad);}
-  .toast{
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:10;
-    background:var(--red-tape); color:#fff; font-size:13px; padding:9px 16px; border-radius:3px;
-  }
-  .ctx-pin{margin-left:auto; padding:1px 7px; font-size:11px;}
-  mark{background:rgba(232,163,61,0.28); color:var(--text); border-radius:2px; padding:0 2px;}
+  .msg-text{margin-top:6px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13.5px; line-height:1.55; max-width:100ch;}
+  .note-box{width:100%; margin-top:10px; min-height:54px; resize:vertical;}
+  .note-status{font:400 10px/1.4 var(--f-mono); color:var(--text-faint); display:block; min-height:14px; margin-top:3px;}
+  .note-status.err{color:var(--amber);}
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:950; background:var(--bg-2); color:var(--amber); border:1px solid var(--amber); box-shadow:0 0 18px -4px rgba(255,178,36,.45); font:500 12px/1.4 var(--f-mono); padding:9px 16px;}
+  .ctx-pin{margin-left:auto;}
 
-  .ctx{margin-top:10px; border-top:1px dashed var(--hairline); padding-top:8px;}
-  .ctx-msg{padding:4px 8px; font-size:13px; color:var(--text-muted); display:flex; gap:8px; border-left:2px solid transparent;}
-  .ctx-msg .who{color:var(--text-muted); font-weight:600; white-space:nowrap;}
-  .ctx-msg.target{color:var(--text); background:rgba(232,163,61,0.08); border-left-color:var(--amber);}
-  .ctx-msg.target .who{color:var(--amber);}
+  .ctx{margin-top:10px; border-top:1px dashed var(--line-2); padding-top:8px;}
+  .ctx-msg{padding:4px 8px; font-size:13px; color:var(--text-dim); display:flex; gap:8px; align-items:baseline; border-left:2px solid transparent;}
+  .ctx-msg .who{color:var(--text-dim); font-weight:600; white-space:nowrap;}
+  .ctx-msg.target{color:var(--text); background:var(--cyan-bg); border-left-color:var(--cyan);}
+  .ctx-msg.target .who{color:var(--text);}
   .ctx-msg .body{white-space:pre-wrap; overflow-wrap:anywhere;}
-  .ctx-time{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); white-space:nowrap; padding-top:2px;}
+  .ctx-time{font:400 10px/1.4 var(--f-mono); color:var(--text-faint); white-space:nowrap; padding-top:2px;}
 
   /* timeline */
   .c-n3{fill:var(--mood-n3);} .c-n2{fill:var(--mood-n2);} .c-n1{fill:var(--mood-n1);}
   .c-z{fill:var(--mood-z);}
   .c-p1{fill:var(--mood-p1);} .c-p2{fill:var(--mood-p2);} .c-p3{fill:var(--mood-p3);}
-  .sw{display:inline-block; width:20px; height:12px; border-radius:2px; vertical-align:-1px;}
+  .sw{display:inline-block; width:20px; height:12px; vertical-align:-1px;}
   .sw.c-n3{background:var(--mood-n3);} .sw.c-n2{background:var(--mood-n2);} .sw.c-n1{background:var(--mood-n1);}
   .sw.c-z{background:var(--mood-z);}
   .sw.c-p1{background:var(--mood-p1);} .sw.c-p2{background:var(--mood-p2);} .sw.c-p3{background:var(--mood-p3);}
-  .sw.none{border:1px dashed var(--hairline);}
+  .sw.none{border:1px dashed var(--line-3);}
   /* F-03: the person only sent media / deleted messages that day - nothing to score, so not a neutral reading */
   .c-media{fill:url(#tlHatch); stroke:var(--text-faint); stroke-width:1;}
   .sw.c-media{background:repeating-linear-gradient(45deg, var(--text-faint) 0 1.5px, transparent 1.5px 5px); border:1px solid var(--text-faint);}
-  .tl-legend{
-    display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-bottom:14px;
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted);
-  }
+  .tl-legend{display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-bottom:14px; font:400 10.5px/1.4 var(--f-mono); color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
   .tl-legend .sep{width:14px;}
   .tl-scroll{overflow-x:auto; padding-bottom:6px;}
   .tl-scroll svg{display:block;}
-  .tl-scroll text{font-family:'IBM Plex Mono',monospace; fill:var(--text-faint); font-size:10px;}
-  .tl-scroll text.name{fill:var(--text-muted); font-size:11px;}
-  .tl-scroll text.peak{fill:var(--text-muted);}
-  .bar{fill:var(--amber);}
-  .cell-empty{fill:none; stroke:var(--hairline); stroke-dasharray:2 3;}
+  .tl-scroll text{font-family:var(--f-mono); fill:var(--text-faint); font-size:10px;}
+  .tl-scroll text.name{fill:var(--text-dim); font-size:11px;}
+  .tl-scroll text.peak{fill:var(--text-dim);}
+  .bar{fill:var(--blue);}
+  .cell-empty{fill:none; stroke:var(--line-2); stroke-dasharray:2 3;}
   .hit-col{fill:transparent; cursor:pointer; outline:none;}
-  .hit-col:hover, .hit-col:focus{fill:rgba(232,163,61,0.06);}
-  .hit-col:focus{stroke:var(--amber-dim);}
+  .hit-col:hover, .hit-col:focus{fill:rgba(56,225,242,.06);}
+  .hit-col:focus{stroke:var(--cyan-dim);}
   .cell{cursor:pointer;}
-  .sel{fill:none; stroke:var(--amber); stroke-width:1.5; pointer-events:none;}
-  .tl-tip{
-    position:fixed; z-index:20; pointer-events:none; min-width:170px;
-    background:var(--panel-raised); border:1px solid var(--hairline); border-radius:3px;
-    padding:8px 10px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,0.4);
-  }
-  .tip-head{font-weight:600; margin-bottom:5px; color:var(--text);}
-  .tip-row{display:flex; align-items:center; gap:7px; padding:1px 0; color:var(--text-muted);}
+  .sel{fill:none; stroke:var(--cyan); stroke-width:1.5; pointer-events:none; filter:drop-shadow(0 0 3px rgba(56,225,242,.6));}
+  .tl-tip{position:fixed; z-index:960; pointer-events:none; min-width:180px; background:var(--bg-2); border:1px solid var(--line-3); border-top:2px solid var(--cyan); padding:8px 10px; font-size:12px; box-shadow:0 6px 18px rgba(0,0,0,.55);}
+  .tip-head{font:500 11px/1.4 var(--f-mono); margin-bottom:6px; color:var(--text); letter-spacing:.04em;}
+  .tip-row{display:flex; align-items:center; gap:7px; padding:1px 0; color:var(--text-dim);}
   .tip-row .tip-name{flex:1;}
-  .tip-row .tip-val{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text);}
+  .tip-row .tip-val{font:400 11px/1.4 var(--f-mono); color:var(--text);}
   .day-head{display:flex; align-items:center; justify-content:space-between; margin:6px 2px 10px;}
   .day-head .result-line{margin:0;}
-  details.tl-table{margin-top:12px;}
-  details.tl-table summary{
-    cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px;
-    color:var(--text-muted); letter-spacing:1px; text-transform:uppercase;
-  }
-  .tl-table-wrap{overflow-x:auto; margin-top:10px; max-height:360px; overflow-y:auto;}
-  table.tl{border-collapse:collapse; width:100%; font-size:12.5px;}
-  table.tl th, table.tl td{text-align:left; padding:5px 12px 5px 0; border-bottom:1px solid var(--hairline);}
-  table.tl th{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-faint);}
-  table.tl td.num{font-family:'IBM Plex Mono',monospace;}
+  details.tl-table{margin-top:14px;}
+  details.tl-table summary{cursor:pointer; font:500 10.5px/1 var(--f-mono); color:var(--text-dim); letter-spacing:.14em; text-transform:uppercase;}
+  details.tl-table summary:hover{color:var(--cyan);}
+  .tl-table-wrap{overflow-x:auto; margin-top:10px; max-height:360px; overflow-y:auto; border:1px solid var(--line);}
+  .tl-table-wrap .tbl td, .tl-table-wrap .tbl th{padding:7px 12px;}
+  .tl-table-wrap .tbl th{position:sticky; top:0;}
 
-  .source-strip{margin-bottom:22px; text-align:center;}
-  .chip{
-    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
-    color:var(--text-muted); border:1px solid var(--hairline); border-radius:20px;
-    padding:3px 11px; margin:3px 3px;
-  }
-  .chip.warn{border-color:var(--amber-dim);}
-  .source-notes{font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.5;}
-  .source-notes b{color:var(--amber-dim); font-weight:600;}
-
-  footer{
-    text-align:center; margin-top:40px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px;
-    color:var(--text-faint); letter-spacing:1px;
-  }
+  footer{margin-top:40px; text-align:center;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <a class="back-link" id="backLink" href="cases.html">&larr; case</a>
-  <header>
-    <div class="eyebrow">Detective Lang · Workspace</div>
-    <h1 id="caseName">—</h1>
-    <div class="subtitle" id="caseMeta"></div>
-  </header>
+<main class="wb-main">
+  <div class="wb-head">
+    <div>
+      <div class="lbl">Workspace</div>
+      <h1 id="caseName">—</h1>
+      <div class="sub" id="caseMeta"></div>
+    </div>
+    <div class="row"><a class="btn ghost sm" id="backLink" href="cases.html">&larr; Case</a></div>
+  </div>
 
-  <div class="source-strip" id="sourceStrip"></div>
+  <section class="panel">
+    <div class="panel__hd"><span class="lbl plain">Sources</span><span class="meta">this case only</span></div>
+    <div class="panel__bd" id="sourceStrip"></div>
+  </section>
 
   <div class="tabs" id="tabs" role="tablist"></div>
   <div id="tabBody"></div>
 
-  <footer>PROTOTYPE — SEARCH IS CASE-SCOPED; MESSAGES NEVER CROSS CASES</footer>
-</div>
+  <footer class="lbl plain">search is case-scoped &middot; messages never cross cases</footer>
+</main>
 
+<script src="static/shell.js"></script>
 <script>
 const API_BASE = 'http://127.0.0.1:8000';
 const caseId = new URLSearchParams(window.location.search).get('case_id');
@@ -430,7 +318,9 @@ const search = {q: '', sender: '', source: '', date: '', offset: 0, seq: 0, time
 
 function mountSearch(root){
   root.innerHTML = `
-    <section data-label="Search messages">
+    <section class="panel">
+      <div class="panel__hd"><span class="lbl plain">Search messages</span><span class="meta">every word must match</span></div>
+      <div class="panel__bd">
       <div class="field-row">
         <input type="text" id="q" class="grow" placeholder="Search this case's messages…" aria-label="Search text" autocomplete="off">
       </div>
@@ -445,6 +335,7 @@ function mountSearch(root){
         <button class="secondary" id="clearBtn">Clear</button>
       </div>
       <div class="hint">every word must match · "quote" for an exact phrase · not case-sensitive</div>
+      </div>
     </section>
     <div id="results"></div>`;
 
@@ -570,7 +461,9 @@ async function mountTimeline(root){
   const legend = ['n3', 'n2', 'n1', 'z', 'p1', 'p2', 'p3']
     .map(b => `<span class="sw c-${b}" title="${MOOD_LABEL[b]} (${MOOD_RANGE[b]})"></span>`).join('');
   root.innerHTML = `
-    <section data-label="Activity &amp; mood by day">
+    <section class="panel">
+      <div class="panel__hd"><span class="lbl plain">Activity &amp; mood by day</span><span class="meta">click a day or cell</span></div>
+      <div class="panel__bd">
       <div class="tl-legend">
         <span>negative</span>${legend}<span>positive</span>
         <span class="sep"></span><span class="sw none"></span><span>no messages</span>
@@ -579,6 +472,7 @@ async function mountTimeline(root){
       <div class="tl-scroll" id="tlScroll"></div>
       <div class="hint">bars: messages per day, everyone · cells: each person's average sentiment that day (an English + Hinglish sentiment model — reads wording, not sarcasm or subtext; hatched = only media or deleted messages that day, so nothing to score) · click a day or cell to read its messages${esc(undated)}</div>
       <details class="tl-table"><summary>Table view</summary><div class="tl-table-wrap" id="tlTable"></div></details>
+      </div>
     </section>
     <div id="dayView"></div>`;
   drawTimeline(root);
@@ -624,7 +518,7 @@ function drawTimeline(root){
     const y = gridTop + row * (ROW_H + ROW_GAP) + ROW_H / 2 + 4;
     return `<text class="name" x="${LEFT - 8}" y="${y}" text-anchor="end">${esc(name.length > 12 ? name.slice(0, 11) + '…' : name)}<title>${esc(name)}</title></text>`;
   }).join('');
-  const axis = `<line x1="${LEFT}" x2="${width - 8}" y1="${barBase + 0.5}" y2="${barBase + 0.5}" stroke="#2E3340"/>`
+  const axis = `<line x1="${LEFT}" x2="${width - 8}" y1="${barBase + 0.5}" y2="${barBase + 0.5}" style="stroke:var(--line-2)"/>`
              + `<text x="${LEFT - 8}" y="${barBase}" text-anchor="end">messages</text>`;
 
   root.querySelector('#tlScroll').innerHTML =
@@ -746,7 +640,7 @@ function renderTimelineTable(){
     `<tr><td>${esc(fmtDayKey(d.date))}</td><td>${esc(name)}</td><td class="num">${c.count}</td>` +
     `<td class="num">${esc(fmtMood(c.mood))}</td><td>${esc(MOOD_LABEL[moodBin(c.mood)])}</td></tr>`)));
   document.getElementById('tlTable').innerHTML =
-    '<table class="tl"><thead><tr><th>Date</th><th>Person</th><th>Messages</th><th>Avg sentiment</th><th></th></tr></thead><tbody>'
+    '<table class="tbl"><thead><tr><th>Date</th><th>Person</th><th>Messages</th><th>Avg sentiment</th><th></th></tr></thead><tbody>'
     + rows.join('') + '</tbody></table>';
 }
 

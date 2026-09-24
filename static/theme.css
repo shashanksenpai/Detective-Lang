@@ -156,9 +156,24 @@ h1{font-size:26px;} h2{font-size:18px;} h3{font-size:14px;}
 .btn.warn:hover{background:var(--amber-bg); box-shadow:0 0 0 1px var(--amber-dim), 0 0 14px -3px rgba(255,178,36,.4);}
 .btn.sm{padding:5px 9px; font-size:10px;}
 
-input[type=text], input[type=search], input[type=file], textarea, select{
+/* Pages that build markup in JS use bare <button>, button.secondary and button.btn-mini: inside .wb-main
+   they get the same look as .btn / .btn.ghost / .btn.sm, so those templates do not need re-classing.
+   (Tab buttons keep their own look: `.tabs [role=tab]` is more specific.) */
+.wb-main button{
+  font:600 11px/1 var(--f-mono); letter-spacing:.12em; text-transform:uppercase; cursor:pointer;
+  padding:9px 15px; background:transparent; color:var(--cyan); border:1px solid var(--cyan-dim);
+  transition:box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+.wb-main button:hover{background:var(--cyan-bg); box-shadow:var(--glow-cyan);}
+.wb-main button:disabled{opacity:.4; cursor:default; box-shadow:none; background:transparent;}
+.wb-main button.secondary{color:var(--text-dim); border-color:var(--line-3);}
+.wb-main button.secondary:hover{color:var(--text); background:var(--bg-3); box-shadow:none; border-color:var(--text-faint);}
+.wb-main button.btn-mini{padding:4px 8px; font-size:10px; letter-spacing:.1em; font-weight:500; color:var(--text-dim); border-color:var(--line-3);}
+.wb-main button.btn-mini:hover, .wb-main button.btn-mini.on{color:var(--cyan); border-color:var(--cyan-dim); background:var(--cyan-bg); box-shadow:none;}
+
+input[type=text], input[type=search], input[type=date], input[type=number], input[type=file], textarea, select{
   background:var(--bg-2); color:var(--text); border:1px solid var(--line-2); border-radius:0;
-  font:400 13px/1.4 var(--f-body); padding:8px 10px; outline:none; min-width:0;
+  font:400 13px/1.4 var(--f-body); padding:8px 10px; outline:none; min-width:0; color-scheme:dark;
 }
 input::placeholder, textarea::placeholder{color:var(--text-faint); font-family:var(--f-mono); font-size:12px;}
 input:focus, textarea:focus, select:focus{border-color:var(--cyan-dim); box-shadow:var(--glow-cyan);}
@@ -208,8 +223,16 @@ input[type=file]::file-selector-button{
 .note{font:400 12px/1.5 var(--f-mono); color:var(--text-dim); padding:8px 10px; border-left:2px solid var(--line-3); background:var(--bg-2);}
 .note.amber{color:var(--amber); border-left-color:var(--amber); background:var(--amber-bg);}
 .note.cyan{color:var(--cyan); border-left-color:var(--cyan); background:var(--cyan-bg);}
-.empty{color:var(--text-faint); font:400 12px/1.6 var(--f-mono); padding:18px 14px;}
-.empty::before{content:"> "; color:var(--cyan-dim);}
+.empty, .empty-note{color:var(--text-faint); font:400 12px/1.6 var(--f-mono); padding:18px 14px;}
+.empty::before, .empty-note::before{content:"> "; color:var(--cyan-dim);}
+/* a failed request or a refused action: a warning (amber), never red - red is reserved for suspicious/high-risk */
+.error-note{color:var(--amber); font:400 12px/1.5 var(--f-mono); padding:9px 12px; border-left:2px solid var(--amber); background:var(--amber-bg);}
+.error-note::before{content:"\2715\00A0"; }
+.hint{font:400 10.5px/1.5 var(--f-mono); color:var(--text-faint); margin-top:9px; letter-spacing:.03em;}
+.result-line{font:400 11px/1.4 var(--f-mono); color:var(--text-dim); letter-spacing:.05em; margin:4px 2px 12px; text-transform:uppercase;}
+.field-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+.field-row .grow, input.grow{flex:1; min-width:200px;}
+mark{background:rgba(56,225,242,.2); color:var(--text); box-shadow:inset 0 -1px 0 var(--cyan); padding:0 2px;}
 
 /* ---- module launcher tiles ---- */
 .mods{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
