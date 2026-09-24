@@ -387,6 +387,7 @@ test_*.py  conftest.py    pytest suites (parsers, message kinds, graph rules, se
                           leak-case key); conftest.py points them at a throwaway database
 sample_*.txt / *.json     Synthetic chats, training lines, labeled sets, answer key
 sentiment_metrics.json    Last recorded sentiment evaluation
+LICENSE                   Apache License 2.0 (this repository's code)
 BACKLOG.md                Agreed next work and every known rough edge
 CLAUDE.md                 Detailed project notes and design history
 ```
@@ -422,4 +423,4 @@ CLAUDE.md                 Detailed project notes and design history
 - **VADER:** `vaderSentiment`, used as a baseline, as extra inputs to the Hinglish model, and as the fallback scorer.
 - **Sentiment training data** (downloaded by `--retrain`, never redistributed here): SentiMix Hindi-English tweets (SemEval-2020 Task 9, OpenRAIL); Hinglish YouTube comments (CC-BY-4.0); a small set of templated Hindi-English sentences (MIT, training only); English tweets (licence not stated by the source). The chat-register training lines, the blind-labeled chat set and the plain-Hinglish probe sets in this repo were written for this project.
 - **Why the model file isn't committed:** the mixed licences above make redistributing the derived 13 MB model something to check first, so it is rebuilt locally from the public sources instead.
-- **License for this repository's code:** not yet specified.
+- **License for this repository's code:** [Apache License 2.0](LICENSE). It covers this repository's code only; the datasets and models above keep their own licences.

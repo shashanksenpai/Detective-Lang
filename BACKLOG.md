@@ -14,7 +14,8 @@ Last updated: 2026-09-24
 Autonomous work goes first; anything that needs a human decision stops for it.
 
 1. **Hygiene** - S-1 static-mount exposure (done), tests skip without the model (done), docs kept honest (done).
-   Still open and waiting on the owner: **H-1 LICENSE**, **S-2 CORS / no auth** (compatibility call).
+   H-1 LICENSE done (Apache-2.0, the owner's choice). **S-2 CORS / no auth** was deferred by the owner on
+   2026-09-24 ("leave for later") - still open, and required before any shared use.
 2. **Parser fidelity - F-01, F-02, F-03.** *Done 2026-09-24* (see Done). Everything downstream (the chat reader,
    contradictions on real chats) is only as good as the import; follow-ups F-31 to F-35 remain, mainly validating
    against a real phone export.
@@ -169,9 +170,8 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   read the local API (browsers restrict this for localhost to varying degrees; **not tested**). Recommended fix:
   allow only the server's own origins (`http://127.0.0.1:8000`, `http://localhost:8000` - the pages already
   hardcode `API_BASE` to :8000) and reject unexpected `Host` headers. **Not changed yet** because it would break
-  opening the pages from `file://` or from another port; needs the owner's OK. Do this before any shared use.
-- [ ] **H-1 · No LICENSE file** in the repo (public since 2026-09-24), so nobody has permission to reuse the code.
-  The owner has to choose the licence; not picked on their behalf.
+  opening the pages from `file://` or from another port. **The owner deferred it on 2026-09-24 ("leave for
+  later").** Do this before any shared use.
 - [ ] **H-2 · The trained sentiment model is deliberately not committed** (mixed training-data licences, F-29).
   Decide whether to publish it (e.g. as a release asset, with attribution) or keep rebuilding it from source.
 - [ ] **H-3 · README figures are copied by hand** from `eval_*.py` / `sentiment_metrics.json`. Re-check them after
@@ -222,6 +222,7 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   with the instruction to run `python eval_sentiment.py --retrain` (fresh clone: 154 passed, 29 skipped; with the model:
   181 passed, 2 xfailed). A model file with the wrong feature version still fails rather than skips (verified).
 - 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): the 49.7% first recorded for paper-leak top-1 was stale; see F-16 / E-1 for the current, noisy figures.
+- 2026-09-24 · **H-1 · LICENSE**: Apache License 2.0 added (the owner's choice), verbatim canonical text; README updated.
 - 2026-09-24 · **DB isolation for tests** (F-15, part): `DETECTIVE_DATABASE_URL` + `conftest.py` - a full suite run leaves the real
   `detective.db` byte-identical (verified by size and mtime).
 - 2026-09-24 · **F-01 · WhatsApp export layouts.** `parsers/whatsapp.py` reads Android 12/24-hour (upper/lower-case am/pm, narrow
