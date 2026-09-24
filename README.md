@@ -10,7 +10,7 @@
 
 It is a working prototype that runs entirely on your own machine. It understands English and Romanized Hindi ("Hinglish"). It is not a forensic instrument: every result is a probabilistic estimate, and the [measured accuracy](#measured-results-and-limitations) is modest and reported honestly below.
 
-> **Status:** research prototype, single-user, local only. There is no authentication, and the dev server has [a security caveat you should read](#security-and-responsible-use) before running it.
+> **Status:** research prototype, single-user, local only. There is no authentication, so read the [security notes](#security-and-responsible-use) before running it with real chats.
 > All chats bundled in this repository are **synthetic**. Nothing here comes from real people.
 
 ## Contents
@@ -325,13 +325,13 @@ To analyse your own chats, create a case and upload an export. In WhatsApp use *
 
 ```bash
 pip install pytest
-python -m pytest -q          # 154 passed, 2 xfailed once the model is built (about half a minute)
+python -m pytest -q          # 181 passed, 2 xfailed once the model is built (under a minute)
 python eval_attribution.py   # attribution accuracy / coverage / precision per case
 python eval_sentiment.py     # sentiment model vs VADER on the held-out sets
 python eval_identity.py      # regression fixture for the (disabled) soft identity tier
 ```
 
-**Without the model file, 16 tests fail**, all in `test_hinglish_sentiment.py`, which asserts that the trained model is present and behaves; the remaining 138 pass. Run step 1 first. The two `xfail`s are known Hinglish misses recorded on purpose.
+**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 154 pass. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
 
 ---
 
@@ -360,7 +360,8 @@ Interactive docs are available at `/docs` while the server runs. All case data i
 ## Repository layout
 
 ```
-server.py                 FastAPI dev server: thin routes, static file host
+server.py                 FastAPI dev server: thin routes, serves the UI pages
+ui_static.py              Static-file policy: only top-level .html pages are served
 models.py  db.py          SQLModel tables; SQLite engine + small column-migration list
 parsers/                  Parser registry: whatsapp.py · instagram.py · telegram.py
 ingestion.py              Background import, timestamp backfill, stranded-import recovery
@@ -406,7 +407,7 @@ CLAUDE.md                 Detailed project notes and design history
 
 ## Security and responsible use
 
-- **Keep it on localhost.** `server.py` mounts the *whole project directory* as static files, which includes `detective.db` and the source files. On a running server, `http://127.0.0.1:8000/detective.db` downloads the entire SQLite database, and there is **no authentication**. It binds to `127.0.0.1` by default; do **not** expose it to a network or the internet, or run it with `--host 0.0.0.0`, while it holds real chats. Fixing this before any shared deployment is required work, not polish.
+- **Keep it on localhost; there is no authentication.** Every API route is open to anything that can reach the port, so whoever can would be able to read every case. It binds to `127.0.0.1` by default; do **not** expose it to a network or the internet, or run it with `--host 0.0.0.0`, while it holds real chats. Two specifics. The static file server only serves the top-level `.html` pages, and the database, uploads, source and `.git` are refused (`test_ui_static.py` covers this). CORS is currently wide open (`allow_origins=["*"]`), so in principle a web page open in the same browser could try to call the local API; browsers restrict that for localhost to varying degrees and it has not been tested here. Restricting origins and checking the `Host` header is tracked as `S-2` in [`BACKLOG.md`](BACKLOG.md) and should land before any shared use.
 - **Your chat content stays local.** It is never sent anywhere. The app does contact Hugging Face to fetch and check the embedding model (and, for `--retrain`, to download the public datasets), and the relationship board loads D3 from a CDN, so that page needs internet access.
 - **Uploads are stored on disk** under `uploads/` (git-ignored) and in `detective.db` (git-ignored).
 - **Treat results as leads, not proof.** Attribution is probabilistic, the engine's accuracy is modest, and the sentiment scorer can't see sarcasm. The tool is built to say "uncertain", to propose rather than decide, and to require a human to confirm merges. It is not designed to assert guilt or to be evidence on its own.

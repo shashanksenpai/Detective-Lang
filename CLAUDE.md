@@ -166,8 +166,10 @@ understandable reason, a buyer's contradiction, a real chai seller also named La
 inconsistency) that a detector should *not* score as the suspect lying. Every reference is an exact
 timestamp + sender + quote, and `test_leak_case.py` checks each one really exists in the chats (and that every
 line of every sample parses - the parser silently drops non-matching lines). Dates are settled by the data
-(no ambiguity note). Baseline on this case, untouched: attribution top-1 accuracy 49.7% (chance is 11%) but
-coverage 0.7% - the engine commits on 1 of 143 test messages, because the "uncertain" thresholds were set
+(no ambiguity note). Baseline on this case, untouched: attribution top-1 accuracy 49.7% when first recorded;
+**re-measured 2026-09-24 on a fresh clone: 46.9% with the VADER fallback, 44.1% with the Hinglish model** (chance is
+11%; the drift from 49.7% is not bisected - the engine and sentiment scorer both changed since) but
+coverage 0.7% (fallback) / 0.0% (model) - the engine commits on 1 of 143 test messages at best, because the "uncertain" thresholds were set
 for 3-person cases and nine speakers dilute the softmax. That is honest behaviour and is more evidence for
 Improvement Stage item (1), fitting weights/thresholds; it is recorded, not tuned. Ingesting this case
 exposed a real inefficiency: `identity_resolution.score_pair` re-embedded every person once per *pair*
@@ -431,7 +433,10 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   `/people/{person_id}`, `/cases/{id}/graph` + `/cases/{id}/relationship-inference`, and (Phase 5)
   `/cases/{id}/senders`, `/messages` (search/browse), `/messages/{mid}/context`, `/timeline`, `/pins`,
   `DELETE /cases/{id}/sources/{sid}` (failed imports only), `/board-layout` — still not the production
-  backend (no auth, no Celery/Redis)
+  backend (no auth, no Celery/Redis; CORS is wide open - BACKLOG S-2)
+- `ui_static.py` — static-file policy for the UI: serves only top-level `*.html` pages. The server used to mount the
+  whole project directory, which exposed `detective.db`, `uploads/`, the source and `.git/` (fixed 2026-09-24, BACKLOG
+  S-1); `test_ui_static.py` pins it (light: no ML imports)
 - `sample_chat.txt` / `sample_dm_riya_karan.txt` — synthetic WhatsApp exports for "Demo: Study Group"
 - `sample_housemates.txt` / `sample_dm_meera_dev.txt` — synthetic WhatsApp exports for "Demo:
   Housemates", the emotionally-varied case (day-over-day arc + group-vs-DM contrast)

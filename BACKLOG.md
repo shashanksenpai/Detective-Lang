@@ -7,7 +7,19 @@ roadmap (that is in `CLAUDE.md`); it is the running list of loose ends.
 with the next free ID. When something is fixed, tick it and move it to *Done* with the date and what fixed
 it. Say plainly what was and wasn't verified — "loads without errors" is not "looks right".
 
-Last updated: 2026-09-22
+Last updated: 2026-09-24
+
+## Priority order (set 2026-09-24)
+
+Autonomous work goes first; anything that needs a human decision stops for it.
+
+1. **Hygiene** - S-1 static-mount exposure (done), tests skip without the model (done), docs kept honest (done).
+   Still open and waiting on the owner: **H-1 LICENSE**, **S-2 CORS / no auth** (compatibility call).
+2. **Parser fidelity - F-01, F-02, F-03.** Everything downstream (the chat reader, contradictions on real chats)
+   is only as good as the import, and real exports hit these first. No sign-off needed.
+3. **N-1 design** - a plan for approval, not code: the method is deliberately undesigned (CLAUDE.md, Phase 6).
+4. **N-1 implementation**, then **N-2 chat reader** (needs step 2).
+5. **N-3** waits for the owner's specifics.
 
 ---
 
@@ -75,7 +87,8 @@ Last updated: 2026-09-22
 
 ### Attribution / identity
 - [ ] **F-16 · Uncertainty thresholds are calibrated for 3-person cases.** On the 9-person paper-leak case
-  top-1 accuracy is 49.7% but the engine commits on 0.7% of test messages. (Improvement Stage item 1.)
+  top-1 accuracy is 46.9% (VADER fallback) / 44.1% (Hinglish model) - re-measured 2026-09-24, the 49.7% first
+  recorded here is stale - and the engine commits on 0.7% / 0.0% of test messages. (Improvement Stage item 1.)
 - [ ] **F-17 · spaCy syntax signal** (Improvement Stage item 2).
 - [ ] **F-18 · `DetectiveEngine` treats the last message of one source and the first of the next as
   adjacent** when it counts turn-taking (`transition_counts`). The board's exchange counting had the same
@@ -135,6 +148,20 @@ Last updated: 2026-09-22
   the UI for that state hasn't been reviewed.
 - [ ] **V-3 · `merge_review.html`** and `cases.html` at phone width.
 
+### Security and repo hygiene (found 2026-09-24 while publishing the repo)
+- [ ] **S-2 · No authentication, and CORS is `allow_origins=["*"]`** (`server.py`). Every API route is open to
+  anything that can reach the port, and the wildcard means a web page open in the same browser could in principle
+  read the local API (browsers restrict this for localhost to varying degrees; **not tested**). Recommended fix:
+  allow only the server's own origins (`http://127.0.0.1:8000`, `http://localhost:8000` - the pages already
+  hardcode `API_BASE` to :8000) and reject unexpected `Host` headers. **Not changed yet** because it would break
+  opening the pages from `file://` or from another port; needs the owner's OK. Do this before any shared use.
+- [ ] **H-1 · No LICENSE file** in the repo (public since 2026-09-24), so nobody has permission to reuse the code.
+  The owner has to choose the licence; not picked on their behalf.
+- [ ] **H-2 · The trained sentiment model is deliberately not committed** (mixed training-data licences, F-29).
+  Decide whether to publish it (e.g. as a release asset, with attribution) or keep rebuilding it from source.
+- [ ] **H-3 · README figures are copied by hand** from `eval_*.py` / `sentiment_metrics.json`. Re-check them after
+  any change to the signals, weights, thresholds or the sentiment model (a stale figure already turned up: F-16).
+
 ### Infrastructure (deferred by the roadmap)
 - [ ] **I-1 · SQLite → Postgres + pgvector, thread pool → Celery + Redis** — only if real usage volume
   justifies it.
@@ -172,3 +199,11 @@ Last updated: 2026-09-22
 - 2026-09-22 · **Hinglish sentiment (F-11)** — VADER replaced by `hinglish_sentiment.py` after measuring it on real data (SentiMix
   macro-F1 46.9 -> 68.7, English 65.5 -> 72.5, unseen plain-Hinglish probes 47% -> 83%, blind-labeled chat test
   53.9 -> 64.0 (likely overstated, F-25); Hinglish YouTube comments 40.6 -> 62.2, a known cost, F-30). See "Hinglish sentiment" in CLAUDE.md for what worked, what did not, and the limits.
+- 2026-09-24 · **S-1 · Static mount exposed `detective.db`, `uploads/`, the source and `.git/`** - `server.py` served the whole
+  project directory. Found on a clean clone (`GET /detective.db` -> 200); fixed by `ui_static.UIStaticFiles`, which serves
+  only top-level `.html` pages. Verified on a real running server (pages, `/docs`, API 200; database, source, `.git`,
+  `uploads/`, traversal 404) and by `test_ui_static.py`.
+- 2026-09-24 · **Fresh clone failed 16 tests** because the model is not committed - the 13 model-behaviour tests now skip
+  with the instruction to run `python eval_sentiment.py --retrain` (fresh clone: 154 passed, 29 skipped; with the model:
+  181 passed, 2 xfailed). A model file with the wrong feature version still fails rather than skips (verified).
+- 2026-09-24 · **Stale figure corrected** (F-16 / CLAUDE.md): paper-leak top-1 is 46.9% / 44.1%, not 49.7%.
