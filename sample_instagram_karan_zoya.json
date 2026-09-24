@@ -1,0 +1,85 @@
+{
+  "participants": [
+    {
+      "name": "Karan"
+    },
+    {
+      "name": "Zoya"
+    }
+  ],
+  "messages": [
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717301520000,
+      "content": "perfect, can't wait honestly"
+    },
+    {
+      "sender_name": "Karan",
+      "timestamp_ms": 1717301460000,
+      "content": "no yeah saturday's still good, ignore that"
+    },
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717301400000,
+      "content": "haha okay whenever works, no pressure"
+    },
+    {
+      "sender_name": "Karan",
+      "timestamp_ms": 1717301340000,
+      "content": "wait i take that back, my thing this weekend got moved lol",
+      "is_unsent": true
+    },
+    {
+      "sender_name": "Karan",
+      "timestamp_ms": 1717301280000,
+      "content": "say less, see you there around 5"
+    },
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717301220000,
+      "content": "saturday's perfect, that cafe near the station?"
+    },
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717301160000,
+      "type": "Generic",
+      "share": {
+        "link": "https://example.com/reel/abc123"
+      }
+    },
+    {
+      "sender_name": "Karan",
+      "timestamp_ms": 1717301100000,
+      "content": "saturday work for you? we could grab food somewhere"
+    },
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717301040000,
+      "content": "yes please, i need a break so bad"
+    },
+    {
+      "sender_name": "Karan",
+      "timestamp_ms": 1717300980000,
+      "content": "we should hang out this weekend, it's been way too long ð"
+    },
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717300920000,
+      "content": "LMAOOO same energy over here"
+    },
+    {
+      "sender_name": "Karan",
+      "timestamp_ms": 1717300860000,
+      "content": "insane honestly, survived on 3 hours of sleep and deja vu Ã© vibes lol"
+    },
+    {
+      "sender_name": "Zoya",
+      "timestamp_ms": 1717300800000,
+      "content": "hey! long time, how's the semester going"
+    }
+  ],
+  "title": "Zoya",
+  "is_still_participant": true,
+  "thread_type": "Regular",
+  "thread_path": "inbox/zoya_998877"
+}

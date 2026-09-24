@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detective Lang — Investigation Board</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#14161C;
+    --panel:#1B1E27;
+    --panel-raised:#232733;
+    --hairline:#2E3340;
+    --amber:#E8A33D;
+    --amber-dim:#8A6526;
+    --text:#E8E6E0;
+    --text-muted:#8B8F9C;
+    --text-faint:#565B69;
+    --bad:#C77B72;
+    /* laser tones: blue/red are the timeline's positive/negative ends, so colour means the same everywhere */
+    --warm-glow:#3987e5;   --warm-core:#a9cfff;
+    --tense-glow:#e66767;  --tense-core:#ffbcbc;
+    --neutral-glow:#8a94ad; --neutral-core:#e3e8f3;
+    --unclear:#565B69;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  [hidden]{display:none !important;}
+  body{
+    background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;
+    padding:22px 18px 40px;
+    background-image:radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
+  }
+  a{color:var(--amber-dim); text-decoration:none;}
+  a:hover{color:var(--amber);}
+  .topbar{display:flex; align-items:baseline; gap:18px; flex-wrap:wrap; margin-bottom:14px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--amber-dim);}
+  h1{font-family:'Special Elite',monospace; font-size:30px; font-weight:400;}
+  .case-scope{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);}
+  .banner{
+    background:rgba(181,69,61,0.12); border:1px solid rgba(181,69,61,0.4); border-radius:3px;
+    padding:12px 16px; margin-bottom:16px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#E7A29C;
+  }
+
+  .stage{display:flex; flex-direction:column; gap:10px;}
+  .stage.full{position:fixed; inset:0; z-index:50; background:var(--bg); padding:14px 16px; height:100vh;}
+  .toolbar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px;
+    background:var(--panel); border:1px solid var(--hairline); border-radius:3px; padding:9px 12px;
+  }
+  .group{display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .glabel{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-faint);}
+  .toolbar .spacer{flex:1;}
+  button, .chip{
+    background:var(--panel-raised); color:var(--text-muted); border:1px solid var(--hairline);
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:11px; letter-spacing:.8px;
+    text-transform:uppercase; padding:6px 11px; border-radius:2px; cursor:pointer;
+  }
+  button:hover, .chip:hover{border-color:var(--amber-dim); color:var(--amber);}
+  button:focus-visible, .chip:focus-visible, input:focus-visible{outline:2px solid var(--amber); outline-offset:1px;}
+  .chip{display:inline-flex; align-items:center; gap:7px;}
+  .chip i{display:inline-block; width:22px; height:3px; border-radius:2px; background:var(--c); box-shadow:0 0 7px var(--c);}
+  .chip b{font-weight:500; color:var(--text-faint);}
+  .chip.off{opacity:.42; text-decoration:line-through; text-decoration-color:var(--text-faint);}
+  .chip.warm{--c:var(--warm-glow);} .chip.tense{--c:var(--tense-glow);}
+  .chip.neutral{--c:var(--neutral-glow);} .chip.unclear{--c:var(--unclear);}
+  .chip.unclear i{background:repeating-linear-gradient(90deg,var(--unclear) 0 4px,transparent 4px 7px); box-shadow:none;}
+  input[type=range]{accent-color:var(--amber); width:120px;}
+  output{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber); min-width:18px;}
+  label.check{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-muted); cursor:pointer;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-faint);}
+  .status.err{color:var(--bad);}
+
+  .grid{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:10px; min-height:0;}
+  .stage.full .grid{flex:1;}
+  .boardbox{
+    position:relative; height:calc(100vh - 190px); min-height:560px;
+    background:radial-gradient(ellipse at center, #1b1f2a 0%, #14161c 75%);
+    border:1px solid var(--hairline); border-radius:3px; overflow:hidden;
+  }
+  .stage.full .boardbox{height:auto; min-height:0;}
+  #board{width:100%; height:100%; display:block; cursor:grab; touch-action:none;}
+  #board.panning{cursor:grabbing;}
+  .hint{
+    position:absolute; left:12px; bottom:10px; font-family:'IBM Plex Mono',monospace;
+    font-size:10px; color:var(--text-faint); pointer-events:none; letter-spacing:.5px;
+  }
+
+  /* ---- lasers ---- */
+  .glow{fill:none; stroke-linecap:round; opacity:.30;}
+  .core{fill:none; stroke-linecap:round; opacity:.95;}
+  .emit{opacity:.95;}
+  .tone-warm.glow{stroke:var(--warm-glow);}   .tone-warm.core{stroke:var(--warm-core);}   .tone-warm.emit{fill:var(--warm-core);}
+  .tone-tense.glow{stroke:var(--tense-glow);} .tone-tense.core{stroke:var(--tense-core);} .tone-tense.emit{fill:var(--tense-core);}
+  .tone-neutral.glow{stroke:var(--neutral-glow);} .tone-neutral.core{stroke:var(--neutral-core);} .tone-neutral.emit{fill:var(--neutral-core);}
+  .tone-unclear.glow{display:none;}
+  .tone-unclear.core{stroke:var(--unclear); stroke-dasharray:3 6; opacity:.5;}
+  .tone-unclear.emit{display:none;}
+  .hit{fill:none; stroke:transparent; stroke-width:14; cursor:pointer;}
+  .faded{opacity:.06 !important;}
+  .hot.glow{opacity:.62;}
+  .hot.core{opacity:1;}
+  .gone{display:none !important;}
+  @media (prefers-reduced-motion: no-preference){
+    .hot.glow{animation:beam 1.8s ease-in-out infinite;}
+    @keyframes beam{0%,100%{opacity:.5;} 50%{opacity:.78;}}
+  }
+
+  /* ---- nodes ---- */
+  .node{cursor:grab; outline:none;}
+  .node:active{cursor:grabbing;}
+  .node .body{fill:#1d212c; stroke:var(--amber-dim); stroke-width:1.6;}
+  .node .initial{fill:var(--text-muted); font-family:'Special Elite',monospace; text-anchor:middle; dominant-baseline:central; pointer-events:none;}
+  .node .halo{fill:var(--amber); opacity:0; pointer-events:none;}
+  .node:focus-visible .body{stroke:var(--text); stroke-width:2.4;}
+  .node.selected .body{stroke:var(--amber); stroke-width:3; fill:#2a2418;}
+  .node.selected .initial{fill:var(--amber);}
+  .node.selected .halo{opacity:.55;}
+  .node.hover .body{stroke:var(--amber);}
+  .node.dim{opacity:.22;}
+  @media (prefers-reduced-motion: no-preference){
+    .node.selected .halo{animation:pulse 2.2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:.4;} 50%{opacity:.75;}}
+  }
+  .label{pointer-events:none;}
+  .label rect{fill:rgba(20,22,28,.94); stroke:var(--hairline); stroke-width:1;}
+  .label.selected rect{stroke:var(--amber);}
+  .label.dim{opacity:.3;}
+  .label .nm{fill:var(--text); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600;}
+  .label .sub{fill:var(--text-muted); font-family:'IBM Plex Mono',monospace; font-size:9.5px;}
+
+  /* ---- side panel ---- */
+  aside{
+    background:var(--panel); border:1px solid var(--hairline); border-radius:3px; padding:14px 15px;
+    height:calc(100vh - 190px); min-height:560px; overflow-y:auto; position:relative;
+  }
+  .stage.full aside{height:auto; min-height:0;}
+  aside h2{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--amber-dim); font-weight:500; margin:16px 0 8px;}
+  aside h2:first-child{margin-top:0;}
+  .who{font-size:20px; font-weight:600; margin-bottom:3px; overflow-wrap:anywhere;}
+  .sub-line{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted); margin-bottom:10px;}
+  .row{display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-top:1px dashed var(--hairline); font-size:13.5px;}
+  .row:first-of-type{border-top:none;}
+  .row .k{color:var(--text-muted);}
+  .row .v{font-family:'IBM Plex Mono',monospace; font-weight:600; text-align:right;}
+  .link-row{display:flex; align-items:center; gap:9px; padding:5px 0; font-size:13px; border-top:1px dashed var(--hairline);}
+  .link-row:first-of-type{border-top:none;}
+  .link-row .dot{width:16px; height:3px; border-radius:2px; background:var(--c); box-shadow:0 0 6px var(--c); flex:none;}
+  .link-row .nm{flex:1; overflow-wrap:anywhere;}
+  .link-row .n{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted);}
+  .empty-note{color:var(--text-faint); font-size:13px; font-style:italic; line-height:1.5;}
+  .warn{font-size:12.5px; color:#E7A29C; line-height:1.5; margin-top:8px;}
+  .btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .lean{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:3px 9px; border-radius:20px; background:rgba(138,101,38,.25); color:var(--amber);}
+  .legend-item{display:flex; align-items:center; gap:9px; font-size:12px; color:var(--text-muted); padding:3px 0;}
+  .legend-item .dot{width:22px; height:3px; border-radius:2px; background:var(--c); box-shadow:0 0 6px var(--c); flex:none;}
+  .fine{font-size:11px; color:var(--text-faint); line-height:1.5; margin-top:10px;}
+
+  #tip{
+    position:fixed; z-index:80; pointer-events:none; background:var(--panel-raised); border:1px solid var(--hairline);
+    border-radius:3px; padding:7px 10px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,.45); max-width:260px;
+  }
+  #tip b{display:block; margin-bottom:3px;}
+  #tip span{display:block; color:var(--text-muted); font-family:'IBM Plex Mono',monospace; font-size:10.5px;}
+
+  @media (max-width: 960px){
+    .grid{grid-template-columns:minmax(0,1fr);}
+    .boardbox{height:64vh; min-height:420px;}
+    aside{height:auto; min-height:0;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="eyebrow">Detective Lang · Investigation Board</div>
+  <h1>The Board</h1>
+  <div class="case-scope">Case: <span id="caseNameLabel">—</span> · <a href="cases.html" id="switchLink">switch case</a> · <a href="#" id="workspaceLink">workspace</a></div>
+</div>
+
+<div id="noCaseBanner" class="banner" hidden>⚠ No case selected — <a href="cases.html">pick or create a case</a> to open the board.</div>
+<div id="errorBanner" class="banner" hidden>⚠ <span id="errorBannerText"></span></div>
+
+<div class="stage" id="stage" hidden>
+  <div class="toolbar">
+    <div class="group" id="toneChips"><span class="glabel">Tone</span></div>
+    <div class="group">
+      <label class="glabel" for="minEx">Min. exchanges</label>
+      <input type="range" id="minEx" min="0" max="10" value="0">
+      <output id="minExOut" for="minEx">0</output>
+    </div>
+    <label class="check"><input type="checkbox" id="onlySel"> Only links of selected</label>
+    <button id="resetFilters" title="Show every link again">Reset filters</button>
+    <span class="status" id="shownStatus"></span>
+    <span class="spacer"></span>
+    <span class="status" id="saveStatus" role="status" aria-live="polite"></span>
+    <div class="group">
+      <button id="btnFit" title="Fit everyone in view">Fit</button>
+      <button id="btnOut" title="Zoom out" aria-label="Zoom out">−</button>
+      <button id="btnIn" title="Zoom in" aria-label="Zoom in">+</button>
+      <button id="btnArrange" title="Discard the saved arrangement and lay everyone out again">Auto-arrange</button>
+      <button id="btnFull" title="Full screen (Esc to leave)">Full screen</button>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="boardbox">
+      <svg id="board" role="group" aria-label="Relationship board"></svg>
+      <div class="hint">drag a person to place them · drag the background to pan · scroll to zoom · click to select</div>
+    </div>
+    <aside id="panel" aria-live="polite"></aside>
+  </div>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const API_BASE = 'http://127.0.0.1:8000';
+const CASE_ID = new URLSearchParams(window.location.search).get('case_id');
+
+// Person names, topics and labels come from someone else's chat export: text
+// is only ever inserted with textContent or through esc().
+function esc(v){
+  return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const TONES = {
+  warm:    {label: 'Warm',    css: 'var(--warm-glow)',    note: 'friendly wording in the replies they exchange'},
+  neutral: {label: 'Neutral', css: 'var(--neutral-glow)', note: 'neither clearly warm nor tense'},
+  tense:   {label: 'Tense',   css: 'var(--tense-glow)',   note: 'sharper or more negative wording'},
+  unclear: {label: 'Unclear', css: 'var(--unclear)',      note: 'too few exchanges to call a tone'},
+};
+const TONE_MIN_EXCHANGES = 5;   // mirrors graph_analysis.TONE_MIN_EXCHANGES (only used in explanatory text)
+
+let nodes = [], edges = [], nodeById = {};
+const selected = new Set();
+const filters = {tones: {warm: true, neutral: true, tense: true, unclear: true}, minEx: 0, onlySel: false};
+let hoverId = null, svg, gView, gGlow, gCore, gHit, gNodes, gLabels, zoom, userZoomed = false;
+let saveTimer = null;
+
+/* ---------- geometry ---------- */
+
+function radiusFor(n){ return 13 + Math.sqrt(n.message_count) * 1.9; }
+
+// One-time, deterministic layout (no live physics): start on a wide ring, let
+// strong repulsion + label-sized collision spread people out, weak links only
+// nudge frequent pairs a little closer. Then everything stays exactly where it is.
+function autoLayout(){
+  const n = nodes.length, maxC = Math.max(1, ...edges.map(e => e.interaction_count));
+  const R = Math.max(240, n * 50);
+  nodes.forEach((nd, i) => {
+    const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+    nd.x = Math.cos(a) * R * 1.35; nd.y = Math.sin(a) * R * 0.85; nd.vx = 0; nd.vy = 0;
+  });
+  if(n < 2) return;
+  const links = edges.filter(e => !e.uncertain)
+    .map(e => ({source: e.source, target: e.target, w: e.interaction_count / maxC}));
+  const sim = d3.forceSimulation(nodes).stop()
+    .force('charge', d3.forceManyBody().strength(-800))
+    .force('link', d3.forceLink(links).distance(l => 360 - 170 * Math.sqrt(l.w)).strength(0.035))
+    .force('collide', d3.forceCollide(nd => nd.r + 80).iterations(3))
+    .force('x', d3.forceX(0).strength(0.025))
+    .force('y', d3.forceY(0).strength(0.03));
+  for(let i = 0; i < 400; i++) sim.tick();
+  // The simulation comes out roughly square; stretch it sideways to the board's own
+  // aspect so a wide board is used edge to edge (this only ever moves people further apart).
+  const el = document.getElementById('board'), W = el.clientWidth || 1000, H = el.clientHeight || 700;
+  const xs = nodes.map(nd => nd.x), ys = nodes.map(nd => nd.y);
+  const w = Math.max(...xs) - Math.min(...xs) + 1, h = Math.max(...ys) - Math.min(...ys) + 1;
+  const stretch = Math.min(1.9, Math.max(1, (W / H) / (w / h)));
+  const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+  nodes.forEach(nd => { nd.x = cx + (nd.x - cx) * stretch; });
+}
+
+function rectDistToPoint(r, px, py){
+  const dx = Math.max(r.x - px, 0, px - (r.x + r.w)), dy = Math.max(r.y - py, 0, py - (r.y + r.h));
+  return Math.hypot(dx, dy);
+}
+function rectOverlap(a, b){
+  const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+  const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+  return w > 0 && h > 0 ? w * h : 0;
+}
+
+// Name plates: try the plate below/above/left/right/diagonal of each person and
+// keep the position that collides least with other plates and other people.
+function placeLabels(){
+  const cands = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+  const rectFor = (n, c) => {
+    const w = n.lw, h = n.lh;
+    const cx = n.x + c[0] * (c[1] === 0 ? n.r + 8 + w / 2 : n.r * 0.72 + w / 2 + 2);
+    const cy = n.y + c[1] * (c[0] === 0 ? n.r + 8 + h / 2 : n.r * 0.72 + h / 2 + 2);
+    return {x: cx - w / 2, y: cy - h / 2, w, h};
+  };
+  const cost = (n, rect, idx) => {
+    let c = idx * 1.5;
+    for(const o of nodes){
+      if(o === n){ continue; }
+      if(o.label) c += rectOverlap(rect, o.label) * 8;
+      const d = rectDistToPoint(rect, o.x, o.y);
+      if(d < o.r + 5) c += (o.r + 5 - d + 6) * 40;
+    }
+    return c;
+  };
+  nodes.forEach(n => { n.label = null; });
+  const order = [...nodes].sort((a, b) => crowd(b) - crowd(a));
+  for(let pass = 0; pass < 3; pass++){
+    for(const n of order){
+      let best = null;
+      cands.forEach((c, idx) => {
+        const rect = rectFor(n, c), k = cost(n, rect, idx);
+        if(!best || k < best.k) best = {k, rect};
+      });
+      n.label = best.rect;
+    }
+  }
+}
+function crowd(n){ return nodes.reduce((s, o) => s + (o !== n && Math.hypot(o.x - n.x, o.y - n.y) < 260 ? 1 : 0), 0); }
+
+/* ---------- build ---------- */
+
+function build(){
+  svg = d3.select('#board');
+  svg.selectAll('*').remove();
+  const defs = svg.append('defs');
+  // userSpaceOnUse: the default bounding-box region has zero height for a perfectly horizontal line and erases it.
+  defs.append('filter').attr('id', 'blurLaser').attr('filterUnits', 'userSpaceOnUse')
+    .attr('x', -20000).attr('y', -20000).attr('width', 40000).attr('height', 40000)
+    .append('feGaussianBlur').attr('stdDeviation', 5);
+  defs.append('filter').attr('id', 'blurHalo').attr('filterUnits', 'userSpaceOnUse')
+    .attr('x', -20000).attr('y', -20000).attr('width', 40000).attr('height', 40000)
+    .append('feGaussianBlur').attr('stdDeviation', 9);
+
+  gView = svg.append('g');
+  gGlow = gView.append('g').attr('filter', 'url(#blurLaser)').style('mix-blend-mode', 'screen');
+  gCore = gView.append('g').style('mix-blend-mode', 'screen');
+  gHit = gView.append('g');
+  gNodes = gView.append('g');
+  gLabels = gView.append('g');
+
+  edges.forEach(e => {
+    const w = 1 + 2.2 * Math.sqrt(e.interaction_count / e.maxC);
+    const tone = 'tone-' + e.tone;
+    e.els = {
+      glow: gGlow.append('line').attr('class', 'glow ' + tone).attr('stroke-width', w * 5).node(),
+      core: gCore.append('line').attr('class', 'core ' + tone).attr('stroke-width', e.tone === 'unclear' ? 1.2 : w).node(),
+      e1: gCore.append('circle').attr('class', 'emit ' + tone).attr('r', w * 1.1 + 1.2).node(),
+      e2: gCore.append('circle').attr('class', 'emit ' + tone).attr('r', w * 1.1 + 1.2).node(),
+      hit: gHit.append('line').attr('class', 'hit').node(),
+    };
+    d3.select(e.els.hit)
+      .on('pointerenter', ev => showTip(ev, edgeTip(e)))
+      .on('pointermove', ev => moveTip(ev))
+      .on('pointerleave', hideTip)
+      .on('click', () => { selected.clear(); selected.add(e.source.id); selected.add(e.target.id); refresh(); });
+  });
+
+  nodes.forEach(n => {
+    const g = gNodes.append('g').attr('class', 'node').attr('tabindex', 0).attr('role', 'button')
+      .attr('aria-label', n.id + ', ' + n.message_count + ' messages');
+    g.append('circle').attr('class', 'halo').attr('r', n.r + 12).attr('filter', 'url(#blurHalo)');
+    g.append('circle').attr('class', 'body').attr('r', n.r);
+    g.append('text').attr('class', 'initial').style('font-size', Math.round(n.r * 0.95) + 'px').text([...n.id][0] || '?');
+    n.el = g.node();
+
+    const lg = gLabels.append('g').attr('class', 'label');
+    const rect = lg.append('rect').attr('rx', 3);
+    const nm = lg.append('text').attr('class', 'nm').attr('x', 8).attr('y', 15).text(n.id);
+    const sub = lg.append('text').attr('class', 'sub').attr('x', 8).attr('y', 28)
+      .text(n.message_count + ' msgs' + (n.dominant_topic ? ' · ' + n.dominant_topic : ''));
+    n.lel = lg.node(); n.lrect = rect;
+    n.measure = () => {
+      const w = Math.max(nm.node().getComputedTextLength(), sub.node().getComputedTextLength()) + 16;
+      n.lw = Math.ceil(w); n.lh = 36; rect.attr('width', n.lw).attr('height', n.lh);
+    };
+
+    g.call(d3.drag().container(gNodes.node()).clickDistance(4)
+      // Raise only once the node really moves: re-inserting the element on mouse-down makes the browser drop the click.
+      .on('drag', ev => { if(!n.raised){ d3.select(n.el).raise(); n.raised = true; } n.x = ev.x; n.y = ev.y; positionAll(false); })
+      .on('end', () => { if(!n.raised) return; n.raised = false; placeLabels(); positionAll(true); queueSave(); }))
+     .on('click', (ev) => { if(ev.defaultPrevented) return; toggleSelect(n.id); })
+     .on('pointerenter', ev => { hoverId = n.id; showTip(ev, nodeTip(n)); refreshStyles(); })
+     .on('pointermove', ev => moveTip(ev))
+     .on('pointerleave', () => { hoverId = null; hideTip(); refreshStyles(); })
+     .on('keydown', ev => {
+       if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); toggleSelect(n.id); }
+       const step = ev.shiftKey ? 60 : 12, mv = {ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step]}[ev.key];
+       if(mv){ ev.preventDefault(); n.x += mv[0]; n.y += mv[1]; placeLabels(); positionAll(true); queueSave(); }
+     });
+  });
+
+  zoom = d3.zoom().scaleExtent([0.25, 3.5])
+    .on('start', ev => { if(ev.sourceEvent) svg.classed('panning', true); })
+    .on('zoom', ev => { gView.attr('transform', ev.transform); if(ev.sourceEvent) userZoomed = true; })
+    .on('end', () => svg.classed('panning', false));
+  svg.call(zoom).on('dblclick.zoom', null);
+  svg.on('click', ev => { if(ev.target === svg.node()){ selected.clear(); refresh(); } });
+}
+
+/* ---------- drawing ---------- */
+
+function positionAll(labelsToo){
+  edges.forEach(e => {
+    const a = e.source, b = e.target, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+    const ok = d > a.r + b.r + 10, ux = dx / (d || 1), uy = dy / (d || 1);
+    e.geomOk = ok;
+    if(!ok) return;
+    const x1 = a.x + ux * (a.r + 4), y1 = a.y + uy * (a.r + 4), x2 = b.x - ux * (b.r + 4), y2 = b.y - uy * (b.r + 4);
+    ['glow', 'core', 'hit'].forEach(k => { const l = e.els[k]; l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); });
+    e.els.e1.setAttribute('cx', x1); e.els.e1.setAttribute('cy', y1);
+    e.els.e2.setAttribute('cx', x2); e.els.e2.setAttribute('cy', y2);
+  });
+  nodes.forEach(n => {
+    n.el.setAttribute('transform', `translate(${n.x},${n.y})`);
+    if(n.label) n.lel.setAttribute('transform', `translate(${n.label.x},${n.label.y})`);
+  });
+  if(labelsToo) applyVisibility();
+}
+
+function edgeVisible(e){
+  if(!e.geomOk) return false;
+  if(!filters.tones[e.tone]) return false;
+  if(e.interaction_count < filters.minEx) return false;
+  if(filters.onlySel && selected.size && !(selected.has(e.source.id) || selected.has(e.target.id))) return false;
+  return true;
+}
+function filtersActive(){
+  return Object.values(filters.tones).some(v => !v) || filters.minEx > 0 || (filters.onlySel && selected.size > 0);
+}
+
+function applyVisibility(){
+  edges.forEach(e => { e.visible = edgeVisible(e); });
+  refreshStyles();
+}
+
+function refreshStyles(){
+  const focus = new Set(selected); if(hoverId) focus.add(hoverId);
+  const active = filtersActive();
+  const linked = new Set();
+  edges.forEach(e => { if(e.visible){ linked.add(e.source.id); linked.add(e.target.id); } });
+  edges.forEach(e => {
+    const touches = focus.has(e.source.id) || focus.has(e.target.id);
+    Object.values(e.els).forEach(el => {
+      const c = d3.select(el);
+      c.classed('gone', !e.visible);
+      if(el === e.els.hit) return;
+      c.classed('hot', e.visible && touches && focus.size > 0);
+      c.classed('faded', e.visible && focus.size > 0 && !touches);
+    });
+  });
+  nodes.forEach(n => {
+    const isSel = selected.has(n.id), dim = active && !isSel && !linked.has(n.id);
+    d3.select(n.el).classed('selected', isSel).classed('hover', hoverId === n.id).classed('dim', dim);
+    d3.select(n.lel).classed('selected', isSel).classed('dim', dim);
+  });
+  const covered = edges.filter(e => !e.geomOk && filters.tones[e.tone] && e.interaction_count >= filters.minEx).length;
+  document.getElementById('shownStatus').textContent =
+    `showing ${edges.filter(e => e.visible).length} of ${edges.length} links` +
+    (covered ? ` · ${covered} not drawn (people on top of each other)` : '');
+}
+
+function toggleSelect(id){
+  selected.has(id) ? selected.delete(id) : selected.add(id);
+  refresh();
+}
+function refresh(){ applyVisibility(); renderPanel(); }
+
+/* ---------- view ---------- */
+
+function bounds(){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  nodes.forEach(n => {
+    x0 = Math.min(x0, n.x - n.r, n.label ? n.label.x : Infinity); x1 = Math.max(x1, n.x + n.r, n.label ? n.label.x + n.label.w : -Infinity);
+    y0 = Math.min(y0, n.y - n.r, n.label ? n.label.y : Infinity); y1 = Math.max(y1, n.y + n.r, n.label ? n.label.y + n.label.h : -Infinity);
+  });
+  return {x0, y0, x1, y1};
+}
+function fitView(animate){
+  const el = svg.node(), W = el.clientWidth || 800, H = el.clientHeight || 600, pad = 50;
+  const b = bounds(), w = Math.max(1, b.x1 - b.x0), h = Math.max(1, b.y1 - b.y0);
+  const k = Math.min(1.4, (W - 2 * pad) / w, (H - 2 * pad) / h);
+  const t = d3.zoomIdentity.translate(W / 2 - k * (b.x0 + b.x1) / 2, H / 2 - k * (b.y0 + b.y1) / 2).scale(k);
+  userZoomed = false;
+  (animate ? svg.transition().duration(450) : svg).call(zoom.transform, t);
+  userZoomed = false;
+}
+
+/* ---------- tooltips ---------- */
+
+function tipBox(){ return document.getElementById('tip'); }
+function nodeTip(n){ return [n.id, n.message_count + ' messages' + (n.dominant_topic ? ' · mostly ' + n.dominant_topic : '')]; }
+function edgeTip(e){
+  const t = TONES[e.tone];
+  return [e.source.id + ' ↔ ' + e.target.id,
+    e.interaction_count + ' exchanges · ' + t.label.toLowerCase() + (e.sentiment_between !== null && e.tone !== 'unclear' ? ' (' + fmtSigned(e.sentiment_between) + ')' : ''),
+    'topic overlap ' + Math.round(e.topic_overlap * 100) + '%'];
+}
+function showTip(ev, lines){
+  const tip = tipBox(); tip.replaceChildren();
+  lines.forEach((l, i) => { const el = document.createElement(i ? 'span' : 'b'); el.textContent = l; tip.appendChild(el); });
+  tip.hidden = false; moveTip(ev);
+}
+function moveTip(ev){
+  const tip = tipBox(), w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(ev.clientX + 16, window.innerWidth - w - 8)) + 'px';
+  tip.style.top = Math.max(8, Math.min(ev.clientY + 16, window.innerHeight - h - 8)) + 'px';
+}
+function hideTip(){ tipBox().hidden = true; }
+
+/* ---------- side panel ---------- */
+
+function fmtSigned(n){ return (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(2); }
+function linksOf(id){ return edges.filter(e => e.source.id === id || e.target.id === id); }
+function otherEnd(e, id){ return e.source.id === id ? e.target : e.source; }
+
+function linkRows(list){
+  return list.map(({e, id}) => {
+    const o = otherEnd(e, id);
+    return `<div class="link-row" style="--c:${TONES[e.tone].css}"><span class="dot"></span><span class="nm">${esc(o.id)}</span>` +
+      `<span class="n">${e.interaction_count} · ${TONES[e.tone].label.toLowerCase()}</span></div>`;
+  }).join('');
+}
+
+let panelSeq = 0;
+async function renderPanel(){
+  const panel = document.getElementById('panel'), seq = ++panelSeq;
+  const legend = `<h2>Legend</h2>` +
+    Object.entries(TONES).map(([k, t]) => `<div class="legend-item" style="--c:${t.css}"><span class="dot"></span><span><b>${t.label}</b> — ${esc(t.note)}${k === 'unclear' ? ' (fewer than ' + TONE_MIN_EXCHANGES + ')' : ''}</span></div>`).join('') +
+    `<div class="fine">Thicker beam = more exchanges. An exchange is a reply right after another person's message. Tone comes from a sentiment model trained on English and Hinglish text; it reads wording, not sarcasm or subtext.</div>`;
+
+  if(selected.size === 0){
+    const total = edges.filter(e => e.visible).length;
+    panel.innerHTML = `<h2>Overview</h2><div class="who">${nodes.length} people</div>` +
+      `<div class="sub-line">${edges.length} possible links · ${total} shown</div>` +
+      `<div class="empty-note">Click a person to see who they exchange with, or two or more to see how they relate. Hover any beam for its numbers.</div>` + legend;
+    return;
+  }
+  if(selected.size === 1){
+    const id = [...selected][0], n = nodeById[id];
+    const mine = linksOf(id).map(e => ({e, id}));
+    const strongest = [...mine].sort((a, b) => b.e.interaction_count - a.e.interaction_count).slice(0, 5);
+    const called = mine.filter(x => x.e.tone !== 'unclear');
+    const warmest = called.filter(x => x.e.tone === 'warm').sort((a, b) => b.e.sentiment_between - a.e.sentiment_between)[0];
+    const tensest = called.filter(x => x.e.tone === 'tense').sort((a, b) => a.e.sentiment_between - b.e.sentiment_between)[0];
+    panel.innerHTML = `<h2>Selected</h2><div class="who">${esc(n.id)}</div>` +
+      `<div class="sub-line">${n.message_count} messages${n.dominant_topic ? ' · mostly ' + esc(n.dominant_topic) : ''}</div>` +
+      `<h2>Most exchanges with</h2>${linkRows(strongest) || '<div class="empty-note">No exchanges on record.</div>'}` +
+      (warmest ? `<h2>Warmest link</h2>${linkRows([warmest])}` : '') +
+      (tensest ? `<h2>Tensest link</h2>${linkRows([tensest])}` : '') +
+      `<div class="btns"><a href="person.html?case_id=${encodeURIComponent(CASE_ID)}&name=${encodeURIComponent(n.id)}"><button>View dossier</button></a>` +
+      `<button id="clearSel">Clear selection</button></div>` + legend;
+    document.getElementById('clearSel').addEventListener('click', () => { selected.clear(); refresh(); });
+    return;
+  }
+
+  const people = [...selected];
+  panel.innerHTML = `<h2>Selected</h2><div class="who">${people.map(esc).join(' · ')}</div><div class="empty-note">Analyzing relationship…</div>`;
+  try{
+    const resp = await fetch(API_BASE + '/cases/' + CASE_ID + '/relationship-inference', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({people}),
+    });
+    const r = await resp.json();
+    if(seq !== panelSeq) return;
+    if(!resp.ok) throw new Error(r.detail || 'Request failed');
+    let body;
+    if(r.uncertain){
+      body = `<div class="row"><span class="k">Shared exchanges on record</span><span class="v">${r.interaction_count}</span></div>` +
+        `<div class="warn">⚠ Not enough shared interaction between these people to say anything meaningful yet — that is the honest answer, not a guess.</div>`;
+    }else{
+      const t = TONES[r.tone];
+      body = `<div class="row"><span class="k">Shared exchanges on record</span><span class="v">${r.interaction_count}</span></div>` +
+        `<div class="row"><span class="k">Dominant shared topic</span><span class="v">${esc(r.dominant_shared_topic ?? '—')}</span></div>` +
+        `<div class="row"><span class="k">Topic alignment</span><span class="v">${Math.round(r.topic_overlap * 100)}%</span></div>` +
+        `<div class="row"><span class="k">Tone when interacting</span><span class="v">${t.label.toLowerCase()} (${fmtSigned(r.sentiment_between)})</span></div>` +
+        (r.tone === 'unclear' ? `<div class="warn">Only ${r.interaction_count} exchanges — too few to call a tone (needs ${TONE_MIN_EXCHANGES}).</div>` : '') +
+        (r.relationship_lean ? `<div style="margin-top:10px;"><span class="lean">${esc(r.relationship_lean)} lean</span></div>` : '');
+    }
+    panel.innerHTML = `<h2>Selected</h2><div class="who">${people.map(esc).join(' · ')}</div>` + body +
+      `<div class="btns"><button id="clearSel">Clear selection</button></div>` + legend;
+    document.getElementById('clearSel').addEventListener('click', () => { selected.clear(); refresh(); });
+  }catch(err){
+    if(seq === panelSeq) panel.innerHTML = `<h2>Selected</h2><div class="who">${people.map(esc).join(' · ')}</div><div class="warn">${esc(err.message)}</div>`;
+  }
+}
+
+/* ---------- toolbar ---------- */
+
+function setupToolbar(){
+  const chips = document.getElementById('toneChips');
+  Object.entries(TONES).forEach(([k, t]) => {
+    const count = edges.filter(e => e.tone === k).length;
+    const b = document.createElement('button');
+    b.className = 'chip ' + k; b.type = 'button'; b.setAttribute('aria-pressed', 'true'); b.title = t.note;
+    const sw = document.createElement('i'), name = document.createTextNode(t.label), num = document.createElement('b');
+    num.textContent = count; b.append(sw, name, num);
+    b.addEventListener('click', () => {
+      filters.tones[k] = !filters.tones[k];
+      b.classList.toggle('off', !filters.tones[k]); b.setAttribute('aria-pressed', String(filters.tones[k]));
+      applyVisibility(); renderPanel();
+    });
+    chips.appendChild(b);
+  });
+  const slider = document.getElementById('minEx'), out = document.getElementById('minExOut');
+  slider.max = Math.max(5, ...edges.map(e => e.interaction_count));
+  slider.addEventListener('input', () => { filters.minEx = Number(slider.value); out.textContent = slider.value; applyVisibility(); });
+  document.getElementById('onlySel').addEventListener('change', ev => { filters.onlySel = ev.target.checked; applyVisibility(); });
+  document.getElementById('resetFilters').addEventListener('click', () => {
+    Object.keys(filters.tones).forEach(k => { filters.tones[k] = true; });
+    filters.minEx = 0; filters.onlySel = false; slider.value = 0; out.textContent = '0';
+    document.getElementById('onlySel').checked = false;
+    chips.querySelectorAll('.chip').forEach(c => { c.classList.remove('off'); c.setAttribute('aria-pressed', 'true'); });
+    applyVisibility(); renderPanel();
+  });
+  document.getElementById('btnFit').addEventListener('click', () => fitView(true));
+  document.getElementById('btnIn').addEventListener('click', () => svg.transition().duration(250).call(zoom.scaleBy, 1.4));
+  document.getElementById('btnOut').addEventListener('click', () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.4));
+  document.getElementById('btnArrange').addEventListener('click', async () => {
+    try{ await fetch(API_BASE + '/cases/' + CASE_ID + '/board-layout', {method: 'DELETE'}); setSaveStatus('arrangement reset'); }
+    catch(err){ setSaveStatus('could not reset the saved arrangement', true); }
+    autoLayout(); placeLabels(); positionAll(true); fitView(true);
+  });
+  const stage = document.getElementById('stage'), fullBtn = document.getElementById('btnFull');
+  const setFull = on => { stage.classList.toggle('full', on); fullBtn.textContent = on ? 'Exit full screen' : 'Full screen'; document.body.style.overflow = on ? 'hidden' : ''; setTimeout(() => { if(!userZoomed) fitView(false); }, 60); };
+  fullBtn.addEventListener('click', () => setFull(!stage.classList.contains('full')));
+  document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && stage.classList.contains('full')) setFull(false); });
+  window.addEventListener('resize', () => { if(!userZoomed && svg) fitView(false); });
+}
+
+/* ---------- persistence ---------- */
+
+function setSaveStatus(msg, isErr){
+  const s = document.getElementById('saveStatus'); s.textContent = msg; s.classList.toggle('err', !!isErr);
+  clearTimeout(setSaveStatus.t); if(msg) setSaveStatus.t = setTimeout(() => { s.textContent = ''; }, 2500);
+}
+function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveLayout, 450); }
+async function saveLayout(){
+  const positions = {};
+  nodes.forEach(n => { positions[n.id] = [Math.round(n.x * 10) / 10, Math.round(n.y * 10) / 10]; });
+  try{
+    const resp = await fetch(API_BASE + '/cases/' + CASE_ID + '/board-layout', {
+      method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({positions}),
+    });
+    if(!resp.ok) throw new Error();
+    setSaveStatus('arrangement saved');
+  }catch(err){ setSaveStatus('arrangement not saved', true); }
+}
+
+/* ---------- init ---------- */
+
+(async function init(){
+  if(!CASE_ID){ document.getElementById('noCaseBanner').hidden = false; return; }
+  document.getElementById('switchLink').href = 'cases.html?case=' + encodeURIComponent(CASE_ID);
+  document.getElementById('workspaceLink').href = 'workspace.html?case_id=' + encodeURIComponent(CASE_ID);
+  try{
+    const c = await fetch(API_BASE + '/cases/' + CASE_ID);
+    if(!c.ok) throw new Error();
+    document.getElementById('caseNameLabel').textContent = (await c.json()).name;
+  }catch(err){ document.getElementById('caseNameLabel').textContent = 'unknown case'; }
+
+  try{
+    const [gr, lr] = await Promise.all([
+      fetch(API_BASE + '/cases/' + CASE_ID + '/graph'),
+      fetch(API_BASE + '/cases/' + CASE_ID + '/board-layout').catch(() => null),
+    ]);
+    if(!gr.ok){
+      const body = await gr.json().catch(() => ({}));
+      throw new Error(body.detail || 'Could not load the graph for this case.');
+    }
+    const graph = await gr.json();
+    const saved = lr && lr.ok ? (await lr.json()).positions || {} : {};
+
+    nodes = graph.nodes.map(n => ({...n, r: 0}));
+    nodes.forEach(n => { n.r = radiusFor(n); nodeById[n.id] = n; });
+    const maxC = Math.max(1, ...graph.edges.map(e => e.interaction_count));
+    edges = graph.edges.map(e => ({...e, source: nodeById[e.source], target: nodeById[e.target], maxC, visible: true, geomOk: true}));
+
+    document.getElementById('stage').hidden = false;
+    build();
+    nodes.forEach(n => n.measure());
+    autoLayout();
+    nodes.forEach(n => { const p = saved[n.id]; if(Array.isArray(p) && p.length === 2){ n.x = p[0]; n.y = p[1]; } });
+    placeLabels(); positionAll(false);
+    setupToolbar();
+    applyVisibility(); renderPanel();
+    fitView(false);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { nodes.forEach(n => n.measure()); placeLabels(); positionAll(true); if(!userZoomed) fitView(false); });
+  }catch(err){
+    document.getElementById('errorBannerText').textContent = err.message;
+    document.getElementById('errorBanner').hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

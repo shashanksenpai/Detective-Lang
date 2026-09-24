@@ -1,0 +1,2106 @@
+{
+ "about": "300 chat messages sampled at random from the demo chats and labeled BEFORE any scorer was run on them. Rule: label the affect the words themselves express (thanks/excitement/affection/laughing banter = positive; worry/panic/anger/hurt/complaining = negative; information, logistics, questions, cold accusations = neutral), not the situation. One labeler, single messages read without context, so treat small differences as noise. 'dev' may be studied and tuned on; 'test' is only for the final number.",
+ "labeler": "the assistant that built this project",
+ "messages": [
+  {
+   "text": "Sana, are you well? You have been very quiet since yesterday.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "he must have forgotten yaar, I got the files through a common friend, not directly from him",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "What if he is not the one?",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I don't know any Lalit, I only assumed after that telegram screenshot, stop ganging up on me 😤",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro who leaks papers in this economy 💀",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ok bro spoke. so it's 4k for the pack?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "The scholarship disbursal has been delayed for everyone this year. Sana, the department office has a hardship form, if you need it.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "chill, they asked the same stuff. i said what i said. don't worry",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yash ur notes are literally prettier than my handwriting 🥺✨",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "babe I went to get chai with Arjun around 9, that's why I was near there, forgot to mention it ❤️",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "done, gave him access. tell him not to talk about it",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "they were nice though 🌷",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu!! that was a lot 🥺 but thank u ❤️",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "i'm on page 2 of page 40",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "guyss my cousin in ECE says there are these telegram channels selling question papers before exams 😭 so cheap too 🙄",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I don't know if I should say.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "all the best guys, no guarantees 🙏 study the topics not just the questions",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "LETS GOOOO 🔥🔥",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Thank you.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Did he say where he was going?",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro gym in the evening then hostel, studying dbms 💪",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "wait yash i thought i saw u at the library that saturday evening around 8?? 🤔",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "meenakshi pls don't start 😂 you all earned it",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro the notice thing. ur guess paper is safe right?? asking as a friend",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ME OBVIOUSLY 😭💃 wearing my lehenga finally",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "You wrote 'it went to Lalit right?' The screenshot showed a Telegram handle. It did not show any payment.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Sharma Xerox?",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Then Monday is for regret.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "because I panicked. the whole group was attacking me. you know how meenakshi is",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Yash, on 21 Sep at 9:06 am you wrote that you stayed up till 3 making the list. Yesterday you stated you slept by 11 with DND on. Also, at 12:20 am on 21 Sep you replied to Harshit's meme, and at 12:21 you said you were 'just checking one last thing'. These do not agree. Could you clarify?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "BRO. Q3 and Q5 EXACTLY from yash's list 😭🔥🔥",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Then do it. I will stay in the group.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "happy dussehra everyone!! 🏹✨ may all ur evils get burnt (harshit's especially)",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "he says a lot of things.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "😎🙌",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro i can't come, statements and stuff. next time 💪",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "meenakshi 1 yash 0 💀",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "he asked me last night if i told anyone he was out that night. i said no. i haven't.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "That is significant. Why did you write that you were at home?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Attention: Mid-semester exam timetable is released. 22 Sep DBMS, 23 Sep CN, 24 Sep OS, 25 Sep SE. All exams 10 AM to 12 PM. Detailed circular is on the portal. Regards, Nikhil",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Attention: the cyber cell and the police have asked all students to report at the college admin block tomorrow at 10 AM with their phones and ID. Please do not delete any data. Regards, Nikhil",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "cake is on me, no arguments 🙌 I'll grab it from the bakery near gate 2 before 10",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "arre wo? I just stepped out to buy a pen around 9, bas 5 min, then went back to the room 😅 forgot about it",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro who signs on a tuesday evening 😭",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Thank you. All the best.",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Attention everyone: the exam cell has informed us that a mid-semester question paper appears to have been circulated before the exam. A committee will look into it. Any student with information should meet the HOD. Please avoid speculation. Regards, Nikhil",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "just pattern analysis tanvi, nothing magic 😎",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu the notice about the leaked paper is scary 😭 hope it's nothing",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "arjun's enthusiasm is overwhelming",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I will pay for my own coffee.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "3,000 rupees a month.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "wait u said u made it yourself",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro mine says 'lift now, cry later' lmao 💪",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "there is ALWAYS food with me 😌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "guys are we doing a trial or what 😅 I've been nice to everyone all semester",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro my roommate wants in for the next exams",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro they asked about payments too 😭",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "babe that's huge!! proud of you 😎",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "why would anyone delete anything lol 😅",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "babe I do help there sometimes but if the committee hears that they'll blame me for nothing. I only run the printing machine, nothing else. please don't tell anyone 🙏",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I have my notes. Will share tonight. 👍",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bhai u helped us all semester at least come for a day",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "coming.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro chill meenakshi you are literally making a case file 💀",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro serious question, how did u actually buy the iphone",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "my feet are dead 😭😭",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I saw the results list. My DBMS marks are 41 out of 50. Last sem it was 28.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "exams over!!! dinner tonight?? brew room 8pm?? 🥳🥳",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro i did ask u lol",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "that was for notes, remember what you put in the remark 😉",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu i'm not accusing you okay. but why didn't you tell me you were near gate 2 that night?? 🥺",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "5 mins bro?? u said u never went inside that shop",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro that's a lot but ok, he'll pay",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "he takes calls at night. steps out to the corridor. second sim in his drawer.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "hm. nice.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Reminder: the DBMS lab viva is on Friday. Please be prepared. Regards, Nikhil",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "8 oct?? 😭 my heart",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "haha my dad funds everything so no part time for me, I'm a full time notes guy 😎 but if you need any DBMS notes parth, I got you 🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "We will hear it tomorrow.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ha of course, you're thorough meenakshi 🙌",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "put 'notes' in the remark lol",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "that i paid for notes bro. i don't know if they believed me",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "BRO WHAT A SHOT 💀💀💀",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "sana barely even talks to me, why would she say this, she's mixed up 🙄",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "all the best guys!! we've got this 🌷✨",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "they asked me about the goa trip money lol?? 😭 i said yash paid for everything",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "always meenakshi 🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "...",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "lmao tanvi u bunk more than u attend",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "arre that was dad's, this is mine, freelance pays well tanvi 😎",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I have prepared a study schedule. I will share it tonight. Those who wish may follow it.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Update, and I am sharing this only for clarity: I contacted Aakash of the 2023 batch through our seniors' group. He says he has never given any notes to Yash and has had no contact with him for two years. Regards, Nikhil",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "send it on my email, I'll do it monday. anything for you guys",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I was in my room, then Arjun dragged me out for chai after, it was like 5 mins, I didn't want you to feel bad that I refused you and then went 😅",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ok bro",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Understood. I will use them only as a cross-check.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "i'm not lying bro 🙏",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "library study session tmrw 5pm?? i'll bring snacks 🌷",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "The committee has released the batch schedule. Batch 1, Wed 29 Oct, 11 AM: Parth, Sana, Arjun. Batch 2, Thu 30 Oct, 11 AM: Tanvi, Harshit, Kritika. Batch 3, Fri 31 Oct, 11 AM: Meenakshi, Nikhil, Yash. Regards, Nikhil",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "guys pls, you did the writing, i just made a list 🙌",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro i'm coming for the food only",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "babe I'll bring you the biggest brownie tomorrow, deal? 🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ok bro. i believe u. but if ur lying i'm done",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro i sleep 4 hrs like a normal engineer 😂 helping people is my hobby",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "hmm. ok 🥺 i'm just confused",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro where do i get the pack",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu are you done with the shop?? 🥺",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yes.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro serious q did ur uncle pay u for the website or gift the phone?? asking for my future 😭",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Please don't send such links here.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu it's so pretty 🥺",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Noted. Thanks everyone. 👍",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "hm.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro he must've forgotten, i got them via a friend, i told u a senior friend gave it",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "thank u meenakshi i feel better already 🥺",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Parth wrote in the group. He paid for the papers.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I panicked, I told you that",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yes it went to a Lalit on upi. but yash bhai how do u know that? i never wrote it here",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "YESSSS 😭🏖️✨",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "babe I swear on you, I haven't done anything wrong. I only helped at the shop and printed stuff. I don't know anything about papers",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Have some water and rest. Tomorrow is a new day.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yash bhai calming the whole class as usual 🫡",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Understood. Thank you.",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro meenakshi is going crazy. did u actually work at sharma xerox",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "sweets boxes for everyone at the hostel gate and CR room, pls pick up 🙌 happy diwali guys 🪔",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "The exam cell has announced that students who voluntarily disclose any use of leaked material before 15 Nov will be treated leniently. After that, action will be strict. Regards, Nikhil",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Because he paid my fees. 12,000 rupees. I owe him. If I say this, he will think I am ungrateful.",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "arjun said thanks?? historic day",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I will be there.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ok bro. just checking 💀",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yash ur guess papers were so accurate last sem too!! 😭✨",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "at least i'm not on page 2 😤",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "8 questions in 7 hours tanvi that's a record",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro at that point just start a startup 💀",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "sorry babe, DND was on. I was asleep by 11, honestly exhausted ❤️",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro if u do that i'll name my protein shake after u",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro just tell them who it was",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "no bro. i'm done",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu 🥺 it won't be the same without you",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro i slept at 5am studying. nothing entered my brain but my eyes are open",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bhai u r too good for this college fr",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "sana?? bro why would u say that 💀",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yash next time SE also pleaseee 🥺",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "That is a good improvement. You attended every group session and revised each unit twice.",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro i'm not sleeping properly rn 😭",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "BRO that's an iPhone 15 pro?? 💀💀 how",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yash bhai has ethics 🫡",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "haha no, just ran out of time meenakshi, DBMS CN OS were the heavy ones 🙌",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "i made most of it bro, the file was just a base. why are u interrogating me too",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "aww yash u are too nice 🥺",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Thanks.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "HARSHIT 😤 thank u tho",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "helping at Sharma uncle's xerox shop near gate 2, weekends. free prints + chai, best deal 😎🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "low bar tanvi",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro dbms from ur list was so on point, i owe u forever 🔥",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I noticed that there was no list for SE. Was that a conscious decision?",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Please note: malpractice can lead to rustication. Kindly stay away from any such channels. Regards, Nikhil",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "meenakshi ur schedule always makes me cry but ok pls share 😭",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro forgot my ID for hall ticket 😭😭 exam cell guy won't give",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Come to the CR room. I can vouch for you. Bring any photo ID.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I asked Aakash. He says he never gave Yash any notes.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "OS quiz today?? nobody told me 💀",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I spoke to the warden. The register shows Yash signed out at 8:34 pm on 20 Sep and signed in at 1:52 am on 21 Sep.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yes. i'll say the same thing. times. nothing else.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "seriously the samosa guy hiked prices but the chai is still the best. next round on me? 😎",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "guysss october break goa?? 5 days, sasta hostel, beach, bakchodi",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "OMGGG 😭 gate 2?? that's sharma xerox?? YASH??",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "won 50k at a hackathon back in august babe, wanted to surprise you. rest on EMI 🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu the dinner was so fun but you spend SO much 🥺 are you sure it's okay?",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "...",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "😭😭 harshit stop",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "my senior Aakash's old notes + my own analysis 🙌 he was a topper, gave me his files last year",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "HAPPY DIWALI EVERYONE 🪔✨🎆",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu where are you?? i'm at the chai stall near gate 2 with riddhi. come out for 5 mins!! 🥺",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "relax guys, Rastogi sir is chill, I'll come with you both, we'll sort it 🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "omg that looks so good!! 🌷",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro don't ask 😄 got some extra from uncle's shop work + freelance",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro not on chat, call me",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Is the DBMS assignment due this Friday or next Friday?",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro 15 days?? not even started dbms yet 💀",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "skipping. eating maggi in room.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "NOOO 😭😭",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Happy Diwali. Wishing you all peace and light.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Thanks. Could you mention the source of these questions? I would like to know which papers they were derived from.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "That is a generous gift. Congratulations, Yash.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu!! 🥺❤️",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "you're the sweetest, you know that?",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "oh that Lalit, haha he's not running a telegram channel bro 😂",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Will the committee call all of us?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu ur a genius 🥺✨",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "guys. i paid for the papers. 4k for OS and CN. it wasn't a guess paper. i paid the number the seller gave me. i went to the committee today and told them. sorry.",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "at home mostly, went for chai near gate 2 with a friend around 9 for like 20 mins, then edited photos till late",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Kindly avoid speculation in this group. Regards, Nikhil",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Uploaded on the portal yesterday. 👍",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "And I could be wrong. It was dark.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "You wrote 'hostel. room.' in the group. Was that accurate for you?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I have transferred my share of 700 rupees. Please check.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro how was ur committee thing",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "guys DND from 9 tonight, locking in for DBMS 📵 will send the imp qs tmrw morning 🙌",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "running rn 🏃💨",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro they asked me so many questions 😭 my hands were shaking",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Please do not forward the list outside our class, as requested by Yash. 👍",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "arre meenakshi 😂 the list was mostly ready Friday, I only formatted it Sunday morning. the 3 was a joke, I slept early haha",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "PARTH 😭😭",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "packing so many outfits for a 2 day trip 😭😭",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ok ok i'll forgive you hehe. but in the group you said uncle gifted it?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Is there anything else you have noticed recently? Anything unusual?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu please tell me you're okay 🥺",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "ok bro",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_yash_harshit.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "That is exactly right. Thank you.",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_dm_arjun_nikhil.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I will attend from 5 to 7 pm. I have a placement aptitude test at 7:30.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "delete this chat rn",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro why did u say lalit in the group. i never said it there",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_parth.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "sana u did the right thing 🥺",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "did you sleep well?? i called around 12:30 last night, no answer 🥺",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_dm_yash_kritika.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro dbms syllabus is like an ocean rn 😭",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "wait what?? lemme zoom 😭",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "I want to tell the group myself. I don't want them to hear it from someone else.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "oh nice catch meenakshi!! fixing rn. what would we do without you 🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "That is good advice.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Please do not spread unverified information. Regards, Nikhil",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yash bhai u r a legend bro 🔥",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Happy birthday, Tanvi. I have left a book on your desk. We will split the dinner.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "They asked about my analysis of the list and the papers. I provided it in full.",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yeah bro sketchy stuff, stay away 💪",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "yashu brownie promise?? 🥺",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "seriously that was unreal!! 😎",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "pay?",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "bro yash kahan gayab rehta hai every weekend??",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Meenakshi, I think I did well in DBMS. Thank you for your notes.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "You are welcome. You worked hard, Sana. I saw it at the library.",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_dm_meenakshi_sana.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "pray for me too 😭😭",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Yash, thank you again for the help on Friday. I will return it in December when the scholarship comes.",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "phone was face down on DND, replied to that one because it's harshit, he'd spam me otherwise 😂",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "great session today guys, Sana you explained joins so well!",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "dinner is on me guys, everyone come 😎",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Thanks, Yash. The ER diagram on page 4 has the cardinality reversed for the second relationship, in case you want to correct it.",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "kaun Lalit? never heard of any Lalit 🤷",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "happy birthday tanvi!! dinner tonight at brew room, on me 🎂🙌",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "Selling or buying question papers is malpractice, and it is also illegal. I hope nobody here is involved.",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_leak_group.txt",
+   "hinglish_heavy": true
+  },
+  {
+   "text": "got chips, drinks, and cups! also found string lights on sale 🎊",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "lmaooo we know",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "don't touch my desk",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "got the good speaker, tested it, works fine",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "cleaning the flat rn, it's actually looking amazing 😄",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "fine by me",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i'll admit, this was fun",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "maybe",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "LMAOOO we're buying a new one then 😂",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i contain multitudes",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "thanks for saying that, i needed it",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i'm so relieved i can't even explain it",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "omg amazing thank you",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "thesis draft is due friday, trying to get ahead of it",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "we should do this every month 😭",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "sure, i'll show up and stand in the corner as usual",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "like 10-12 people, music, snacks, vibes 😄",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "no worries at all, we got it!!",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "WAIT REALLY, CONGRATS 🎉🎉🎉",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "powerful update",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "yoooo who's free this weekend, thinking we throw a lil thing at the flat 🎉",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "my ears are still ringing but yeah, good one",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "perfect, i'm gonna shower and then i'm all yours",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "how's the thesis going",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "also for the record, the party can absolutely happen without you stressing about chairs",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "seriously, you've got time, stop spiraling",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i'm so frustrated, rewriting the same paragraph for the third time",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i will, thank you dev, actually",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "people can sit on the floor, it's a vibe not a banquet",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i'm really worried i'm going to let people down",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "haha let's just keep it chill, less to plan",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "rude",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "fairy lights are up, flat looks so good actually",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i feel terrible, like i'm completely failing at this",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "on it!! what deadline",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "you got this!! want help with anything party related so you can focus",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "fine i'll ask the neighbors for a couple",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "you're a good friend you know that",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "also should we do a theme 😭😭 i vote 90s",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "honestly yes, can you handle the shopping list today",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "this is stressing me out so much",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "sorry if i seemed off today, i've just been really anxious",
+   "label": "negative",
+   "split": "dev",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i'm kind of scared about this thesis thing, more than i let on earlier",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "it's going",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "go get it!! 🔥",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "lol true",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "define \"lil thing\"",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "absolutely not",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i've read your stuff before, you're harder on yourself than anyone else would be",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i'm so proud of myself, i actually did it",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "🙂",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "i feel awful, like i'm behind everyone else and this draft isn't good",
+   "label": "negative",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "we already have a speaker",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "nobody thought that, don't worry about it",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "anytime, seriously. try to get some sleep though",
+   "label": "positive",
+   "split": "test",
+   "source_file": "sample_dm_meera_dev.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "hey it's gonna be okay, you always say this and then pull through",
+   "label": "positive",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "can someone pick up drinks thursday, i have a deadline thing thursday",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "what day are we thinking",
+   "label": "neutral",
+   "split": "dev",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "ok now can you actually help with the party lol",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  },
+  {
+   "text": "yeah don't worry about it, write your thing",
+   "label": "neutral",
+   "split": "test",
+   "source_file": "sample_housemates.txt",
+   "hinglish_heavy": false
+  }
+ ]
+}

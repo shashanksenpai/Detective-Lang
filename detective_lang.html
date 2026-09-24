@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Detective Lang</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#14161C;
+    --panel:#1B1E27;
+    --panel-raised:#232733;
+    --hairline:#2E3340;
+    --amber:#E8A33D;
+    --amber-dim:#8A6526;
+    --red-tape:#B5453D;
+    --text:#E8E6E0;
+    --text-muted:#8B8F9C;
+    --text-faint:#565B69;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:48px 24px 80px;
+    background-image:
+      radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
+  }
+  .wrap{max-width:640px; margin:0 auto;}
+
+  header{text-align:center; margin-bottom:44px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--amber-dim); margin-bottom:10px;
+  }
+  h1{
+    font-family:'Special Elite',monospace;
+    font-size:42px; font-weight:400; letter-spacing:1px;
+    color:var(--text);
+  }
+  .case-scope{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--text-muted); margin-top:12px;
+  }
+  .case-scope select{
+    background:transparent; border:none; color:var(--amber);
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    border-bottom:1px dotted var(--amber-dim); cursor:pointer;
+  }
+
+  .query-box{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:3px;
+    padding:6px;
+    display:flex; gap:8px;
+    box-shadow:0 20px 40px -20px rgba(0,0,0,0.6);
+    position:relative;
+  }
+  .query-box::before{
+    content:'EVIDENCE';
+    position:absolute; top:-9px; left:16px;
+    background:var(--bg); padding:0 8px;
+    font-family:'IBM Plex Mono',monospace; font-size:9px;
+    letter-spacing:2px; color:var(--amber-dim);
+  }
+  textarea{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--text); font-family:'Inter',sans-serif; font-size:15px;
+    resize:none; padding:14px 12px; line-height:1.5;
+  }
+  textarea::placeholder{color:var(--text-faint);}
+  button.investigate{
+    background:var(--amber); color:#14161C; border:none;
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px;
+    letter-spacing:1px; text-transform:uppercase;
+    padding:0 22px; border-radius:2px; cursor:pointer;
+    transition:filter .15s ease;
+  }
+  button.investigate:hover{filter:brightness(1.12);}
+  .context-toggle{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.5px;
+    color:var(--text-faint); cursor:pointer; margin:10px 2px 0;
+    display:inline-block;
+  }
+  .context-toggle:hover{color:var(--amber-dim);}
+  .context-box{
+    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
+    margin-top:8px; padding:2px;
+  }
+  .context-box textarea{font-size:13px; color:var(--text-muted);}
+  button.investigate:disabled{opacity:0.4; cursor:default;}
+
+  .try-row{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;
+  }
+  .try-chip{
+    font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--text-muted); background:var(--panel);
+    border:1px solid var(--hairline); padding:6px 11px; border-radius:20px;
+    cursor:pointer; transition:border-color .15s, color .15s;
+  }
+  .try-chip:hover{border-color:var(--amber-dim); color:var(--amber);}
+
+  #results{margin-top:40px; display:none;}
+  #results.show{display:block;}
+
+  .verdict-sentence{
+    font-family:'Special Elite',monospace;
+    font-size:15px; color:var(--text-muted);
+    padding-bottom:18px; margin-bottom:24px;
+    border-bottom:1px dashed var(--hairline);
+  }
+  .verdict-sentence span{color:var(--text);}
+
+  #caseTags{margin:-14px 0 20px;}
+  #caseTags .tell-chip{text-transform:uppercase; letter-spacing:1px; color:var(--amber-dim);}
+
+  .uncertain-banner{
+    background:rgba(181,69,61,0.12); border:1px solid rgba(181,69,61,0.4);
+    border-radius:3px; padding:14px 16px; margin-bottom:20px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:#E7A29C;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .suspect{
+    display:flex; align-items:center; gap:16px;
+    padding:16px 18px; margin-bottom:10px;
+    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
+    position:relative; overflow:hidden;
+  }
+  .suspect.lead{
+    background:var(--panel-raised);
+    border-color:var(--amber-dim);
+  }
+  .suspect.lead::before{
+    content:'PRIME SUSPECT';
+    position:absolute; top:0; right:0;
+    background:var(--amber); color:#14161C;
+    font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:600;
+    letter-spacing:1px; padding:3px 9px; border-radius:0 0 0 4px;
+  }
+  .avatar{
+    width:44px; height:44px; border-radius:50%;
+    background:var(--hairline); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Special Elite',monospace; font-size:17px; color:var(--text-muted);
+  }
+  .suspect.lead .avatar{background:var(--amber-dim); color:#14161C;}
+  .suspect-info{flex:1; min-width:0;}
+  .suspect-name{font-size:15px; font-weight:600; margin-bottom:5px;}
+  .bar-track{
+    height:5px; background:var(--hairline); border-radius:3px; overflow:hidden;
+  }
+  .bar-fill{height:100%; background:var(--text-faint); border-radius:3px;}
+  .suspect.lead .bar-fill{background:var(--amber);}
+  .confidence{
+    font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600;
+    color:var(--text-muted); width:58px; text-align:right; flex-shrink:0;
+  }
+  .suspect.lead .confidence{color:var(--amber);}
+
+  .tells{margin-top:24px;}
+  .tells-label{
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px;
+    color:var(--text-faint); text-transform:uppercase; margin-bottom:10px;
+  }
+  .tell-chip{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--text-muted); background:var(--panel); border:1px solid var(--hairline);
+    padding:5px 10px; border-radius:3px; margin:0 6px 6px 0;
+  }
+
+  footer{
+    text-align:center; margin-top:60px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px;
+    color:var(--text-faint); letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Detective Lang · Case File</div>
+    <h1>Who said it?</h1>
+    <div class="case-scope">Case: <span id="caseNameLabel">—</span> · <a href="cases.html">switch case</a></div>
+  </header>
+
+  <div id="noCaseBanner" class="uncertain-banner" style="display:none;">
+    ⚠ No case selected — <a href="cases.html">pick or create a case</a> to investigate.
+  </div>
+
+  <div class="query-box">
+    <textarea id="sentenceInput" rows="2" placeholder="Paste the message in question…"></textarea>
+    <button class="investigate" onclick="investigate()">Investigate</button>
+  </div>
+
+  <div class="context-toggle" onclick="toggleContext()" id="contextToggle">+ add what was said just before (optional)</div>
+  <div class="context-box" id="contextBox" style="display:none;">
+    <textarea id="contextInput" rows="2" placeholder="One line per prior message, oldest first — e.g.&#10;Karan: agreed, the plot twist caught me off guard"></textarea>
+  </div>
+
+  <div class="try-row">
+    <div class="try-chip" onclick="tryExample(0)">"omg no way that's crazy lol 😭"</div>
+    <div class="try-chip" onclick="tryExample(1)">"we need to split the work into sections"</div>
+    <div class="try-chip" onclick="tryExample(2)">"the deadline is tomorrow and I haven't started"</div>
+    <div class="try-chip" onclick="tryExample(3)">"haha yeah for sure, sounds good"</div>
+    <div class="try-chip" onclick="tryExample(4)">"I'm so worried about our exam tomorrow"</div>
+  </div>
+
+  <div id="results">
+    <div class="verdict-sentence">Evidence: <span id="echoedSentence"></span></div>
+    <div id="caseTags"></div>
+    <div id="uncertainBanner" class="uncertain-banner" style="display:none;">
+      ⚠ Confidence too low to name a suspect — this may be a speech pattern not yet on file.
+    </div>
+    <div id="errorBanner" class="uncertain-banner" style="display:none;">
+      ⚠ <span id="errorBannerText">Can't reach the attribution engine — start it with <code>python server.py</code>.</span>
+    </div>
+    <div id="suspectList"></div>
+    <div class="tells">
+      <div class="tells-label">Why the lead suspect</div>
+      <div id="tellsList"></div>
+    </div>
+  </div>
+
+  <footer>PROTOTYPE — SCORING RUN BY THE ATTRIBUTION ENGINE, LOCAL CORPUS OF 3 PARTICIPANTS</footer>
+</div>
+
+<script>
+// Live calls to the DetectiveEngine via server.py (run: python server.py).
+// No precomputed/hardcoded results here anymore — every query, including
+// ones typed by hand, goes through the real attribution engine, scoped to
+// whichever case is active (?case_id= in the URL, set from cases.html).
+const API_BASE = 'http://127.0.0.1:8000';
+const CASE_ID = new URLSearchParams(window.location.search).get('case_id');
+
+const EXAMPLES = [
+  "omg no way that's crazy lol 😭",
+  "we need to split the work into sections",
+  "the deadline is tomorrow and I haven't started",
+  "haha yeah for sure, sounds good",
+  "I'm so worried about our exam tomorrow",
+];
+
+const SIGNAL_LABELS = {
+  topic: "Topic/vocabulary overlap",
+  category: "Topic domain (studies/fun/food/work/logistics)",
+  emotion: "Emotional tone baseline",
+  style: "Writing style (length, punctuation, emoji)",
+  syntactic: "Sentence form (question/command/statement)",
+  discourse: "Conversational turn-taking",
+};
+
+function toggleContext(){
+  const box = document.getElementById('contextBox');
+  const shown = box.style.display !== 'none';
+  box.style.display = shown ? 'none' : 'block';
+  document.getElementById('contextToggle').textContent =
+    shown ? '+ add what was said just before (optional)' : '− hide prior context';
+}
+
+function tryExample(i){
+  document.getElementById('sentenceInput').value = EXAMPLES[i];
+  investigate();
+}
+
+function parseContext(raw){
+  return raw.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const m = line.match(/^([^:]{1,40}):\s*(.+)$/);
+    return m ? {sender: m[1].trim(), text: m[2].trim()} : {sender: null, text: line};
+  });
+}
+
+async function investigate(){
+  if(!CASE_ID) return;
+  const text = document.getElementById('sentenceInput').value.trim();
+  if(!text) return;
+  const context = parseContext(document.getElementById('contextInput').value);
+
+  document.getElementById('errorBanner').style.display = 'none';
+  let result;
+  try{
+    const resp = await fetch(API_BASE + '/cases/' + CASE_ID + '/investigate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sentence: text, context}),
+    });
+    if(!resp.ok){
+      const body = await resp.json().catch(() => ({}));
+      throw new Error(body.detail || 'bad response');
+    }
+    result = await resp.json();
+  }catch(err){
+    document.getElementById('errorBannerText').textContent =
+      err.message && err.message !== 'bad response'
+        ? err.message
+        : "Can't reach the attribution engine — start it with python server.py.";
+    document.getElementById('errorBanner').style.display = 'flex';
+    document.getElementById('uncertainBanner').style.display = 'none';
+    document.getElementById('suspectList').innerHTML = '';
+    document.getElementById('caseTags').innerHTML = '';
+    document.getElementById('tellsList').parentElement.style.display = 'none';
+    document.getElementById('echoedSentence').textContent = '"' + text + '"';
+    document.getElementById('results').classList.add('show');
+    return;
+  }
+
+  document.getElementById('echoedSentence').textContent = '"' + result.sentence + '"';
+  document.getElementById('uncertainBanner').style.display = result.uncertain ? 'flex' : 'none';
+
+  const tags = document.getElementById('caseTags');
+  tags.innerHTML = [result.dominant_category, result.sentence_type]
+    .filter(Boolean)
+    .map(t => `<span class="tell-chip">${t}</span>`)
+    .join('') + (result.context_used ? `<span class="tell-chip">+${result.context_used} prior msg</span>` : '');
+
+  const list = document.getElementById('suspectList');
+  list.innerHTML = '';
+  result.ranking.forEach((r, idx) => {
+    const el = document.createElement('div');
+    el.className = 'suspect' + (idx === 0 && !result.uncertain ? ' lead' : '');
+    el.style.cursor = 'pointer';
+    el.title = `Open ${r.sender}'s dossier`;
+    el.onclick = () => { window.location.href = 'person.html?case_id=' + CASE_ID + '&name=' + encodeURIComponent(r.sender); };
+    el.innerHTML = `
+      <div class="avatar">${r.sender[0]}</div>
+      <div class="suspect-info">
+        <div class="suspect-name">${r.sender}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${r.confidence}%"></div></div>
+      </div>
+      <div class="confidence">${r.confidence}%</div>
+    `;
+    list.appendChild(el);
+  });
+
+  // Build the "why" panel from the lead suspect's actual signal breakdown —
+  // top 3 signals by strength, not a hardcoded per-person list.
+  const tellsList = document.getElementById('tellsList');
+  const lead = result.ranking[0];
+  const topSignals = Object.entries(lead.signals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  tellsList.innerHTML = topSignals
+    .map(([k, v]) => `<span class="tell-chip">${SIGNAL_LABELS[k] || k}: ${Math.round(v * 100)}%</span>`)
+    .join('');
+  tellsList.parentElement.style.display = result.uncertain ? 'none' : 'block';
+
+  document.getElementById('results').classList.add('show');
+}
+
+(async function init(){
+  if(!CASE_ID){
+    document.getElementById('noCaseBanner').style.display = 'flex';
+    document.querySelector('button.investigate').disabled = true;
+    return;
+  }
+  try{
+    const resp = await fetch(API_BASE + '/cases/' + CASE_ID);
+    if(!resp.ok) throw new Error();
+    const caseData = await resp.json();
+    document.getElementById('caseNameLabel').textContent = caseData.name;
+  }catch(err){
+    document.getElementById('caseNameLabel').textContent = 'unknown case';
+  }
+})();
+</script>
+</body>
+</html>

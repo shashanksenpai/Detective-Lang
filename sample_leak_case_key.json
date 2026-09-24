@@ -1,0 +1,302 @@
+{
+  "case": "Demo: The Paper Leak",
+  "purpose": "Answer key for the synthetic 'paper leak' demo case. Written by hand alongside the chat exports so a future contradiction detector (roadmap Phase 6) can be evaluated: every planted contradiction and every innocent decoy is listed with the exact timestamp, sender and quote. test_leak_case.py checks each reference really exists in the sample files.",
+  "sources": {
+    "group": "sample_leak_group.txt",
+    "kritika": "sample_leak_dm_yash_kritika.txt",
+    "harshit": "sample_leak_dm_yash_harshit.txt",
+    "parth": "sample_leak_dm_yash_parth.txt",
+    "sana": "sample_leak_dm_meenakshi_sana.txt",
+    "arjun": "sample_leak_dm_arjun_nikhil.txt"
+  },
+  "cast": {
+    "Yash": "SUSPECT. Warm, generous, over-helpful ('bhai', 'I got you', 'no stress'). Pays for everyone, shares notes. Adds detail and jokes when cornered; tells each person a different story.",
+    "Meenakshi": "Topper. Formal, exact times and dates, quotes people's earlier messages back at them. Never accuses, only 'points out inconsistencies'.",
+    "Tanvi": "Gossip, drama, emoji-heavy. Unreliable witness: mixes up days.",
+    "Harshit": "Class clown, all lowercase, Yash's loyal best friend. Defends him until the end.",
+    "Sana": "Quiet scholarship student who owes Yash fee money. Saw him at the shop but first wrote 'at home'.",
+    "Parth": "Gym-bro. Secretly bought OS+CN papers. Publicly says he only used the 'guess list'.",
+    "Nikhil": "Class rep. Formal notices signed 'Regards, Nikhil'. Investigates quietly.",
+    "Kritika": "Yash's girlfriend, design student. Her 9:12 pm Instagram story puts him at the shop.",
+    "Arjun": "Yash's hostel roommate. Deadpan, terse, exact times. Silent in the group, key witness in DMs."
+  },
+  "similarity_traps": [
+    "Yash, Harshit and Parth all use 'bro/bhai' and 'lol'-style slang",
+    "Meenakshi and Nikhil are both formal and time-precise",
+    "Tanvi and Kritika are both emoji-heavy and expressive",
+    "Sana and Arjun both write very short messages"
+  ],
+  "ground_truth": {
+    "summary": "Yash works weekend evenings at Sharma Xerox (near Gate 2), which the exam cell used to print the DBMS, CN and OS mid-sem papers; the SE paper was printed in the department. On Sat 20 Sep 2025 he photographed the master papers, and sold them through a Telegram channel ('ImpQs Official', admin @lalit_impqs, ~312 members, ~3-5k per pack) with payments collected under the alias/account 'Lalit'. He circulated a 'guess list' to the class as cover. The channel has run since at least last semester.",
+    "timeline_2025": {
+      "Sat 20 Sep 8:34 pm": "signs out of hostel (gate register), tells everyone he is on DND from 9 and studying",
+      "Sat 20 Sep ~9:12 pm": "seen entering Sharma Xerox in the background of Kritika's story",
+      "Sat 20 Sep ~10:30 pm": "seen inside the shop with keys on a red lanyard by Sana",
+      "Sun 21 Sep 12:20 am": "replies in the group despite 'DND' and 'asleep by 11'",
+      "Sun 21 Sep 1:52 am": "signs back into hostel; works on laptop until about 3",
+      "Sun 21 Sep 8:57 am": "confirms receipt of Parth's 4k ('got it')",
+      "Sun 21 Sep 9:05 am": "posts the 'guess list' (matches 17/20 DBMS, 16/20 CN, 15/20 OS)",
+      "Mon-Wed 22-24 Sep": "DBMS, CN, OS papers match the list; SE (no list) does not",
+      "Mon 6 Oct": "exam-cell notice; Yash names subjects and a count the notice never gave",
+      "Thu 13 Nov": "Parth confesses; Yash reveals he knows the payee is 'Lalit'",
+      "Fri 14 Nov": "Sana tells the group what she saw; Yash's explanation changes again",
+      "Mon 17 Nov": "police and cyber cell ask all students to report with phones"
+    }
+  },
+  "planted_contradictions": [
+    {
+      "id": "C01", "severity": "high", "type": "self-contradiction (chat timestamps)",
+      "summary": "Claims to have slept by 11 with the phone on DND, but replied in the group at 12:20-12:21 am.",
+      "statements": [
+        {"src": "group", "at": "10/08/25, 8:35 PM", "who": "Yash", "quote": "asleep by 11"},
+        {"src": "kritika", "at": "09/21/25, 9:34 AM", "who": "Yash", "quote": "I was asleep by 11"},
+        {"src": "group", "at": "09/20/25, 5:41 PM", "who": "Yash", "quote": "DND from 9 tonight"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "09/21/25, 12:20 AM", "who": "Yash", "quote": "lmaooo same"},
+        {"src": "group", "at": "09/21/25, 12:21 AM", "who": "Yash", "quote": "just checking one last thing"},
+        {"src": "group", "at": "10/09/25, 7:56 AM", "who": "Yash", "quote": "phone was face down on DND"}
+      ]
+    },
+    {
+      "id": "C02", "severity": "high", "type": "self-contradiction (across chats, same morning)",
+      "summary": "Tells the group he stayed up until 3 making the list; 28 minutes later tells his girlfriend he was asleep by 11. Later calls the '3' a joke.",
+      "statements": [
+        {"src": "group", "at": "09/21/25, 9:06 AM", "who": "Yash", "quote": "stayed up till 3 making it"},
+        {"src": "group", "at": "09/21/25, 9:22 AM", "who": "Yash", "quote": "3 hrs bas babe"}
+      ],
+      "conflicts_with": [
+        {"src": "kritika", "at": "09/21/25, 9:34 AM", "who": "Yash", "quote": "I was asleep by 11"},
+        {"src": "group", "at": "10/08/25, 8:35 PM", "who": "Yash", "quote": "asleep by 11"},
+        {"src": "group", "at": "10/09/25, 7:52 AM", "who": "Yash", "quote": "the 3 was a joke, I slept early haha"}
+      ]
+    },
+    {
+      "id": "C03", "severity": "high", "type": "contradicted by witness and physical record",
+      "summary": "Says he was in his room from 8:30 and did not leave; his roommate and the hostel gate register say he left at 8:34 pm and returned at 1:52 am.",
+      "statements": [
+        {"src": "group", "at": "10/08/25, 8:35 PM", "who": "Yash", "quote": "in my room by 8:30"},
+        {"src": "kritika", "at": "09/20/25, 8:52 PM", "who": "Yash", "quote": "in my room, deep in DBMS"}
+      ],
+      "conflicts_with": [
+        {"src": "arjun", "at": "10/12/25, 10:36 PM", "who": "Arjun", "quote": "he left around 8:30 pm with his bag"},
+        {"src": "arjun", "at": "10/12/25, 10:37 PM", "who": "Arjun", "quote": "he came back around 1:40 am"},
+        {"src": "arjun", "at": "10/13/25, 4:10 PM", "who": "Nikhil", "quote": "signed out at 8:34 pm on 20 Sep and signed in at 1:52 am"},
+        {"src": "arjun", "at": "10/12/25, 10:52 PM", "who": "Arjun", "quote": "he wasn't there at 8"}
+      ]
+    },
+    {
+      "id": "C04", "severity": "high", "type": "contradicted by witness",
+      "summary": "Places himself in his room at 10:30 pm; Sana saw him inside Sharma Xerox with keys.",
+      "statements": [
+        {"src": "group", "at": "10/08/25, 8:35 PM", "who": "Yash", "quote": "asleep by 11"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "11/14/25, 8:10 AM", "who": "Sana", "quote": "I saw you at Sharma Xerox on 20 Sep around 10:30 pm"},
+        {"src": "sana", "at": "10/09/25, 9:41 PM", "who": "Sana", "quote": "Yash was inside with a bag"},
+        {"src": "sana", "at": "10/09/25, 9:42 PM", "who": "Sana", "quote": "red lanyard with keys"}
+      ]
+    },
+    {
+      "id": "C05", "severity": "high", "type": "contradicted by photo evidence",
+      "summary": "Kritika's story (9:12 pm, chai stall near Gate 2) shows Yash entering Sharma Xerox while he told her he was in his room.",
+      "statements": [
+        {"src": "group", "at": "10/08/25, 8:35 PM", "who": "Yash", "quote": "in my room by 8:30"},
+        {"src": "kritika", "at": "09/20/25, 8:52 PM", "who": "Yash", "quote": "in my room, deep in DBMS"}
+      ],
+      "conflicts_with": [
+        {"src": "kritika", "at": "09/20/25, 8:38 PM", "who": "Kritika", "quote": "chai stall near gate 2"},
+        {"src": "group", "at": "10/11/25, 5:10 PM", "who": "Tanvi", "quote": "isn't that yash in the background going into the shop"}
+      ]
+    },
+    {
+      "id": "C06", "severity": "high", "type": "shifting story (four versions)",
+      "summary": "Why he was near the shop that night changes each time: never left; a pen at 9; chai with Arjun at 9; an assignment print at 10.",
+      "statements": [
+        {"src": "group", "at": "10/08/25, 8:35 PM", "who": "Yash", "quote": "in my room by 8:30"},
+        {"src": "group", "at": "10/11/25, 5:16 PM", "who": "Yash", "quote": "I just stepped out to buy a pen around 9"},
+        {"src": "kritika", "at": "10/11/25, 5:44 PM", "who": "Yash", "quote": "I went to get chai with Arjun around 9"},
+        {"src": "group", "at": "11/14/25, 8:25 AM", "who": "Yash", "quote": "I did go to the shop for 5 mins around 10 to pick up my assignment print"}
+      ],
+      "conflicts_with": [
+        {"src": "arjun", "at": "10/12/25, 10:49 PM", "who": "Arjun", "quote": "i was in my room all night"},
+        {"src": "arjun", "at": "10/12/25, 10:36 PM", "who": "Arjun", "quote": "he left around 8:30 pm with his bag"}
+      ]
+    },
+    {
+      "id": "C07", "severity": "high", "type": "self-contradiction over time (job at the shop)",
+      "summary": "Openly says in September he works weekends at Sharma uncle's xerox shop; in October says it was a joke, that he has never been inside, that he is only a customer; admits privately to his girlfriend that he does help there.",
+      "statements": [
+        {"src": "group", "at": "09/06/25, 7:14 PM", "who": "Yash", "quote": "helping at Sharma uncle's xerox shop near gate 2, weekends"},
+        {"src": "group", "at": "09/13/25, 6:38 PM", "who": "Yash", "quote": "stuck at uncle's shop till late"},
+        {"src": "group", "at": "09/26/25, 4:41 PM", "who": "Yash", "quote": "uncle's shop paid well this month"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "10/15/25, 7:41 PM", "who": "Yash", "quote": "never even been inside that shop's back room"},
+        {"src": "group", "at": "10/15/25, 7:45 PM", "who": "Yash", "quote": "I go there only as a customer"},
+        {"src": "kritika", "at": "10/15/25, 9:12 PM", "who": "Yash", "quote": "I do help there sometimes"},
+        {"src": "harshit", "at": "10/15/25, 8:27 PM", "who": "Yash", "quote": "kabhi kabhi print nikalne jata hu"}
+      ]
+    },
+    {
+      "id": "C08", "severity": "low", "type": "self-contradiction (could be innocent)",
+      "summary": "Says he takes no part-time work, then describes weekend work at the shop four days later.",
+      "statements": [
+        {"src": "group", "at": "09/02/25, 7:22 PM", "who": "Yash", "quote": "my dad funds everything so no part time for me"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "09/06/25, 7:14 PM", "who": "Yash", "quote": "helping at Sharma uncle's xerox shop near gate 2, weekends"}
+      ]
+    },
+    {
+      "id": "C09", "severity": "medium", "type": "self-contradiction over time (finances)",
+      "summary": "Skips Goa because his father's business is slow, then pays for the whole trip six weeks later ('I've got tons'). Offers 'freelance' as the explanation.",
+      "statements": [
+        {"src": "group", "at": "09/12/25, 11:58 AM", "who": "Yash", "quote": "dad ka business slow chal raha hai abhi"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "10/22/25, 8:10 PM", "who": "Yash", "quote": "I've got tons"},
+        {"src": "group", "at": "10/22/25, 8:15 PM", "who": "Yash", "quote": "that was dad's, this is mine"}
+      ]
+    },
+    {
+      "id": "C10", "severity": "high", "type": "cross-context contradiction (source of money)",
+      "summary": "The phone and spending are explained five different ways depending on who is asking.",
+      "statements": [
+        {"src": "group", "at": "10/03/25, 6:18 PM", "who": "Yash", "quote": "uncle gifted it, I built his clinic's website and he insisted"},
+        {"src": "group", "at": "10/04/25, 8:23 PM", "who": "Yash", "quote": "the clinic website gave me 40k, uncle topped up the rest"},
+        {"src": "kritika", "at": "10/03/25, 9:15 PM", "who": "Yash", "quote": "won 50k at a hackathon back in august"},
+        {"src": "harshit", "at": "10/03/25, 7:44 PM", "who": "Yash", "quote": "sold my old laptop, uncle chipped in a bit, and some savings"},
+        {"src": "kritika", "at": "09/26/25, 11:42 PM", "who": "Yash", "quote": "I earn from the shop and some freelance"}
+      ],
+      "conflicts_with": [
+        {"src": "arjun", "at": "10/13/25, 4:31 PM", "who": "Arjun", "quote": "pays cash for everything now"}
+      ]
+    },
+    {
+      "id": "C11", "severity": "high", "type": "cross-context contradiction (source of the guess list)",
+      "summary": "The list came from a senior named Aakash; then he made it himself with 'no senior no nothing'; then a senior friend gave him a file; then a 'common friend'. Aakash says he never gave him anything.",
+      "statements": [
+        {"src": "group", "at": "09/21/25, 9:17 AM", "who": "Yash", "quote": "my senior Aakash's old notes"},
+        {"src": "harshit", "at": "10/06/25, 8:53 PM", "who": "Yash", "quote": "i made it myself from past papers, nothing else. no senior no nothing"},
+        {"src": "harshit", "at": "10/10/25, 11:38 PM", "who": "Yash", "quote": "a senior friend gave me a file, for free"},
+        {"src": "group", "at": "11/06/25, 4:14 PM", "who": "Yash", "quote": "I got the files through a common friend, not directly from him"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "11/06/25, 4:10 PM", "who": "Nikhil", "quote": "He says he has never given any notes to Yash"},
+        {"src": "parth", "at": "09/17/25, 9:42 PM", "who": "Yash", "quote": "os + cn pack is 4k"}
+      ]
+    },
+    {
+      "id": "C12", "severity": "high", "type": "knowledge slip",
+      "summary": "Names the affected subjects and a headcount the exam-cell notice never gave; then blames Tanvi, who denies it.",
+      "statements": [
+        {"src": "group", "at": "10/06/25, 9:23 AM", "who": "Yash", "quote": "DBMS aur CN dono ka leak hua tha"},
+        {"src": "group", "at": "10/06/25, 9:23 AM", "who": "Yash", "quote": "40 log ke paas tha"},
+        {"src": "group", "at": "10/06/25, 9:27 AM", "who": "Yash", "quote": "Tanvi ne bataya tha"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "10/06/25, 9:15 AM", "who": "Nikhil", "quote": "a mid-semester question paper appears to have been circulated"},
+        {"src": "group", "at": "10/06/25, 9:28 AM", "who": "Tanvi", "quote": "I DID NOT"}
+      ]
+    },
+    {
+      "id": "C13", "severity": "high", "type": "cross-context contradiction (Telegram channel)",
+      "summary": "Tells the group he is not in any paper channel; privately adds buyers to 'the channel' and grants access.",
+      "statements": [
+        {"src": "group", "at": "09/28/25, 6:25 PM", "who": "Yash", "quote": "I'm not in any of those channels"}
+      ],
+      "conflicts_with": [
+        {"src": "parth", "at": "09/21/25, 10:18 AM", "who": "Yash", "quote": "the channel. i'll add u by evening"},
+        {"src": "parth", "at": "10/01/25, 8:24 PM", "who": "Yash", "quote": "done, gave him access"}
+      ]
+    },
+    {
+      "id": "C14", "severity": "high", "type": "cross-context contradiction + knowledge slip ('Lalit')",
+      "summary": "Says he has never heard of any Lalit; privately arranges the 'file' and payment through Lalit; a roommate overheard him ask 'lalit bhai, payment aaya?'; then volunteers that Parth's payment 'went to Lalit' before Parth named anyone, and immediately denies knowing any Lalit.",
+      "statements": [
+        {"src": "group", "at": "10/08/25, 8:10 PM", "who": "Yash", "quote": "never heard of any Lalit"},
+        {"src": "group", "at": "11/13/25, 9:47 PM", "who": "Yash", "quote": "I don't know any Lalit"},
+        {"src": "group", "at": "11/13/25, 9:55 PM", "who": "Yash", "quote": "I don't know any Lalit. end of story"}
+      ],
+      "conflicts_with": [
+        {"src": "parth", "at": "09/19/25, 8:40 PM", "who": "Yash", "quote": "Lalit ko bol diya hai, file sat night milegi, payment sunday"},
+        {"src": "arjun", "at": "10/13/25, 4:41 PM", "who": "Arjun", "quote": "lalit bhai, payment aaya?"},
+        {"src": "group", "at": "11/13/25, 9:44 PM", "who": "Yash", "quote": "it went to Lalit right?"}
+      ]
+    },
+    {
+      "id": "C15", "severity": "high", "type": "cross-context contradiction (took the money)",
+      "summary": "Tells the group he never took Parth's money; in DM he acknowledged receipt ('got it') minutes after Parth said he was sending 4k.",
+      "statements": [
+        {"src": "group", "at": "11/13/25, 9:44 PM", "who": "Yash", "quote": "I never took your money"}
+      ],
+      "conflicts_with": [
+        {"src": "parth", "at": "09/21/25, 8:50 AM", "who": "Parth", "quote": "sending 4k to lalit's upi now"},
+        {"src": "parth", "at": "09/21/25, 8:57 AM", "who": "Yash", "quote": "got it"}
+      ]
+    },
+    {
+      "id": "C16", "severity": "medium", "type": "cross-context contradiction (relationship with Sana)",
+      "summary": "Says Sana barely talks to him after she names what she saw; earlier he gave her 12,000 rupees for fees and told her to repay whenever.",
+      "statements": [
+        {"src": "group", "at": "11/14/25, 8:20 AM", "who": "Yash", "quote": "sana barely even talks to me"}
+      ],
+      "conflicts_with": [
+        {"src": "group", "at": "09/08/25, 9:41 AM", "who": "Yash", "quote": "return whenever, seriously"},
+        {"src": "sana", "at": "10/09/25, 9:48 PM", "who": "Sana", "quote": "he paid my fees. 12,000 rupees"}
+      ]
+    }
+  ],
+  "corroborating_conduct": [
+    {"id": "K01", "summary": "Tells the buyer to say it was only the guess list.", "ref": {"src": "parth", "at": "10/06/25, 9:42 AM", "who": "Yash", "quote": "just say it was my guess list"}},
+    {"id": "K02", "summary": "Tells the buyer the payment 'was for notes' and to remember the remark.", "ref": {"src": "parth", "at": "10/13/25, 11:28 PM", "who": "Yash", "quote": "that was for notes, remember what you put in the remark"}},
+    {"id": "K03", "summary": "Tells the buyer not to disclose.", "ref": {"src": "parth", "at": "11/12/25, 8:36 PM", "who": "Yash", "quote": "don't say a word. i'll take care of everything"}},
+    {"id": "K04", "summary": "Asks the buyer to delete the chat right after his slip.", "ref": {"src": "parth", "at": "11/13/25, 10:18 PM", "who": "Yash", "quote": "delete this chat rn"}},
+    {"id": "K05", "summary": "Asks his roommate whether he told anyone he was out that night.", "ref": {"src": "arjun", "at": "10/14/25, 8:00 AM", "who": "Arjun", "quote": "he asked me last night if i told anyone he was out that night"}},
+    {"id": "K06", "summary": "Pre-announces DND for the exact evening, then breaks it.", "ref": {"src": "group", "at": "09/20/25, 5:41 PM", "who": "Yash", "quote": "DND from 9 tonight"}}
+  ],
+  "decoys": [
+    {
+      "id": "D01", "type": "innocent memory slip, self-corrected",
+      "summary": "Tanvi says she saw Yash at the library that Saturday around 8, then retracts it as a mix-up of days. Not evidence for or against him.",
+      "refs": [
+        {"src": "group", "at": "10/08/25, 8:38 PM", "who": "Tanvi", "quote": "i thought i saw u at the library"},
+        {"src": "group", "at": "10/08/25, 8:41 PM", "who": "Tanvi", "quote": "maybe it was sunday"}
+      ]
+    },
+    {
+      "id": "D02", "type": "witness inconsistency, explained and later corrected",
+      "summary": "Sana wrote 'at home, studied until 11' but had gone out to help her aunt and passed the shop; she explains privately (fear, gratitude for the fee help) and corrects it with the committee. She is not the suspect.",
+      "refs": [
+        {"src": "group", "at": "10/08/25, 8:27 PM", "who": "Sana", "quote": "At home, my aunt's house. I studied until 11."},
+        {"src": "sana", "at": "10/09/25, 9:40 PM", "who": "Sana", "quote": "I did go out that night"}
+      ]
+    },
+    {
+      "id": "D03", "type": "buyer's contradiction (culpable, but not the leaker)",
+      "summary": "Parth tells the group to stay away from paper channels and that he only used the guess list, then confesses to paying 4k. A contradiction, but by the buyer, not the suspect.",
+      "refs": [
+        {"src": "group", "at": "09/28/25, 6:29 PM", "who": "Parth", "quote": "stay away"},
+        {"src": "group", "at": "10/06/25, 9:21 AM", "who": "Parth", "quote": "i only used yash's guess paper"},
+        {"src": "group", "at": "11/13/25, 9:40 PM", "who": "Parth", "quote": "i paid for the papers"}
+      ]
+    },
+    {
+      "id": "D04", "type": "innocent namesake",
+      "summary": "There really is a chai seller called Lalit at Gate 1. Yash's 'oh that Lalit' is about him and is not by itself a contradiction of the DM evidence; the contradiction is that he says he has never heard of any Lalit and then privately deals with one.",
+      "refs": [
+        {"src": "group", "at": "10/08/25, 8:11 PM", "who": "Harshit", "quote": "lalit is the chai guy at gate 1"},
+        {"src": "group", "at": "10/08/25, 8:12 PM", "who": "Yash", "quote": "oh that Lalit"}
+      ]
+    },
+    {
+      "id": "D05", "type": "procedural statement, not a contradiction",
+      "summary": "Nikhil asks everyone to avoid speculation, then discloses the outside vendor himself ('I should not have said this').",
+      "refs": [
+        {"src": "group", "at": "10/06/25, 9:33 AM", "who": "Nikhil", "quote": "Kindly avoid speculation"},
+        {"src": "group", "at": "10/15/25, 7:33 PM", "who": "Nikhil", "quote": "I should not have said this"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "Weekend Plans",
+  "type": "private_group",
+  "id": 4455667788,
+  "messages": [
+    {
+      "id": 1,
+      "type": "service",
+      "date": "2024-06-01T18:00:00",
+      "action": "create_group",
+      "actor": "Riya",
+      "title": "Weekend Plans"
+    },
+    {
+      "id": 2,
+      "type": "message",
+      "date": "2024-06-01T18:01:00",
+      "from": "Riya",
+      "from_id": "user111",
+      "text": "made the group lol let's plan this weekend"
+    },
+    {
+      "id": 3,
+      "type": "message",
+      "date": "2024-06-01T18:02:00",
+      "from": "Zoya",
+      "from_id": "user222",
+      "text": "omg finally, i was about to suggest the same thing"
+    },
+    {
+      "id": 4,
+      "type": "message",
+      "date": "2024-06-01T18:03:00",
+      "from": "Riya",
+      "from_id": "user111",
+      "text": [
+        "found this place, check it out ",
+        {
+          "type": "link",
+          "text": "https://example.com/venue"
+        },
+        " looks fun"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "message",
+      "date": "2024-06-01T18:04:00",
+      "from": "Zoya",
+      "from_id": "user222",
+      "text": "that looks great actually"
+    },
+    {
+      "id": 6,
+      "type": "message",
+      "date": "2024-06-01T18:05:00",
+      "from": null,
+      "from_id": "channel333",
+      "text": "this account was deleted"
+    },
+    {
+      "id": 7,
+      "type": "message",
+      "date": "2024-06-01T18:06:00",
+      "from": "Riya",
+      "from_id": "user111",
+      "text": "saturday afternoon work for everyone?"
+    },
+    {
+      "id": 8,
+      "type": "message",
+      "date": "2024-06-01T18:07:00",
+      "from": "Zoya",
+      "from_id": "user222",
+      "text": "works for me!"
+    },
+    {
+      "id": 9,
+      "type": "message",
+      "date": "2024-06-01T18:08:00",
+      "from": "Riya",
+      "from_id": "user111",
+      "text": "perfect, i'll book it then"
+    },
+    {
+      "id": 10,
+      "type": "message",
+      "date": "2024-06-01T18:09:00",
+      "from": "Zoya",
+      "from_id": "user222",
+      "text": "you're the best, thank you!!"
+    },
+    {
+      "id": 11,
+      "type": "message",
+      "date": "2024-06-01T18:10:00",
+      "from": "Riya",
+      "from_id": "user111",
+      "text": "np, excited for this honestly"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+detective.db
+uploads/
+.pytest_cache/
+.sentiment_cache/

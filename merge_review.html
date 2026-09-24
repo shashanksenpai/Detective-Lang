@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Detective Lang — Identity Review</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#14161C;
+    --panel:#1B1E27;
+    --panel-raised:#232733;
+    --hairline:#2E3340;
+    --amber:#E8A33D;
+    --amber-dim:#8A6526;
+    --red-tape:#B5453D;
+    --text:#E8E6E0;
+    --text-muted:#8B8F9C;
+    --text-faint:#565B69;
+    --good:#7CB88F;
+    --bad:#C77B72;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:48px 24px 80px;
+    background-image:radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+  a{color:var(--amber-dim); text-decoration:none;}
+  a:hover{color:var(--amber);}
+  .back-link{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px;
+    text-transform:uppercase; display:inline-block; margin-bottom:24px;
+  }
+  header{text-align:center; margin-bottom:36px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--amber-dim); margin-bottom:10px;
+  }
+  h1{font-family:'Special Elite',monospace; font-size:40px; font-weight:400;}
+  .subtitle{color:var(--text-muted); font-size:14px; margin-top:10px;}
+
+  .empty-note{color:var(--text-faint); font-size:13px; font-style:italic; text-align:center; padding:30px 0;}
+
+  .suggestion-card{
+    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
+    padding:20px 22px; margin-bottom:16px; position:relative;
+  }
+  .tier-badge{
+    position:absolute; top:0; right:0;
+    font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:0 0 0 4px;
+  }
+  .tier-badge.hard{background:var(--good); color:#14161C;}
+  .tier-badge.fuzzy{background:var(--amber); color:#14161C;}
+  .tier-badge.soft{background:var(--panel-raised); color:var(--text-muted); border:1px solid var(--hairline);}
+
+  .match-row{display:flex; align-items:center; gap:16px; margin-bottom:14px;}
+  .match-person{flex:1;}
+  .match-person .pname{font-size:16px; font-weight:600; margin-bottom:4px;}
+  .match-person .pcases{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-faint);}
+  .match-sep{font-family:'Special Elite',monospace; font-size:18px; color:var(--amber-dim);}
+
+  .confidence-line{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);
+    margin-bottom:12px;
+  }
+  .confidence-line b{color:var(--amber);}
+
+  .evidence{
+    background:var(--panel-raised); border:1px solid var(--hairline); border-radius:3px;
+    padding:10px 12px; margin-bottom:14px; font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    color:var(--text-muted);
+  }
+  .evidence div{padding:2px 0;}
+
+  .decision-row{display:flex; gap:10px;}
+  button{
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px;
+    letter-spacing:1px; text-transform:uppercase;
+    padding:9px 18px; border-radius:2px; cursor:pointer; border:none;
+    transition:filter .15s ease;
+  }
+  button:hover{filter:brightness(1.12);}
+  button.accept{background:var(--good); color:#14161C;}
+  button.reject{background:var(--panel-raised); color:var(--bad); border:1px solid var(--hairline);}
+
+  footer{
+    text-align:center; margin-top:40px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px;
+    color:var(--text-faint); letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="cases.html">&larr; all cases</a>
+  <header>
+    <div class="eyebrow">Detective Lang · Identity Review</div>
+    <h1>Possible Matches</h1>
+    <div class="subtitle">Same person, different case? Nothing merges until you say so.</div>
+  </header>
+
+  <div id="list"></div>
+  <div class="empty-note" id="emptyNote" style="display:none;">No pending matches right now.</div>
+
+  <footer>PROTOTYPE — MATCHES ARE SUGGESTED, NEVER APPLIED AUTOMATICALLY</footer>
+</div>
+
+<script>
+const API_BASE = 'http://127.0.0.1:8000';
+
+function evidenceLine(evidence){
+  const lines = [];
+  if(evidence.phone_match) lines.push(`Matching phone number: ${evidence.phone_match}`);
+  if(evidence.name_similarity !== undefined) lines.push(`Name similarity: ${Math.round(evidence.name_similarity * 100)}%`);
+  if(evidence.embedding_similarity !== null && evidence.embedding_similarity !== undefined){
+    lines.push(`Writing-style similarity: ${Math.round(evidence.embedding_similarity * 100)}%`);
+  }
+  if(evidence.compared_names){
+    lines.push(`Names compared: "${evidence.compared_names.a.join('", "')}" vs "${evidence.compared_names.b.join('", "')}"`);
+  }
+  return lines;
+}
+
+function personBlock(p){
+  const cases = p.cases.map(c => c.name).join(', ') || '(no case)';
+  return `<div class="match-person"><div class="pname">${p.display_name}</div><div class="pcases">${cases}</div></div>`;
+}
+
+function renderList(suggestions){
+  const el = document.getElementById('list');
+  document.getElementById('emptyNote').style.display = suggestions.length ? 'none' : 'block';
+  el.innerHTML = suggestions.map(s => `
+    <div class="suggestion-card" id="suggestion-${s.id}">
+      <span class="tier-badge ${s.match_type}">${s.match_type} match</span>
+      <div class="match-row">
+        ${personBlock(s.person_a)}
+        <span class="match-sep">≟</span>
+        ${personBlock(s.person_b)}
+      </div>
+      <div class="confidence-line">Confidence: <b>${Math.round(s.confidence * 100)}%</b></div>
+      <div class="evidence">${evidenceLine(s.evidence).map(l => `<div>${l}</div>`).join('')}</div>
+      <div class="decision-row">
+        <button class="accept" onclick="decide(${s.id}, 'accept')">Same person — merge</button>
+        <button class="reject" onclick="decide(${s.id}, 'reject')">Not a match</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadSuggestions(){
+  const resp = await fetch(API_BASE + '/merge-suggestions?status=pending');
+  renderList(await resp.json());
+}
+
+async function decide(id, action){
+  const card = document.getElementById('suggestion-' + id);
+  card.style.opacity = '0.5';
+  try{
+    const resp = await fetch(API_BASE + '/merge-suggestions/' + id + '/' + action, {method: 'POST'});
+    if(!resp.ok) throw new Error('request failed');
+    card.remove();
+    const list = document.getElementById('list');
+    document.getElementById('emptyNote').style.display = list.children.length ? 'none' : 'block';
+  }catch(err){
+    card.style.opacity = '1';
+    alert('Could not record that decision — is the server running?');
+  }
+}
+
+loadSuggestions();
+</script>
+</body>
+</html>

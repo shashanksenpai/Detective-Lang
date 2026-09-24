@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detective Lang — Workspace</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#14161C;
+    --panel:#1B1E27;
+    --panel-raised:#232733;
+    --hairline:#2E3340;
+    --amber:#E8A33D;
+    --amber-dim:#8A6526;
+    --red-tape:#B5453D;
+    --text:#E8E6E0;
+    --text-muted:#8B8F9C;
+    --text-faint:#565B69;
+    --good:#7CB88F;
+    --bad:#C77B72;
+    /* diverging sentiment ramp: equal steps per arm, neutral gray midpoint */
+    --mood-n3:#e66767; --mood-n2:#aa5956; --mood-n1:#704a46;
+    --mood-z:#383835;
+    --mood-p1:#3d536c; --mood-p2:#3d6da7; --mood-p3:#3987e5;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:40px 20px 80px;
+    background-image:radial-gradient(ellipse at 50% -10%, rgba(232,163,61,0.07), transparent 60%);
+  }
+  .wrap{max-width:860px; margin:0 auto;}
+  a{color:var(--amber-dim); text-decoration:none;}
+  a:hover{color:var(--amber);}
+  .back-link{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px;
+    text-transform:uppercase; display:inline-block; margin-bottom:22px;
+  }
+  header{text-align:center; margin-bottom:26px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--amber-dim); margin-bottom:10px;
+  }
+  h1{font-family:'Special Elite',monospace; font-size:38px; font-weight:400;}
+  .subtitle{color:var(--text-muted); font-size:13.5px; margin-top:8px;}
+
+  .tabs{
+    display:flex; gap:4px; border-bottom:1px solid var(--hairline); margin-bottom:22px;
+    overflow-x:auto;
+  }
+  .tab{
+    background:none; color:var(--text-muted); border:none; border-bottom:2px solid transparent;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:1.5px;
+    text-transform:uppercase; padding:10px 16px; cursor:pointer; white-space:nowrap;
+  }
+  .tab:hover{color:var(--text); filter:none;}
+  .tab.active{color:var(--amber); border-bottom-color:var(--amber);}
+  .tab .count{color:var(--text-faint); margin-left:6px;}
+
+  section{
+    background:var(--panel); border:1px solid var(--hairline); border-radius:3px;
+    padding:20px 22px; margin-bottom:18px; position:relative;
+  }
+  section::before{
+    content:attr(data-label);
+    position:absolute; top:-9px; left:16px;
+    background:var(--bg); padding:0 8px;
+    font-family:'IBM Plex Mono',monospace; font-size:9px;
+    letter-spacing:2px; color:var(--amber-dim); text-transform:uppercase;
+  }
+
+  .field-row{display:flex; gap:10px; flex-wrap:wrap;}
+  input[type=text], input[type=date], select{
+    background:var(--panel-raised); border:1px solid var(--hairline); color:var(--text);
+    font-family:'Inter',sans-serif; font-size:14px; padding:9px 11px; border-radius:3px;
+    outline:none; color-scheme:dark;
+  }
+  input[type=text]:focus, input[type=date]:focus, select:focus{border-color:var(--amber-dim);}
+  input.grow{flex:1; min-width:200px;}
+  .hint{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-faint); margin-top:9px;}
+
+  button{
+    background:var(--amber); color:#14161C; border:none;
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px;
+    letter-spacing:1px; text-transform:uppercase;
+    padding:10px 18px; border-radius:2px; cursor:pointer;
+  }
+  button:hover{filter:brightness(1.12);}
+  button:disabled{opacity:0.4; cursor:default;}
+  button.secondary{background:var(--panel-raised); color:var(--text-muted); border:1px solid var(--hairline);}
+  .btn-mini{
+    background:none; color:var(--text-faint); border:1px solid var(--hairline);
+    font-size:10px; padding:3px 9px; letter-spacing:1px; font-weight:500;
+  }
+  .btn-mini:hover{color:var(--amber); border-color:var(--amber-dim); filter:none;}
+  .btn-mini.on{color:var(--amber); border-color:var(--amber-dim);}
+
+  .result-line{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted);
+    letter-spacing:.5px; margin:4px 2px 12px;
+  }
+  .empty-note{color:var(--text-faint); font-size:13px; font-style:italic; padding:6px 2px;}
+  .error-note{color:var(--bad); font-size:13px; padding:6px 2px;}
+
+  .msg{
+    background:var(--panel-raised); border:1px solid var(--hairline);
+    border-left:3px solid var(--hairline); border-radius:3px;
+    padding:11px 14px; margin-bottom:8px;
+  }
+  .msg-head{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
+  .msg-sender{color:var(--amber); font-weight:600; font-size:13px;}
+  .msg-meta{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-faint);}
+  .msg-actions{margin-left:auto; display:flex; gap:6px;}
+  .msg-text{margin-top:6px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; line-height:1.5;}
+  .msg.pinned{border-left-color:var(--amber);}
+  .note-box{
+    width:100%; margin-top:10px; min-height:54px; resize:vertical;
+    background:var(--bg); border:1px solid var(--hairline); color:var(--text);
+    font-family:'Inter',sans-serif; font-size:13px; padding:8px 10px; border-radius:3px; outline:none;
+  }
+  .note-box:focus{border-color:var(--amber-dim);}
+  .note-status{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); display:block; min-height:14px; margin-top:3px;}
+  .note-status.err{color:var(--bad);}
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:10;
+    background:var(--red-tape); color:#fff; font-size:13px; padding:9px 16px; border-radius:3px;
+  }
+  .ctx-pin{margin-left:auto; padding:1px 7px; font-size:11px;}
+  mark{background:rgba(232,163,61,0.28); color:var(--text); border-radius:2px; padding:0 2px;}
+
+  .ctx{margin-top:10px; border-top:1px dashed var(--hairline); padding-top:8px;}
+  .ctx-msg{padding:4px 8px; font-size:13px; color:var(--text-muted); display:flex; gap:8px; border-left:2px solid transparent;}
+  .ctx-msg .who{color:var(--text-muted); font-weight:600; white-space:nowrap;}
+  .ctx-msg.target{color:var(--text); background:rgba(232,163,61,0.08); border-left-color:var(--amber);}
+  .ctx-msg.target .who{color:var(--amber);}
+  .ctx-msg .body{white-space:pre-wrap; overflow-wrap:anywhere;}
+  .ctx-time{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); white-space:nowrap; padding-top:2px;}
+
+  /* timeline */
+  .c-n3{fill:var(--mood-n3);} .c-n2{fill:var(--mood-n2);} .c-n1{fill:var(--mood-n1);}
+  .c-z{fill:var(--mood-z);}
+  .c-p1{fill:var(--mood-p1);} .c-p2{fill:var(--mood-p2);} .c-p3{fill:var(--mood-p3);}
+  .sw{display:inline-block; width:20px; height:12px; border-radius:2px; vertical-align:-1px;}
+  .sw.c-n3{background:var(--mood-n3);} .sw.c-n2{background:var(--mood-n2);} .sw.c-n1{background:var(--mood-n1);}
+  .sw.c-z{background:var(--mood-z);}
+  .sw.c-p1{background:var(--mood-p1);} .sw.c-p2{background:var(--mood-p2);} .sw.c-p3{background:var(--mood-p3);}
+  .sw.none{border:1px dashed var(--hairline);}
+  .tl-legend{
+    display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-bottom:14px;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted);
+  }
+  .tl-legend .sep{width:14px;}
+  .tl-scroll{overflow-x:auto; padding-bottom:6px;}
+  .tl-scroll svg{display:block;}
+  .tl-scroll text{font-family:'IBM Plex Mono',monospace; fill:var(--text-faint); font-size:10px;}
+  .tl-scroll text.name{fill:var(--text-muted); font-size:11px;}
+  .tl-scroll text.peak{fill:var(--text-muted);}
+  .bar{fill:var(--amber);}
+  .cell-empty{fill:none; stroke:var(--hairline); stroke-dasharray:2 3;}
+  .hit-col{fill:transparent; cursor:pointer; outline:none;}
+  .hit-col:hover, .hit-col:focus{fill:rgba(232,163,61,0.06);}
+  .hit-col:focus{stroke:var(--amber-dim);}
+  .cell{cursor:pointer;}
+  .sel{fill:none; stroke:var(--amber); stroke-width:1.5; pointer-events:none;}
+  .tl-tip{
+    position:fixed; z-index:20; pointer-events:none; min-width:170px;
+    background:var(--panel-raised); border:1px solid var(--hairline); border-radius:3px;
+    padding:8px 10px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  }
+  .tip-head{font-weight:600; margin-bottom:5px; color:var(--text);}
+  .tip-row{display:flex; align-items:center; gap:7px; padding:1px 0; color:var(--text-muted);}
+  .tip-row .tip-name{flex:1;}
+  .tip-row .tip-val{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text);}
+  .day-head{display:flex; align-items:center; justify-content:space-between; margin:6px 2px 10px;}
+  .day-head .result-line{margin:0;}
+  details.tl-table{margin-top:12px;}
+  details.tl-table summary{
+    cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--text-muted); letter-spacing:1px; text-transform:uppercase;
+  }
+  .tl-table-wrap{overflow-x:auto; margin-top:10px; max-height:360px; overflow-y:auto;}
+  table.tl{border-collapse:collapse; width:100%; font-size:12.5px;}
+  table.tl th, table.tl td{text-align:left; padding:5px 12px 5px 0; border-bottom:1px solid var(--hairline);}
+  table.tl th{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-faint);}
+  table.tl td.num{font-family:'IBM Plex Mono',monospace;}
+
+  .source-strip{margin-bottom:22px; text-align:center;}
+  .chip{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+    color:var(--text-muted); border:1px solid var(--hairline); border-radius:20px;
+    padding:3px 11px; margin:3px 3px;
+  }
+  .chip.warn{border-color:var(--amber-dim);}
+  .source-notes{font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.5;}
+  .source-notes b{color:var(--amber-dim); font-weight:600;}
+
+  footer{
+    text-align:center; margin-top:40px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px;
+    color:var(--text-faint); letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" id="backLink" href="cases.html">&larr; case</a>
+  <header>
+    <div class="eyebrow">Detective Lang · Workspace</div>
+    <h1 id="caseName">—</h1>
+    <div class="subtitle" id="caseMeta"></div>
+  </header>
+
+  <div class="source-strip" id="sourceStrip"></div>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="tabBody"></div>
+
+  <footer>PROTOTYPE — SEARCH IS CASE-SCOPED; MESSAGES NEVER CROSS CASES</footer>
+</div>
+
+<script>
+const API_BASE = 'http://127.0.0.1:8000';
+const caseId = new URLSearchParams(window.location.search).get('case_id');
+
+// All dynamic text goes through esc(): message bodies, sender names and
+// source labels come from someone else's chat export and are untrusted.
+function esc(value){
+  return String(value ?? '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+
+// Timestamps are naive (the export's own local time); a date-time string
+// with no offset is parsed by JS as local time, so it displays unchanged.
+function fmtWhen(iso){
+  if(!iso) return 'undated';
+  const d = new Date(iso);
+  if(isNaN(d)) return 'undated';
+  return d.toLocaleString(undefined, {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'});
+}
+function fmtDay(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+}
+function fmtClock(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'});
+}
+
+async function api(path, options){
+  const resp = await fetch(API_BASE + path, options);
+  if(!resp.ok){
+    const body = await resp.json().catch(() => ({}));
+    throw new Error(body.detail || ('Request failed (' + resp.status + ')'));
+  }
+  return resp.json();
+}
+
+const state = {sources: [], senders: [], pinCount: 0};
+
+/* ---------- shared message row ---------- */
+
+function messageBodyHtml(m){
+  if(m.parts) return m.parts.map(([t, hit]) => hit ? '<mark>' + esc(t) + '</mark>' : esc(t)).join('');
+  return esc(m.text);
+}
+
+function renderMessage(m, opts = {}){
+  const pinned = m.pin_id != null;
+  const actions = opts.evidence
+    ? '<button class="btn-mini" data-action="context">context</button><button class="btn-mini" data-action="unpin">unpin</button>'
+    : `<button class="btn-mini ${pinned ? 'on' : ''}" data-action="pin">${pinned ? 'pinned' : 'pin'}</button><button class="btn-mini" data-action="context">context</button>`;
+  const note = opts.evidence
+    ? `<textarea class="note-box" maxlength="2000" aria-label="Note" placeholder="Why does this matter? (saved when you click away)">${esc(m.note)}</textarea><span class="note-status"></span>`
+    : '';
+  return `
+    <div class="msg ${pinned ? 'pinned' : ''}" data-mid="${m.id}" data-pin="${pinned ? m.pin_id : ''}">
+      <div class="msg-head">
+        <span class="msg-sender">${esc(m.sender)}</span>
+        <span class="msg-meta">${esc(fmtWhen(m.sent_at))} · ${esc(m.source_label)}</span>
+        <span class="msg-actions">${actions}</span>
+      </div>
+      <div class="msg-text">${messageBodyHtml(m)}</div>
+      ${note}
+      <div class="ctx" hidden></div>
+    </div>`;
+}
+
+async function toggleContext(msgEl){
+  const box = msgEl.querySelector('.ctx');
+  const btn = msgEl.querySelector('[data-action="context"]');
+  if(!box.hidden){
+    box.hidden = true;
+    btn.classList.remove('on');
+    return;
+  }
+  btn.disabled = true;
+  try{
+    const data = await api('/cases/' + caseId + '/messages/' + msgEl.dataset.mid + '/context?before=5&after=5');
+    box.innerHTML = data.messages.map(c => `
+      <div class="ctx-msg ${c.is_target ? 'target' : ''}">
+        <span class="ctx-time">${esc(fmtClock(c.sent_at))}</span>
+        <span class="who">${esc(c.sender)}</span>
+        <span class="body">${esc(c.text)}</span>
+        <button class="btn-mini ctx-pin ${c.pin_id != null ? 'on' : ''}" data-action="ctx-pin" data-mid="${c.id}" data-pin="${c.pin_id ?? ''}" title="Pin this message">${c.pin_id != null ? 'pinned' : 'pin'}</button>
+      </div>`).join('');
+    box.hidden = false;
+    btn.classList.add('on');
+  }catch(err){
+    box.innerHTML = '<div class="error-note">' + esc(err.message) + '</div>';
+    box.hidden = false;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function toast(message){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = message;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+const JSON_HEADERS = {'Content-Type': 'application/json'};
+
+// One message can be on screen in several places (result row, context row);
+// keep every copy's pin state in step with the server.
+function applyPinState(mid, pinId){
+  const label = pinId != null ? 'pinned' : 'pin';
+  document.querySelectorAll('.msg[data-mid="' + mid + '"]').forEach(el => {
+    el.dataset.pin = pinId ?? '';
+    el.classList.toggle('pinned', pinId != null);
+    const b = el.querySelector('[data-action="pin"]');
+    if(b){ b.textContent = label; b.classList.toggle('on', pinId != null); }
+  });
+  document.querySelectorAll('.ctx-pin[data-mid="' + mid + '"]').forEach(b => {
+    b.dataset.pin = pinId ?? '';
+    b.textContent = label;
+    b.classList.toggle('on', pinId != null);
+  });
+}
+
+async function refreshPinCount(){
+  try{ state.pinCount = (await api('/cases/' + caseId + '/pins')).length; }
+  catch(err){ /* keep the previous count */ }
+  updateTabCounts();
+}
+
+async function togglePin(btn, mid, pinId){
+  btn.disabled = true;
+  try{
+    if(pinId){
+      await api('/cases/' + caseId + '/pins/' + pinId, {method: 'DELETE'});
+      applyPinState(mid, null);
+    } else {
+      const pin = await api('/cases/' + caseId + '/pins', {
+        method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({message_id: Number(mid)}),
+      });
+      applyPinState(mid, pin.pin_id);
+    }
+    refreshPinCount();
+  }catch(err){
+    toast('Could not update pin — ' + err.message);
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function unpinFromEvidence(msgEl){
+  const note = (msgEl.querySelector('.note-box')?.value || '').trim();
+  if(note && !confirm('Remove this pin and its note?')) return;
+  try{
+    await api('/cases/' + caseId + '/pins/' + msgEl.dataset.pin, {method: 'DELETE'});
+    msgEl.remove();
+    await refreshPinCount();
+    if(!document.querySelector('#evRows .msg')) mountEvidence(document.getElementById('tabBody'));
+  }catch(err){
+    toast('Could not remove pin — ' + err.message);
+  }
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const msgEl = btn.closest('.msg');
+  const action = btn.dataset.action;
+  if(action === 'context' && msgEl) toggleContext(msgEl);
+  else if(action === 'pin' && msgEl) togglePin(btn, msgEl.dataset.mid, msgEl.dataset.pin);
+  else if(action === 'ctx-pin') togglePin(btn, btn.dataset.mid, btn.dataset.pin);
+  else if(action === 'unpin' && msgEl) unpinFromEvidence(msgEl);
+});
+
+// A note saves when the box loses focus (only if it changed).
+document.addEventListener('focusout', async e => {
+  const box = e.target;
+  if(!box.classList || !box.classList.contains('note-box') || box.value === box.dataset.saved) return;
+  const msgEl = box.closest('.msg');
+  const status = msgEl.querySelector('.note-status');
+  const sending = box.value;
+  status.className = 'note-status';
+  status.textContent = 'saving…';
+  try{
+    await api('/cases/' + caseId + '/pins/' + msgEl.dataset.pin, {
+      method: 'PATCH', headers: JSON_HEADERS, body: JSON.stringify({note: sending}),
+    });
+    box.dataset.saved = sending;
+    status.textContent = 'saved';
+  }catch(err){
+    status.className = 'note-status err';
+    status.textContent = 'not saved — ' + err.message;
+  }
+});
+
+/* ---------- Search tab ---------- */
+
+const PAGE = 50;
+const search = {q: '', sender: '', source: '', date: '', offset: 0, seq: 0, timer: null};
+
+function mountSearch(root){
+  root.innerHTML = `
+    <section data-label="Search messages">
+      <div class="field-row">
+        <input type="text" id="q" class="grow" placeholder="Search this case's messages…" aria-label="Search text" autocomplete="off">
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <select id="fSender" aria-label="Sender"><option value="">Anyone</option>${
+          state.senders.map(s => `<option value="${esc(s.name)}">${esc(s.name)} (${s.message_count})</option>`).join('')
+        }</select>
+        <select id="fSource" aria-label="Source"><option value="">All sources</option>${
+          state.sources.filter(s => s.status === 'ready').map(s => `<option value="${s.id}">${esc(s.label)}</option>`).join('')
+        }</select>
+        <input type="date" id="fDate" aria-label="Date">
+        <button class="secondary" id="clearBtn">Clear</button>
+      </div>
+      <div class="hint">every word must match · "quote" for an exact phrase · not case-sensitive</div>
+    </section>
+    <div id="results"></div>`;
+
+  const qEl = root.querySelector('#q');
+  qEl.value = search.q;
+  root.querySelector('#fSender').value = search.sender;
+  root.querySelector('#fSource').value = search.source;
+  root.querySelector('#fDate').value = search.date;
+
+  const run = () => {
+    search.q = qEl.value.trim();
+    search.sender = root.querySelector('#fSender').value;
+    search.source = root.querySelector('#fSource').value;
+    search.date = root.querySelector('#fDate').value;
+    search.offset = 0;
+    runSearch(false);
+  };
+  qEl.addEventListener('input', () => { clearTimeout(search.timer); search.timer = setTimeout(run, 300); });
+  qEl.addEventListener('keydown', e => { if(e.key === 'Enter'){ clearTimeout(search.timer); run(); } });
+  ['#fSender', '#fSource', '#fDate'].forEach(sel => root.querySelector(sel).addEventListener('change', run));
+  root.querySelector('#clearBtn').addEventListener('click', () => {
+    qEl.value = '';
+    root.querySelector('#fSender').value = '';
+    root.querySelector('#fSource').value = '';
+    root.querySelector('#fDate').value = '';
+    run();
+  });
+  qEl.focus();
+  runSearch(false);
+}
+
+async function runSearch(append){
+  const results = document.getElementById('results');
+  if(!results) return;
+  const total = state.sources.reduce((n, s) => n + (s.message_count || 0), 0);
+  const filtering = search.q || search.sender || search.source || search.date;
+  if(!filtering){
+    ++search.seq;   // cancel any in-flight search
+    results.innerHTML = `<div class="empty-note">Search ${total} messages across this case's sources — or filter by person, source or date.</div>`;
+    return;
+  }
+
+  const mySeq = ++search.seq;
+  const params = new URLSearchParams({limit: PAGE, offset: search.offset});
+  if(search.q) params.set('q', search.q);
+  if(search.sender) params.set('sender', search.sender);
+  if(search.source) params.set('source_id', search.source);
+  if(search.date) params.set('date', search.date);
+
+  try{
+    const data = await api('/cases/' + caseId + '/messages?' + params);
+    if(mySeq !== search.seq) return;   // a newer search superseded this one
+    const shown = data.offset + data.results.length;
+    const rows = data.results.map(m => renderMessage(m)).join('');
+    const more = shown < data.total
+      ? `<div style="text-align:center; margin-top:10px;"><button class="secondary" id="moreBtn">Load more (${data.total - shown} left)</button></div>` : '';
+    const summary = data.total === 0 ? 'No messages match.'
+      : `${data.total} message${data.total === 1 ? '' : 's'} match${data.total === 1 ? 'es' : ''} — showing ${shown}`;
+
+    if(append){
+      results.querySelector('#rows').insertAdjacentHTML('beforeend', rows);
+      results.querySelector('.result-line').textContent = summary;
+    } else {
+      results.innerHTML = `<div class="result-line">${esc(summary)}</div><div id="rows">${rows}</div><div id="moreWrap"></div>`;
+    }
+    results.querySelector('#moreWrap').innerHTML = more;
+    const moreBtn = results.querySelector('#moreBtn');
+    if(moreBtn) moreBtn.addEventListener('click', () => { search.offset = shown; runSearch(true); });
+  }catch(err){
+    if(mySeq === search.seq) results.innerHTML = '<div class="error-note">' + esc(err.message) + '</div>';
+  }
+}
+
+/* ---------- Timeline tab ---------- */
+
+const MOOD_LABEL = {n3: 'strongly negative', n2: 'negative', n1: 'slightly negative', z: 'neutral',
+                    p1: 'slightly positive', p2: 'positive', p3: 'strongly positive'};
+const MOOD_RANGE = {n3: '-0.40 or lower', n2: '-0.40 to -0.20', n1: '-0.20 to -0.05', z: '-0.05 to +0.05',
+                    p1: '+0.05 to +0.20', p2: '+0.20 to +0.40', p3: '+0.40 or higher'};
+
+// compound (P(positive) - P(negative), -1..1): +-0.05 is the conventional neutral band; the outer steps
+// are equal-width so each arm of the diverging scale carries the same weight.
+function moodBin(v){
+  const a = Math.abs(v);
+  if(a < 0.05) return 'z';
+  return (v > 0 ? 'p' : 'n') + (a < 0.2 ? 1 : a < 0.4 ? 2 : 3);
+}
+function fmtMood(v){ return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2); }
+
+// 'YYYY-MM-DD' -> local Date (new Date('YYYY-MM-DD') would be UTC and can
+// land on the previous day when displayed).
+function parseDay(str){ const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); }
+function dayKey(d){
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function allDays(first, last){
+  const out = [];
+  for(const d = parseDay(first), end = parseDay(last); d <= end; d.setDate(d.getDate() + 1)) out.push(dayKey(d));
+  return out;
+}
+function fmtDayKey(key, opts){ return parseDay(key).toLocaleDateString(undefined, opts || {month: 'short', day: 'numeric', year: 'numeric'}); }
+
+const tl = {data: null, byDate: {}, days: [], geo: null, selected: null};
+
+async function mountTimeline(root){
+  root.innerHTML = '<div class="empty-note">Loading…</div>';
+  let data;
+  try{ data = await api('/cases/' + caseId + '/timeline'); }
+  catch(err){ root.innerHTML = '<div class="error-note">' + esc(err.message) + '</div>'; return; }
+
+  const undated = data.undated_count
+    ? ` ${data.undated_count} message${data.undated_count === 1 ? ' has' : 's have'} no readable timestamp and can't be placed on a day.` : '';
+  if(!data.days.length){
+    root.innerHTML = '<div class="empty-note">No dated messages in this case yet.' + esc(undated) + '</div>';
+    return;
+  }
+  tl.data = data;
+  tl.selected = null;
+  tl.byDate = Object.fromEntries(data.days.map(d => [d.date, d]));
+  tl.days = allDays(data.days[0].date, data.days[data.days.length - 1].date);
+
+  const legend = ['n3', 'n2', 'n1', 'z', 'p1', 'p2', 'p3']
+    .map(b => `<span class="sw c-${b}" title="${MOOD_LABEL[b]} (${MOOD_RANGE[b]})"></span>`).join('');
+  root.innerHTML = `
+    <section data-label="Activity &amp; mood by day">
+      <div class="tl-legend">
+        <span>negative</span>${legend}<span>positive</span>
+        <span class="sep"></span><span class="sw none"></span><span>no messages</span>
+      </div>
+      <div class="tl-scroll" id="tlScroll"></div>
+      <div class="hint">bars: messages per day, everyone · cells: each person's average sentiment that day (an English + Hinglish sentiment model — reads wording, not sarcasm or subtext) · click a day or cell to read its messages${esc(undated)}</div>
+      <details class="tl-table"><summary>Table view</summary><div class="tl-table-wrap" id="tlTable"></div></details>
+    </section>
+    <div id="dayView"></div>`;
+  drawTimeline(root);
+  renderTimelineTable();
+}
+
+function drawTimeline(root){
+  const data = tl.data, days = tl.days, people = data.people;
+  const LEFT = 96, BAR_H = 64, TOP = 20, ROW_H = 24, ROW_GAP = 2, GRID_GAP = 16, AXIS_H = 34;
+  const avail = Math.max(320, (root.querySelector('#tlScroll').clientWidth || 700) - LEFT - 8);
+  const cw = Math.max(26, Math.min(96, Math.floor(avail / days.length)));
+  const barBase = TOP + BAR_H, gridTop = barBase + GRID_GAP;
+  const gridBottom = gridTop + people.length * (ROW_H + ROW_GAP);
+  const width = LEFT + days.length * cw + 8, height = gridBottom + AXIS_H;
+  const maxTotal = Math.max(...data.days.map(d => d.total));
+  tl.geo = {LEFT, cw, TOP, gridTop, gridBottom, ROW_H, ROW_GAP};
+
+  let bars = '', cells = '', hits = '', labels = '', lastMonth = -1;
+  const step = Math.max(1, Math.ceil(44 / cw));
+  days.forEach((key, i) => {
+    const x = LEFT + i * cw, d = tl.byDate[key];
+    if(d){
+      const h = Math.max(2, Math.round(d.total / maxTotal * BAR_H)), r = Math.min(4, h, (cw - 2) / 2), w = cw - 2, bx = x + 1, by = barBase - h;
+      bars += `<path class="bar" d="M${bx},${barBase} V${by + r} Q${bx},${by} ${bx + r},${by} H${bx + w - r} Q${bx + w},${by} ${bx + w},${by + r} V${barBase} Z"/>`;
+      if(d.total === maxTotal) bars += `<text class="peak" x="${x + cw / 2}" y="${by - 5}" text-anchor="middle">${d.total}</text>`;
+    }
+    people.forEach((name, row) => {
+      const y = gridTop + row * (ROW_H + ROW_GAP), c = d && d.people[name];
+      cells += c
+        ? `<rect class="cell c-${moodBin(c.mood)}" data-day="${key}" data-person="${esc(name)}" x="${x + 1}" y="${y}" width="${cw - 2}" height="${ROW_H}" rx="2"/>`
+        : `<rect class="cell-empty" x="${x + 1.5}" y="${y + 0.5}" width="${cw - 3}" height="${ROW_H - 1}" rx="2"/>`;
+    });
+    const label = d ? `${fmtDayKey(key)}: ${d.total} messages` : `${fmtDayKey(key)}: no messages`;
+    hits += `<rect class="hit-col" data-day="${key}" tabindex="0" role="button" aria-label="${esc(label)}" x="${x}" y="${TOP - 4}" width="${cw}" height="${gridBottom - TOP + 4}"/>`;
+    if(i % step === 0){
+      const dt = parseDay(key), newMonth = dt.getMonth() !== lastMonth;
+      lastMonth = dt.getMonth();
+      labels += `<text x="${x + cw / 2}" y="${gridBottom + 14}" text-anchor="middle">${newMonth ? fmtDayKey(key, {month: 'short', day: 'numeric'}) : dt.getDate()}</text>`;
+      if(cw >= 34) labels += `<text x="${x + cw / 2}" y="${gridBottom + 27}" text-anchor="middle">${dt.toLocaleDateString(undefined, {weekday: 'short'})}</text>`;
+    }
+  });
+  const names = people.map((name, row) => {
+    const y = gridTop + row * (ROW_H + ROW_GAP) + ROW_H / 2 + 4;
+    return `<text class="name" x="${LEFT - 8}" y="${y}" text-anchor="end">${esc(name.length > 12 ? name.slice(0, 11) + '…' : name)}<title>${esc(name)}</title></text>`;
+  }).join('');
+  const axis = `<line x1="${LEFT}" x2="${width - 8}" y1="${barBase + 0.5}" y2="${barBase + 0.5}" stroke="#2E3340"/>`
+             + `<text x="${LEFT - 8}" y="${barBase}" text-anchor="end">messages</text>`;
+
+  root.querySelector('#tlScroll').innerHTML =
+    `<svg id="tlSvg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Messages and average sentiment per person per day">`
+    + hits + axis + bars + names + cells + labels
+    + `<rect id="tlSelCol" class="sel" style="display:none" rx="3"/><rect id="tlSelCell" class="sel" style="display:none" rx="2"/></svg>`;
+  attachTimelineEvents(root.querySelector('#tlScroll'));
+}
+
+let tlTip = null;
+function ensureTip(){
+  if(!tlTip){
+    tlTip = document.createElement('div');
+    tlTip.className = 'tl-tip';
+    tlTip.hidden = true;
+    document.body.appendChild(tlTip);
+  }
+  return tlTip;
+}
+
+// Tooltip DOM is built with textContent only: person names come from an export.
+function showTip(key, clientX, clientY){
+  const tip = ensureTip(), d = tl.byDate[key];
+  tip.replaceChildren();
+  const head = document.createElement('div');
+  head.className = 'tip-head';
+  head.textContent = fmtDayKey(key, {weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'})
+    + ' — ' + (d ? d.total : 0) + (d && d.total === 1 ? ' message' : ' messages');
+  tip.appendChild(head);
+  if(d){
+    tl.data.people.forEach(name => {
+      const c = d.people[name];
+      if(!c) return;
+      const row = document.createElement('div'), sw = document.createElement('span');
+      const nm = document.createElement('span'), val = document.createElement('span');
+      row.className = 'tip-row';
+      sw.className = 'sw c-' + moodBin(c.mood);
+      nm.className = 'tip-name';
+      nm.textContent = name;
+      val.className = 'tip-val';
+      val.textContent = c.count + ' msg · ' + fmtMood(c.mood) + ' ' + MOOD_LABEL[moodBin(c.mood)];
+      row.append(sw, nm, val);
+      tip.appendChild(row);
+    });
+  }
+  tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(clientX + 14, window.innerWidth - w - 8)) + 'px';
+  tip.style.top = Math.max(8, Math.min(clientY + 14, window.innerHeight - h - 8)) + 'px';
+}
+function hideTip(){ if(tlTip) tlTip.hidden = true; }
+
+function updateSelection(){
+  const col = document.getElementById('tlSelCol'), cell = document.getElementById('tlSelCell');
+  if(!col) return;
+  const sel = tl.selected;
+  // SVG elements ignore the HTML `hidden` attribute, so toggle display directly.
+  col.style.display = cell.style.display = 'none';
+  if(!sel) return;
+  const g = tl.geo, i = tl.days.indexOf(sel.day);
+  col.setAttribute('x', g.LEFT + i * g.cw + 0.5);
+  col.setAttribute('y', g.TOP - 3);
+  col.setAttribute('width', g.cw - 1);
+  col.setAttribute('height', g.gridBottom - g.TOP + 3);
+  col.style.display = '';
+  const row = tl.data.people.indexOf(sel.person);
+  if(row >= 0){
+    cell.setAttribute('x', g.LEFT + i * g.cw + 0.5);
+    cell.setAttribute('y', g.gridTop + row * (g.ROW_H + g.ROW_GAP) - 1);
+    cell.setAttribute('width', g.cw - 1);
+    cell.setAttribute('height', g.ROW_H + 2);
+    cell.style.display = '';
+  }
+}
+
+async function showDay(day, person){
+  tl.selected = {day, person};
+  updateSelection();
+  const box = document.getElementById('dayView');
+  box.innerHTML = '<div class="empty-note">Loading…</div>';
+  const params = new URLSearchParams({date: day, limit: 200});
+  if(person) params.set('sender', person);
+  try{
+    const data = await api('/cases/' + caseId + '/messages?' + params);
+    if(!tl.selected || tl.selected.day !== day || tl.selected.person !== person) return;   // superseded
+    const title = fmtDayKey(day, {weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'}) + (person ? ' — ' + person : '');
+    const count = data.total + ' message' + (data.total === 1 ? '' : 's')
+      + (data.total > data.results.length ? ' (showing the first ' + data.results.length + ')' : '');
+    box.innerHTML = `<div class="day-head"><span class="result-line">${esc(title)} · ${esc(count)}</span><button class="btn-mini" id="clearDay">clear</button></div>`
+      + data.results.map(m => renderMessage(m)).join('');
+    box.querySelector('#clearDay').addEventListener('click', () => { tl.selected = null; updateSelection(); box.innerHTML = ''; });
+    box.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }catch(err){
+    box.innerHTML = '<div class="error-note">' + esc(err.message) + '</div>';
+  }
+}
+
+function attachTimelineEvents(scroll){
+  const target = e => e.target.closest('[data-day]');
+  scroll.addEventListener('pointermove', e => { const t = target(e); t ? showTip(t.dataset.day, e.clientX, e.clientY) : hideTip(); });
+  scroll.addEventListener('pointerleave', hideTip);
+  scroll.addEventListener('click', e => { const t = target(e); if(t) showDay(t.dataset.day, t.dataset.person || null); });
+  scroll.addEventListener('focusin', e => {
+    const t = target(e);
+    if(t){ const r = t.getBoundingClientRect(); showTip(t.dataset.day, r.left + r.width / 2, r.top); }
+  });
+  scroll.addEventListener('focusout', hideTip);
+  scroll.addEventListener('keydown', e => {
+    const t = target(e);
+    if(t && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); showDay(t.dataset.day, t.dataset.person || null); }
+  });
+}
+
+// The same numbers as the chart, as a table - so nothing depends on colour.
+function renderTimelineTable(){
+  const rows = [];
+  tl.data.days.forEach(d => Object.entries(d.people).forEach(([name, c]) => rows.push(
+    `<tr><td>${esc(fmtDayKey(d.date))}</td><td>${esc(name)}</td><td class="num">${c.count}</td>` +
+    `<td class="num">${esc(fmtMood(c.mood))}</td><td>${esc(MOOD_LABEL[moodBin(c.mood)])}</td></tr>`)));
+  document.getElementById('tlTable').innerHTML =
+    '<table class="tl"><thead><tr><th>Date</th><th>Person</th><th>Messages</th><th>Avg sentiment</th><th></th></tr></thead><tbody>'
+    + rows.join('') + '</tbody></table>';
+}
+
+/* ---------- Evidence tab ---------- */
+
+async function mountEvidence(root){
+  root.innerHTML = '<div class="empty-note">Loading…</div>';
+  try{
+    const pins = await api('/cases/' + caseId + '/pins');
+    state.pinCount = pins.length;
+    updateTabCounts();
+    if(!pins.length){
+      root.innerHTML = '<div class="empty-note">Nothing pinned yet — pin messages from Search or the Timeline, or open a message\'s context and pin its neighbours.</div>';
+      return;
+    }
+    root.innerHTML =
+      `<div class="result-line">${pins.length} pinned message${pins.length === 1 ? '' : 's'} — in the order they were sent</div>` +
+      `<div id="evRows">${pins.map(p => renderMessage(p, {evidence: true})).join('')}</div>`;
+    root.querySelectorAll('.note-box').forEach(box => { box.dataset.saved = box.value; });
+  }catch(err){
+    root.innerHTML = '<div class="error-note">' + esc(err.message) + '</div>';
+  }
+}
+
+/* ---------- tabs + page shell ---------- */
+
+const TABS = [
+  {id: 'search', label: 'Search', mount: mountSearch},
+  {id: 'timeline', label: 'Timeline', mount: mountTimeline},
+  {id: 'evidence', label: 'Evidence', mount: mountEvidence, badge: () => state.pinCount},
+];
+
+function updateTabCounts(){
+  TABS.forEach(t => {
+    const el = t.badge && document.querySelector('[data-badge="' + t.id + '"]');
+    if(el) el.textContent = t.badge() > 0 ? t.badge() : '';
+  });
+}
+
+function showTab(id){
+  const tab = TABS.find(t => t.id === id) || TABS[0];
+  document.querySelectorAll('.tab').forEach(b => {
+    const on = b.dataset.tab === tab.id;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on);
+  });
+  if(location.hash !== '#' + tab.id) history.replaceState(null, '', '#' + tab.id);
+  tab.mount(document.getElementById('tabBody'));
+}
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML = TABS.map(t =>
+    `<button class="tab" role="tab" data-tab="${t.id}">${esc(t.label)}${t.badge ? `<span class="count" data-badge="${t.id}"></span>` : ''}</button>`).join('');
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+}
+
+function renderSourceStrip(){
+  const el = document.getElementById('sourceStrip');
+  const chips = state.sources.map(s => {
+    const span = s.first_at
+      ? fmtDay(s.first_at) + (fmtDay(s.last_at) !== fmtDay(s.first_at) ? ' – ' + fmtDay(s.last_at) : '')
+      : 'undated';
+    const status = s.status === 'ready' ? `${s.message_count} msgs` : s.status;
+    return `<span class="chip ${s.date_note ? 'warn' : ''}">${esc(s.label)} · ${esc(status)} · ${esc(span)}</span>`;
+  }).join('');
+  const notes = state.sources.filter(s => s.date_note)
+    .map(s => `<div><b>${esc(s.label)}:</b> ${esc(s.date_note)}</div>`).join('');
+  el.innerHTML = chips + (notes ? `<div class="source-notes">${notes}</div>` : '');
+}
+
+(async function init(){
+  if(!caseId){
+    document.getElementById('tabBody').innerHTML = '<div class="error-note">No case selected — open a case from the case list.</div>';
+    return;
+  }
+  document.getElementById('backLink').href = 'cases.html?case=' + encodeURIComponent(caseId);
+  try{
+    const [c, sources, senders] = await Promise.all([
+      api('/cases/' + caseId),
+      api('/cases/' + caseId + '/sources'),
+      api('/cases/' + caseId + '/senders'),
+    ]);
+    state.sources = sources;
+    state.senders = senders;
+    document.getElementById('caseName').textContent = c.name;
+    document.getElementById('caseMeta').textContent =
+      senders.length + ' people · ' + sources.reduce((n, s) => n + (s.message_count || 0), 0) +
+      ' messages · ' + sources.length + ' sources';
+    renderSourceStrip();
+    renderTabs();
+    refreshPinCount();
+    showTab(location.hash.slice(1));
+    window.addEventListener('hashchange', () => showTab(location.hash.slice(1)));
+  }catch(err){
+    document.getElementById('tabBody').innerHTML = '<div class="error-note">' + esc(err.message) + '</div>';
+  }
+})();
+</script>
+</body>
+</html>
