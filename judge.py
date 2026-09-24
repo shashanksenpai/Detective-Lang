@@ -95,6 +95,9 @@ class GeminiJudge:
     """Placeholder for the Gemini-backed semantic judge (see the module docstring)."""
 
     name = "gemini"
+    # Flip to True only when judge() really calls the API. The status bar reads this so that
+    # "configured" is never mistaken for "working" while this is still a placeholder.
+    implemented = False
     ENV_KEY = "GEMINI_API_KEY"                  # the variable the google-genai SDK reads by default
     ENV_MODEL = "DETECTIVE_GEMINI_MODEL"        # no default: model IDs change, pick one deliberately
     ENV_CONSENT = "DETECTIVE_ALLOW_EXTERNAL_LLM"  # must be "1": the compared statements go to Google

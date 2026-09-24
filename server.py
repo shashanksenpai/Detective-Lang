@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlmodel import Session, select
 
 import engine_cache
@@ -29,6 +29,7 @@ from ingestion import backfill_message_kinds, backfill_timestamps, recover_stran
 from models import BoardLayout, Case, Identifier, MergeSuggestion, Message, Person, PersonCase, Source
 from parsers import PARSERS
 from seed_demo_case import seed_demo_case_if_needed
+from status import system_status
 from ui_static import UIStaticFiles
 
 UPLOAD_DIR = "uploads"
@@ -95,9 +96,20 @@ def create_case(req: CaseCreate, session: Session = Depends(get_session)):
     return case
 
 
+@app.get("/status")
+def get_system_status(session: Session = Depends(get_session)):
+    """Live state for the workstation bar: sentiment engine, external-LLM switch, counts."""
+    return system_status(session)
+
+
 @app.get("/cases")
 def list_cases(session: Session = Depends(get_session)):
     cases = session.exec(select(Case).order_by(Case.created_at)).all()
+    message_counts = dict(session.exec(
+        select(Source.case_id, func.count(Message.id))
+        .join(Message, Message.source_id == Source.id)
+        .group_by(Source.case_id)
+    ).all())
     summaries = []
     for case in cases:
         sources = session.exec(select(Source).where(Source.case_id == case.id)).all()
@@ -107,6 +119,7 @@ def list_cases(session: Session = Depends(get_session)):
             "description": case.description,
             "created_at": case.created_at,
             "source_count": len(sources),
+            "message_count": message_counts.get(case.id, 0),
             "ready_source_count": sum(1 for s in sources if s.status == "ready"),
             "importing_source_count": sum(1 for s in sources if s.status in ("pending", "processing")),
             "failed_source_count": sum(1 for s in sources if s.status == "failed"),
