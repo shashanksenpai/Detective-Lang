@@ -294,6 +294,33 @@ Hinglish (2 sentences are marked `xfail` in `test_hinglish_sentiment.py`; on the
 toh chha gaya"); (4) Devanagari script and sarcasm are not handled; (5) training data licences: SentiMix OpenRAIL, YouTube
 CC-BY-4.0, the English tweets' licence is unstated - fine for local use, check before redistributing the model file.
 
+**Learned attribution engine** (BACKLOG A-1, 2026-09-24) - the default engine for "who said this?". Trigger: on the Paper Leak the
+owner's sentence "Dont worry guys I'll pay" (Yash's habitual line) came back uncertain with Yash 2nd, because the legacy engine's category
+signal had no word for "pay"/"worry" (weight 0.0), its tone/style signals don't separate three bro-slang writers, and nine speakers can
+never clear its 35% / 8-point thresholds. `learned_engine.py` (`LearnedEngine`, scikit-learn only, no embedding model): word 1-2-grams +
+char 2-5-grams (TF-IDF, apostrophes kept inside tokens) -> one multinomial logistic regression, `class_weight="balanced"`, retrained per
+case; **calibrated on cross-validated predictions of the case's own messages** (temperature scaling, bounded 0.5-4); it says **uncertain**
+below the lowest confidence whose held-out precision was >= 80% *at the pessimistic end* (Wilson lower bound), reached by >= 20 checks and
+10% of them, never below 50%, and **never commits with fewer than ~250 checks** (`MIN_CHECKED_TO_COMMIT`; on the nine-person case the
+calibrated cut-off met its target from ~270 training messages and fell short below - 74% at 180). Returns the same shape as the legacy
+engine plus `engine`, `plausible_senders` (the fewest people covering 90%), `calibration`, `notes` and `evidence`: an **exact**
+decomposition of the log-odds top-vs-runner-up into per-word (its weight + the letter patterns inside it) and per-phrase contributions
+and the model's starting lean - `test_learned_engine.py` checks they sum to the log-odds. A message with no known word or letter pattern
+gets the base rate and a note (a linear model's output there would be just its intercepts). It ignores `context` and says so (A-2).
+`engine_kind.py` holds `ENGINE_KINDS`, `DEFAULT_ENGINE = "learned"` and `default_engine_kind()` (`DETECTIVE_ENGINE=legacy` switches; a typo is
+a `ValueError`, not a silent fallback); `engine_cache.get_attributor(case_id, kind)` builds/caches per (case, kind) and `invalidate`
+clears both; `POST /cases/{id}/investigate` takes an optional `engine`; `/status` reports `attribution.engine`; `detective_lang.html` has a
+Learned / Legacy toggle and renders the "could be" list, the reliability line, the evidence table (all through `esc()`) - the legacy
+engine, the graph and the dossiers are unchanged (`get_engine` is still the legacy engine's profiles).
+*Measured* (`python eval_attribution.py --engine both`, 5 splits, legacy -> learned top-1): Study Group 40.0 -> 61.1, Housemates
+59.0 -> 67.6 (gain under one sd), Paper Leak 49.6 -> 73.5 (top-3 83.7 -> 96.1, log-loss 1.82 -> 0.79, paired 60 vs 230); on Paper Leak it commits
+on 71% of messages and is right 82.2%; on the two 3-person demos it never commits (too little chat). `--transfer` (train group, test DMs):
+55.8% (legacy 35.7%) but it commits on 55% and is right only 69% - confidence does not transfer across contexts (A-3). `--curve`: 46 /
+56 / 60 / 68 / 73% at 5 / 10 / 20 / 40 / 80 messages per person. Tried and dropped: normalising apostrophes/case in the word features,
+appended sentence embeddings, "behaviour prototype" features (A-7). **Everything is synthetic; nothing is validated on a real chat
+(A-5).** Tests: `test_learned_engine.py`, `test_eval_metrics.py`, `test_investigate_route.py`, 2 in `test_ui_pages.py` - 420 passed +
+2 xfailed with the model (393 passed, 29 skipped without it), 16 mutations each caught. Checked in a browser, including a hostile export.
+
 **Improvement Stage** (in progress) - before more features, measuring and fixing accuracy problems
 found through real testing rather than guessing:
 
@@ -328,11 +355,9 @@ found through real testing rather than guessing:
     threshold-tuned to fit this one 6-person fixture, which would just be overfitting) until real
     usage provides meaningfully more messages per person - re-run `eval_identity.py` before ever
     re-enabling it
-- Deferred, in order: (1) fit the six attribution signal weights against labeled held-out data via
-  `eval_attribution.py`, once there's enough real data to do that without overfitting a handful of
-  people; (2) replace `syntactic_features()`'s hand-rolled word-list heuristics with a real POS
-  tagger (spaCy) - the one place a genuinely new dependency looks like a clear win, worth confirming
-  against the eval harness rather than assuming
+- Deferred, in order: (1) *superseded for attribution by the learned engine above* - fitting the six hand-set signal weights of the
+  legacy engine (`detective.py`) is no longer needed for the default path; (2) replace `syntactic_features()`'s hand-rolled word-list
+  heuristics with a real POS tagger (spaCy) - now only relevant to the legacy engine, so low priority (BACKLOG F-17)
 
 ## Roadmap
 
@@ -464,7 +489,11 @@ D3.js (`investigation_board.html`, via CDN) is the one external JS library in th
 force-directed graph layout is a well-solved problem, not worth hand-rolling.
 
 ## Reference files in this repo
-- `detective.py` — attribution engine (6-signal scoring, softmax ranking, dynamic trust-based
+- `learned_engine.py` — the default attribution engine (see "Learned attribution engine"): word+char n-gram logistic regression,
+  cross-validated calibration, abstention, exact evidence; `engine_kind.py` — which engine answers (`DETECTIVE_ENGINE`, default learned;
+  light, no ML imports); `eval_metrics.py` — the eval's scoring rules (top-k, log-loss, "could be" set, abstention curve, paired flips;
+  light); tests `test_learned_engine.py`, `test_eval_metrics.py`, `test_investigate_route.py`
+- `detective.py` — the original attribution engine, still selectable (6-signal scoring, softmax ranking, dynamic trust-based
   weight redistribution); re-exports `parse_whatsapp` from `parsers/whatsapp.py` for backward
   compat; `embed_texts` is the public accessor other modules (identity_resolution.py) reuse
 - `person_profile.py` — case-scoped person-dossier aggregation (sentiment, Big Five estimate,
@@ -476,7 +505,7 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   `score_pair`) that produces `MergeSuggestion` rows; never merges anything itself. Soft tier
   (`stylometric_fingerprint`, `person_centroid`) computed for evidence but disabled from gating a
   suggestion - see Improvement Stage notes above
-- `eval_attribution.py` — eval harness for the attribution engine: per-case train/test splits (5 by default),
+- `eval_attribution.py` — eval harness for the attribution engines (`--engine legacy|learned|both`, `--transfer`, `--curve`): per-case train/test splits (5 by default),
   reports accuracy/coverage/precision as mean +- sd. Run after any change to signals/weights/thresholds
 - `eval_split.py` — its light (no ML/DB imports) per-sender split + `summarize`; `test_eval_split.py` pins it
 - `eval_identity.py` — self-contained regression fixture for identity resolution's soft tier,
@@ -496,7 +525,8 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
   case-scoped exact-name person resolution; triggers `identity_resolution.scan_for_matches` after a
   successful ingest (best-effort - a matching failure doesn't undo the ingestion). Phase 5: stores
   timestamps + `Source.date_note`; `backfill_timestamps()` and `recover_stranded_sources()` run at startup
-- `engine_cache.py` — lazy per-case `DetectiveEngine`/profile/timeline building + cache invalidation
+- `engine_cache.py` — lazy per-case `DetectiveEngine`/profile/timeline building + cache invalidation; `new_engine(kind)` and
+  `get_attributor(case_id, kind)` for the switchable attribution engine (`get_engine` stays the legacy engine the graph/dossiers use)
 - `seed_demo_case.py` — seeds all four demo cases from the sample files through the real ingestion
   path; each checked/created independently by name so a new demo case can be added without wiping
   an existing install's database
@@ -543,7 +573,8 @@ force-directed graph layout is a well-solved problem, not worth hand-rolling.
 - `sample_leak_group.txt` / `sample_leak_dm_*.txt` — synthetic WhatsApp exports for "Demo: The Paper Leak"
   (nine people, ~730 messages); `sample_leak_case_key.json` — its machine-readable answer key (planted
   contradictions, corroborating conduct, decoys); `test_leak_case.py` — checks the key against the chats
-- `detective_lang.html` — query-driven investigate UX, scoped to `?case_id=`
+- `detective_lang.html` — query-driven investigate UX, scoped to `?case_id=`; Learned / Legacy toggle, "could be" list, reliability line,
+  evidence table (learned) or six-signal table (legacy)
 - `person.html` — per-person dossier page, scoped to `?case_id=`; shows a banner linking to the
   combined dossier once a person has been merged across cases
 - `merge_review.html` — pending cross-case match review: evidence + accept/reject

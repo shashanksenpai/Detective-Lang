@@ -36,7 +36,7 @@ It is a working prototype that runs entirely on your own machine. It understands
 |---|---|---|
 | **Cases** | Isolated investigations. Each case has its own uploaded sources and its own pool of people; nothing leaks between cases unless you explicitly link people. | `cases.html` |
 | **Multi-platform import** | WhatsApp `.txt`, Instagram JSON ("Download Your Information") and Telegram Desktop JSON exports. Imports run in the background with a visible `pending → processing → ready / failed` status. A bad file fails loudly; it never yields a silent empty result. | `cases.html` |
-| **"Who said this?"** | Paste a sentence (optionally with the messages just before it) and get a ranked list of candidate speakers, a confidence for each, and the six signal scores behind every number. | `detective_lang.html` |
+| **"Who said this?"** | Paste a sentence and get a ranked list of candidate speakers with a calibrated confidence for each, a "could be" set when it can't commit, and the evidence behind the ranking. The default **learned engine** learns each person's wording from their own messages and says "uncertain" when its own held-out checks say it can't be trusted; the original six-signal engine is one click away. | `detective_lang.html` |
 | **Honest uncertainty** | If the top candidate is below 35% confidence, or ahead of the runner-up by less than 8 points, the result is flagged `uncertain` instead of forcing a pick. | `detective_lang.html` |
 | **Person dossier** | Sentiment level and volatility, distinctive words and phrases, question/command rates, topic mix, a heuristic Big Five *writing-style* estimate, and a **group-vs-DM comparison** that surfaces context-dependent behaviour. | `person.html` |
 | **Cross-case identity resolution** | The same person under a phone number in one chat and a name in another, or "Karan" vs "Karan Mehta", is *suggested* as a match with the evidence shown. Nothing merges until you accept it. | `merge_review.html` |
@@ -122,6 +122,32 @@ Ingestion (`ingestion.py`) runs on an in-process `ThreadPoolExecutor`, so the up
 
 ### The attribution engine
 
+Two engines answer "who said this?". The **learned engine** is the default; the original **six-signal engine** stays selectable (the *Engine* toggle on the investigate page, `engine` in the API request, or `DETECTIVE_ENGINE=legacy`). The relationship board and the dossiers do not depend on the choice.
+
+#### The learned engine (default)
+
+[`learned_engine.py`](learned_engine.py) learns each person's texting behaviour from their own messages instead of blending hand-weighted similarities. It exists because the six-signal engine could not name Yash for *"Dont worry guys I'll pay"* (his habitual reassure-and-pay line) on the Paper Leak case: its topic-family signal had no word for "pay" or "worry" and switched itself off, the tone and style signals cannot tell three bro-slang writers apart, and it never commits with nine speakers.
+
+- **Features.** Word 1-2-grams and character 2-5-grams (TF-IDF), so a person's wording, spelling habits, slang and emoji all count and "dont" and "don't" share most of their letter patterns. No embedding model is needed.
+- **Model.** One multinomial logistic regression per case, retrained when a source is imported, with every person weighted equally so a talkative person does not win ties by volume.
+- **Honest confidence.** Probabilities are calibrated on cross-validated predictions of *this case's own messages* (each is predicted by a model that never saw it). The engine says **uncertain** below the confidence at which those held-out checks were right at least **80%** of the time, judged at the pessimistic end of what that many checks can show (a Wilson lower bound), never below 50%, and it will not commit at all with fewer than about 250 checks to learn from. Every answer also carries a **"could be" set** (the fewest people covering 90% of the probability) and the calibration it rests on ("when it was at least 57% sure it was right 82% of the time, and it was that sure for 72% of messages").
+- **Exact evidence.** A score is a sum of per-feature contributions, so the explanation is not a story. For the top match over the runner-up, each word (its own weight plus the spelling patterns inside it) and each two-word phrase gets a signed log-odds contribution; together with the model's starting lean they add up exactly to the odds shown, and anything too small to list is folded into "everything else" (`test_learned_engine.py` checks the sum).
+- **What it does not do yet.** It reads only the sentence: the messages just before it are accepted and reported as unused. A person's group voice does not fully carry into their DMs, and its confidence describes messages *like those in the chat*. See [Measured results](#measured-results-and-limitations).
+
+A real response from the Paper Leak demo (trained on all 725 messages; nine candidates):
+
+```
+sentence: "Dont worry guys I'll pay"       engine: learned      uncertain: false
+  Yash 94.7%   Parth 4.4%   Kritika 0.4%   Tanvi 0.3%   ...
+why Yash over Parth (log-odds):  worry +1.8  guys +1.7  i'll +0.6  dont +0.1  starting lean +0.9
+                                 "pay" -1.9 (points to Parth)  "i'll pay" -0.2      total +3.1  (22 : 1)
+calibration: commits at >= 57% confidence; held-out checks there were right 82% of the time, for 72% of messages
+```
+
+The six-signal engine on the same sentence: *uncertain*, Parth 16.6%, Yash 13.9%.
+
+#### The original six-signal engine
+
 [`detective.py`](detective.py) scores every candidate speaker on **six signals**, blends them, and converts the blend to confidences.
 
 For each sender the engine builds a profile from that sender's messages. For a query sentence it compares the sentence against each profile:
@@ -155,7 +181,7 @@ weights_used: topic .312 · style .150 · emotion .163 · category .250 · synta
 
 The top pick leads by only 6.4 points, under the 8-point margin, so the engine declines to commit. Note how `discourse` was zeroed and its weight moved to the other signals.
 
-**What is not fitted.** The six weights and both thresholds are hand-chosen. Fitting them against labeled held-out data is the top deferred accuracy item, and the numbers below show why it matters.
+**What is not fitted.** The six weights and both thresholds are hand-chosen (the learned engine above is what replaced fitting them). The numbers below show why that mattered.
 
 ### Hinglish sentiment
 
@@ -253,24 +279,30 @@ The Paper Leak case is the stress test. Its nine speakers are written to be dist
 
 ## Measured results and limitations
 
-Reproduce the attribution numbers with `python eval_attribution.py`. For each case it holds out ~20% of every sender's messages, builds an engine on the rest, and reports top-1 accuracy (forced choice), **coverage** (how often the engine was willing to commit rather than say "uncertain") and **precision when it does commit**. It repeats this over **5 reproducible splits** (`--splits 1` is a quick single run) and reports **mean ± standard deviation**, because on a small case a single split can swing by several points. Each sender's split depends only on that sender, so unrelated changes to the data don't re-draw everyone else's test messages.
+Reproduce the attribution numbers with `python eval_attribution.py --engine both`. For each case it holds out ~20% of every sender's messages, builds each engine on the rest, and reports top-1 accuracy (forced choice), top-3, log-loss (how badly a wrong answer is believed), the "could be" set, **coverage** (how often the engine was willing to commit rather than say "uncertain") and **precision when it does commit**, plus a **paired** count of the messages only one engine got right. It repeats this over **5 reproducible splits** (`--splits 1` is a quick single run) and reports **mean ± standard deviation**, because on a small case a single split can swing by several points. Each sender's split depends only on that sender, so unrelated changes to the data don't re-draw everyone else's test messages. `--transfer` trains on the group chat only and tests on the DMs; `--curve` caps the training messages per person.
 
-| Case | Senders | Test msgs / split | Chance | Top-1, VADER fallback | Top-1, Hinglish model | Coverage (fallback / model) | Precision when confident (fallback / model) |
-|---|---:|---:|---:|---:|---:|---|---|
-| Study Group | 3 | 18 | 33% | 44.4% ± 13.6 | 40.0% ± 9.1 | 43% / 40% | 51.3% / 50.0% |
-| Housemates | 3 | 21 | 33% | 61.0% ± 8.5 | 59.0% ± 8.7 | 45% / 44% | 68.1% / 71.7% |
-| The Paper Leak | 9 | 142 | 11% | 51.7% ± 3.3 | 49.6% ± 2.1 | 0% / 0% | never committed |
+| Case | Senders | Test msgs / split | Chance | Legacy top-1 | **Learned top-1** | Top-3 (legacy → learned) | Log-loss (legacy → learned) | Only legacy right / only learned right | Learned commits |
+|---|---:|---:|---:|---:|---:|---|---|---|---|
+| Study Group | 3 | 18 | 33% | 40.0% ± 9.1 | **61.1% ± 8.8** | 100% → 100% | 1.04 → 0.96 | 8 / 27 | never (too little chat) |
+| Housemates | 3 | 21 | 33% | 59.0% ± 8.7 | **67.6% ± 7.8** | 100% → 100% | 0.94 → 0.82 | 18 / 27 | never (too little chat) |
+| The Paper Leak | 9 | 142 | 11% | 49.6% ± 2.1 | **73.5% ± 2.6** | 83.7% → 96.1% | 1.82 → 0.79 | 60 / 230 | 71% of messages, right **82.2%** (416/506) |
+
+(Legacy figures are with the Hinglish sentiment model; with the plain-VADER fallback they are 44.4 ± 13.6, 61.0 ± 8.5 and 51.7 ± 3.3. The legacy engine commits on 40%, 44% and 0% of messages, with 50%, 72% and no precision to report.)
 
 **How to read this honestly:**
 
-- **The engine is above chance on the larger cases, and not clearly so on the smallest.** On the nine-person Paper Leak (chance 11%) it gets about 50% and the spread is small (±2–3 points). On Housemates it is around 60% against 33%. On Study Group, with only 18 test messages per split, it scores 40–44% ± 9–14 against a 33% chance level, which is within about one standard deviation of guessing. It is not a reliable classifier anywhere: "precision when confident" is only 50–72% on the 3-person cases.
-- **The Hinglish model and the VADER fallback are indistinguishable here.** Their gaps (2–4 points) are all well inside one standard deviation, so nothing in this table says one attributes better than the other.
-- **The uncertainty thresholds (35% / 8 pts) were set for 3-person chats.** With nine speakers the softmax spreads out and the engine declines everything: it commits on none of the 142 test messages, with either scorer. That is honest behaviour, but it means the thresholds need refitting, and this is the strongest evidence for fitting the weights and thresholds against labeled data.
-- **Why the spread is reported.** An earlier version of the eval used a single split and shuffled every sender's messages with one shared random generator, so changing one sender's list could re-draw other senders' held-out messages. Dropping four media placeholders moved the Paper Leak figure from 44% to 47% (model) and from 47% to 54% (fallback) with no change to the engine; in a synthetic check that design re-drew another sender's held-out set for 12 of 19 list sizes. That is fixed (`E-1` in [`BACKLOG.md`](BACKLOG.md)), and the standard deviations above show how much a single split can wander.
-- Everything here is on **synthetic** chats. Nothing has been validated on real conversations.
+- **The learned engine is better on all three cases, clearly on two.** On the nine-person Paper Leak it goes from about 50% to about 74% top-1 (and 96% top-3), and of the 710 messages judged (142 × 5 splits) it alone got 230 right against 60 for the legacy engine. On Study Group the gain is about two standard deviations. On Housemates the gain (8.6 points) is under one standard deviation, though the paired count still leans to the learned engine, so treat it as "no worse, probably better". Its "could be" list is 2.7 of 9 people wide and holds the true sender 95.5% of the time; the legacy engine's 90% set is 7.9 of 9 people wide.
+- **It commits only when it has earned it.** On Paper Leak it commits on 71% of messages and is right 82.2% of the time, against an 80% target set from its own held-out checks. On the two three-person chats (about 100 messages each) it never commits: below about 250 messages to check itself against, the calibrated cut-off proved unreliable (on the Paper Leak, capping the training size gave 74% precision at 180 messages and 64% at 90, against the 80% target), so it ranks and shows probabilities but says "uncertain". That is a design choice, not a bug, and the 250 was measured on one case.
+- **It learns quickly.** Paper Leak top-1 by messages per person in training: 5 → 46%, 10 → 56%, 20 → 60%, 40 → 68%, 80 → 73% (chance 11%).
+- **A person's group voice only partly carries into their DMs.** Trained on the Paper Leak group chat and tested on the 249 DM messages: 55.8% top-1 (legacy 35.7%; always guessing the most frequent DM sender 29.7%). Its confidence does not transfer: it commits on 55% of them but is right only 69%, under its 80% target, because the calibration describes messages like those in the chat. By person it ranges from Meenakshi 19/22 and Yash 56/74 to Nikhil 1/19 and Sana 6/25. (In the app the model is trained on the DMs too; this is a stress test.) On the tiny Study Group the same test (31 DMs) scores 45.2%, below always guessing the majority (51.6%).
+- **The legacy engine's thresholds (35% / 8 pts) were set for 3-person chats.** With nine speakers the softmax spreads out and it declines everything: it commits on none of the 142 test messages, with either scorer. That is honest behaviour, but it is what the learned engine's per-case calibration replaces.
+- **Why the spread is reported.** An earlier version of the eval used a single split and shuffled every sender's messages with one shared random generator, so changing one sender's list could re-draw other senders' held-out messages. Dropping four media placeholders moved the Paper Leak figure from 44% to 47% (model) and from 47% to 54% (fallback) with no change to the engine. That is fixed (`E-1` in [`BACKLOG.md`](BACKLOG.md)), and the standard deviations above show how much a single split can wander.
+- **Everything here is on synthetic chats**, written by one author in formulaic personas, with held-out messages drawn at random from the same conversations, so near-duplicates leak and absolute accuracy is optimistic. The *comparison* between the engines and the calibration logic are what should transfer; nothing has been validated on real conversations (`A-5`).
+- **What did not work** (kept as findings): raw sentence embeddings appended to the n-gram features lowered accuracy on two of the three cases (Study Group 61.1 → 52.2, Paper Leak 71.0 → 65.9), zero-shot "behaviour prototype" features added nothing, and normalising apostrophes and capitals in the word features cost a little on the small cases. Unweighted classes were worse than equally weighted ones on all three.
 
 **Known limitations**, tracked in [`BACKLOG.md`](BACKLOG.md):
 
+- **Attribution.** The learned engine ignores the messages just before the query (`A-2`), its confidence is weaker across contexts (`A-3`), small chats never commit and "how sure" is fixed at 80% (`A-4`), and a message from someone who is not in the chat is forced onto somebody unless it is uncertain (`A-8`).
 - **Import formats.** The WhatsApp layouts above have not been checked against a real phone export, only synthetic and hand-written files, so an unusual locale can still fail with "No messages parsed". System events (someone joined, the encryption notice) are dropped rather than stored. Sources imported before multi-line support keep their old truncated text until re-uploaded. Only WhatsApp media is flagged; the Instagram and Telegram parsers drop media-only entries, and have only been exercised on hand-written samples, never a real export.
 - **Timestamps.** Instagram is UTC while WhatsApp/Telegram are device-local, so a cross-platform case is off by the UTC offset (flagged, not corrected). One unreadable date line undates a whole WhatsApp file.
 - **Sentiment.** Reads wording only: no sarcasm, no Devanagari script, and a cold accusation with no negative words reads neutral, so the board's "tense" tone can't see it. Known misses on plain Hinglish remain (two are marked `xfail` in the tests).
@@ -317,7 +349,7 @@ Then open **http://127.0.0.1:8000/cases.html** (the bare `/` returns 404; there 
 
 Pick a case on the dashboard; each case offers **Open investigate**, **Open dossiers**, **Open investigation board** and **Open workspace**. **Identity Review** is a link at the top of the dashboard.
 
-1. Open **Demo: Housemates** → *Open investigate*. Paste a sentence and read the ranking and per-signal breakdown. Try one with no obvious topic and watch it say *uncertain*. The optional "what was said just before" box takes one `Sender: text` line per prior message, oldest first.
+1. Open **Demo: The Paper Leak** → *Open investigate* and paste `Dont worry guys I'll pay`: the learned engine names Yash and shows the words behind it. Click **Legacy** to re-run the same sentence on the six-signal engine and see it decline. Try a bare `ok` to see the "could be" list, and open **Demo: Housemates** to see a small chat where the learned engine ranks but will not commit. The optional "what was said just before" box takes one `Sender: text` line per prior message, oldest first (the legacy engine uses it; the learned engine says it did not).
 2. From the same case, *Open dossiers* and pick Meera to see the group-vs-DM comparison.
 3. Open **Identity Review** to see the two suggested cross-platform matches from **Demo: Other Platforms** (Karan and Riya); accept one and open the combined dossier.
 4. Open **Demo: The Paper Leak** → *Open investigation board*, then *Open workspace* to search, view the timeline, and pin messages.
@@ -328,13 +360,14 @@ To analyse your own chats, create a case and upload an export. In WhatsApp use *
 
 ```bash
 pip install pytest
-python -m pytest -q          # 363 passed, 2 xfailed once the model is built (about a minute)
+python -m pytest -q          # 420 passed, 2 xfailed once the model is built (about a minute)
 python eval_attribution.py   # attribution accuracy / coverage / precision per case, mean ± sd over 5 splits (--splits 1 = quick)
+                             #   --engine learned|legacy|both  --transfer (group -> DM)  --curve (messages per person)
 python eval_sentiment.py     # sentiment model vs VADER on the held-out sets
 python eval_identity.py      # regression fixture for the (disabled) soft identity tier
 ```
 
-**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 336 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
+**Without the model file** the 29 model-dependent tests in `test_hinglish_sentiment.py` are skipped, each with the instruction to run step 1, and the other 393 pass. The suite runs against a throwaway database (`conftest.py`), never your `detective.db`. A model file that exists but was built with different features fails rather than skips. The two `xfail`s are known Hinglish misses recorded on purpose.
 
 ---
 
@@ -347,10 +380,10 @@ Interactive docs are available at `/docs` while the server runs. All case data i
 | `POST` / `GET` | `/cases`, `/cases/{id}` | Create / list cases, get one |
 | `POST` | `/cases/{id}/sources` | Upload an export (multipart: `file`, `platform`, `context`, `label`); returns immediately, `status=pending` |
 | `GET` / `DELETE` | `/cases/{id}/sources`, `…/sources/{sid}` | List sources with status; remove a *failed* import only |
-| `POST` | `/cases/{id}/investigate` | `{sentence, context[]}` → ranked speakers, confidences, per-signal breakdown, `uncertain` |
+| `POST` | `/cases/{id}/investigate` | `{sentence, context[], engine?}` (`engine`: `learned` or `legacy`, default from `/status`) → ranked speakers, confidences, `uncertain`, and that engine's evidence (`evidence` / `plausible_senders` / `calibration` for learned, per-signal breakdown for legacy) |
 | `GET` | `/cases/{id}/people`, `/cases/{id}/person/{name}` | People in a case; a person's dossier |
 | `GET` | `/people/{person_id}` | Combined cross-case dossier for a merged person |
-| `GET` | `/status` | Live state for the workstation bar: sentiment scorer, external-LLM switch, counts |
+| `GET` | `/status` | Live state for the workstation bar: attribution engine, sentiment scorer, external-LLM switch, counts |
 | `POST` | `/cases/{id}/rescan-matches` | Re-run identity scan for a case |
 | `GET` | `/merge-suggestions` | Suggestions with evidence (`?status=pending\|accepted\|rejected`) |
 | `POST` | `/merge-suggestions/{id}/accept`, `…/reject` | The only place a merge happens |
@@ -373,7 +406,9 @@ models.py  db.py          SQLModel tables; SQLite engine + small column-migratio
 parsers/                  Parser registry: whatsapp.py · instagram.py · telegram.py
 ingestion.py              Background import, timestamp backfill, stranded-import recovery
 engine_cache.py           Lazy per-case engine / profile / timeline cache
-detective.py              The six-signal attribution engine
+engine_kind.py            Which attribution engine answers (DETECTIVE_ENGINE, default learned)
+learned_engine.py         The learned attribution engine (default): n-gram model, calibrated abstention, exact evidence
+detective.py              The original six-signal attribution engine (still selectable)
 person_profile.py         Case dossier aggregation (shared core)
 combined_profile.py       Cross-case dossier, pooled by Identifier id
 identity_resolution.py    hard / fuzzy (and disabled soft) matching → MergeSuggestion
@@ -389,6 +424,7 @@ merge_review.html  investigation_board.html  workspace.html      The UI pages
 
 eval_attribution.py  eval_sentiment.py  eval_identity.py        Evaluation harnesses
 eval_split.py             Per-sender train/test split and mean ± sd helper for eval_attribution.py
+eval_metrics.py           Scoring rules for the attribution eval (top-k, log-loss, abstention, paired flips)
 test_*.py  conftest.py    pytest suites (parsers, message kinds, graph rules, sentiment, static policy,
                           leak-case key); conftest.py points them at a throwaway database
 sample_*.txt / *.json     Synthetic chats, training lines, labeled sets, answer key
@@ -411,18 +447,18 @@ CLAUDE.md                 Detailed project notes and design history
 | 3 | Instagram and Telegram parsers, cross-platform demo | Done |
 | 4 | Relationship graph | Done, then reworked into the current board |
 | 5 | Workspace: timestamps, search, timeline, pins, import polish | Done (Postgres/Celery move deferred until usage justifies it) |
-| Improvement | Evaluation harnesses; Hinglish sentiment | In progress. Next: fit signal weights and thresholds on labeled data; replace the rule-based syntax signal with a POS tagger |
+| Improvement | Evaluation harnesses; Hinglish sentiment; **learned attribution engine with calibrated abstention** | In progress. Done: harnesses, Hinglish sentiment, the learned engine (default). Next: validate on a real chat, use the preceding messages, better cross-context confidence (see `A-2`..`A-8`) |
 | 6 | **Contradiction detection**: statements that conflict with themselves, across group and DM, with other people, or with timestamps and records. Every finding must cite both statements, say *why* they conflict, wait for a human to confirm, never assert guilt, and be able to say "uncertain" (decoys such as a self-corrected memory slip must *not* be scored as lies) | Being designed. `judge.py` is a placeholder for an optional, off-by-default Gemini judge (it raises `NotImplementedError` and sends nothing). Will be evaluated against `sample_leak_case_key.json` |
 | 7 | Investigator-style presentation: a dark digital-forensics workstation look with a colour contract (red only for suspicious/high-risk) | Done for all seven pages. One item is deliberately left: the blue/red sentiment and tone colours, which still use red for negative (deferred by the owner) |
 
 ## Security and responsible use
 
 - **Keep it on localhost; there is no authentication.** Every API route is open to anything that can reach the port, so whoever can would be able to read every case. It binds to `127.0.0.1` by default; do **not** expose it to a network or the internet, or run it with `--host 0.0.0.0`, while it holds real chats. Two specifics. The static file server only serves the top-level `.html` pages and files directly inside `static/`, and the database, uploads, source and `.git` are refused (`test_ui_static.py` covers this). CORS is currently wide open (`allow_origins=["*"]`), so in principle a web page open in the same browser could try to call the local API; browsers restrict that for localhost to varying degrees and it has not been tested here. Restricting origins and checking the `Host` header is tracked as `S-2` in [`BACKLOG.md`](BACKLOG.md) and should land before any shared use.
-- **A chat export is untrusted input.** Sender names, source labels and case names come from files you upload, and every page escapes them before display. Four stored cross-site-scripting holes of exactly this kind were found on four pages while building the current UI (a crafted export ran script in the page); each was reproduced in a real browser on the old page and re-tested after the fix. See `S-3` and `S-4` in [`BACKLOG.md`](BACKLOG.md). Because the API itself is still open (`S-2`), escaping on output is the only defence, so any new page that shows names must be checked with a hostile export.
+- **A chat export is untrusted input.** Sender names, source labels and case names come from files you upload, and every page escapes them before display. Four stored cross-site-scripting holes of exactly this kind were found on four pages while building the current UI (a crafted export ran script in the page); each was reproduced in a real browser on the old page and re-tested after the fix. See `S-3` and `S-4` in [`BACKLOG.md`](BACKLOG.md). The learned engine's evidence table also echoes words and phrases from the chat; those go through the same escaping and were checked in a browser with a hostile export. Because the API itself is still open (`S-2`), escaping on output is the only defence, so any new page that shows names or words must be checked with a hostile export.
 - **Planned, and not built yet: an optional Gemini judge** for contradiction detection. When it exists it will be off by default and will send the two statements being compared (plus a little context) to Google. Google's terms for the **free** Gemini API tier say submitted content may be used to improve its products and read by human reviewers, and tell you not to submit personal information; the paid tier is not used that way. The maintainer's decision is to use it on the bundled synthetic cases only: real chats will not be sent to it.
 - **Your chat content stays local.** Today it is never sent anywhere. The app does contact Hugging Face to fetch and check the embedding model (and, for `--retrain`, to download the public datasets), and the relationship board loads D3 from a CDN, so that page needs internet access.
 - **Uploads are stored on disk** under `uploads/` (git-ignored) and in `detective.db` (git-ignored).
-- **Treat results as leads, not proof.** Attribution is probabilistic, the engine's accuracy is modest, and the sentiment scorer can't see sarcasm. The tool is built to say "uncertain", to propose rather than decide, and to require a human to confirm merges. It is not designed to assert guilt or to be evidence on its own.
+- **Treat results as leads, not proof.** Attribution is probabilistic (the learned engine is right about 3 times in 4 on the synthetic nine-person case, and its stated confidence is only as good as the chat it learned from), and the sentiment scorer can't see sarcasm. The tool is built to say "uncertain", to propose rather than decide, and to require a human to confirm merges. It is not designed to assert guilt or to be evidence on its own.
 - **Only analyse chats you have the right to analyse**, ideally with the consent of the people in them. The bundled cases, including "The Paper Leak", are entirely fictional.
 
 ## Data, models and licences

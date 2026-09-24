@@ -27,6 +27,9 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 5. **N-3 (Phase 7 UI)** - the owner's brief arrived 2026-09-24; **all seven pages are done** (theme, shell, `/status`,
    `cases`, `workspace`, `board`, `investigate`, `dossier`, `combined dossier`, `identity review`). Left: C-1 (the
    blue/red colours, deferred by the owner) and the follow-ups under N-3.
+6. **A-1 (learned attribution engine)** - *steps 1-2 done 2026-09-24* (see Done): the eval harness and `learned_engine.py`, now
+   the default. Follow-ups A-2 to A-8 are under *Attribution / identity*; the ones that need the owner are A-5 (a real chat to
+   validate on) and A-4 (how sure "sure" should be).
 
 ---
 
@@ -138,13 +141,50 @@ Autonomous work goes first; anything that needs a human decision stops for it.
   queries through it); what is left is route-level tests with a test client and fixtures.
 
 ### Attribution / identity
-- [ ] **F-16 · Uncertainty thresholds are calibrated for 3-person cases.** On the 9-person paper-leak case
+- [ ] **A-2 · The learned engine reads only the sentence, not what was said just before it.** `context` is accepted and reported as
+  unused (a note in the response and on the page). The legacy engine used it (a turn-taking signal and a recency-weighted topic
+  blend) but its benefit was never measured. To do it properly the eval needs conversation-ordered examples (`split_by_sender`
+  shuffles), then a product of experts with P(sender | previous sender), kept only if it beats the noise. F-18 (turn-taking counted
+  across source boundaries) applies to any version of this.
+- [ ] **A-3 · Its confidence transfers imperfectly across contexts.** Trained on the group chat and tested on the 249 DMs of the paper
+  leak (`--transfer`): 55.8% top-1 (legacy 35.7%, always guessing the most frequent DM sender 29.7%), but it commits on 55% of
+  them and is right only 69% of those, under its 80% target, because the calibration describes messages *like those in the chat*.
+  Per person: Meenakshi 19/22, Yash 56/74, Harshit 21/31 ... Nikhil 1/19, Sana 6/25. In the app the model is trained on the group
+  *and* the DMs, so this is a stress test, but the reliability line on the page is not a promise about a message from a
+  context the case has little of. Ideas: calibrate per source context; warn when the query's context is thin in training.
+  On the tiny Study Group the transfer figure (45.2%, 31 DM messages) is below always guessing the majority (51.6%).
+- [ ] **A-4 · Small chats never commit, and "how sure" is fixed at 80%.** By design it needs about 250 held-out checks (`MIN_CHECKED_TO_COMMIT`)
+  before it names one person: on the nine-person case the calibrated cut-off met its target from ~270 training messages (80-85%) and
+  not below (74% at 180, 64% at 90), and with plain point estimates the two 3-person demos "committed" at 33-43% precision. So
+  Study Group (~72 training messages) and Housemates (~85) always answer "uncertain" and show the ranking, top-3 and probabilities.
+  The 250 was measured on one case; check it on more. The 80% target (`TARGET_PRECISION`) could be a user setting.
+- [ ] **A-5 · No validation on real chats (extends F-25 to attribution).** Every number here is from synthetic chats written by one
+  author, in formulaic personas, with random held-out messages from the same conversations (near-duplicates leak) - so absolute
+  accuracy is optimistic; the *comparison* with the legacy engine and the calibration logic are the parts that should transfer.
+  The eval harness is read-only and prints aggregates, so it can be run on a real export locally. Needs a real chat (a case
+  with a few hundred messages per person is ideal).
+- [ ] **A-6 · A per-person "signature"** (habitual phrases, from the model's weights) for the dossier is not built; the evidence table
+  only explains one query. Filter to n-grams the person used at least twice, to avoid one-off noise.
+- [ ] **A-7 · Behavioural and semantic features are unvalidated.** Tried and not adopted: zero-shot "behaviour prototype" features
+  (no gain) and raw sentence embeddings appended to the n-grams (Study Group 61.1 -> 52.2, Paper Leak 71.0 -> 65.9, Housemates
+  +1.9 within noise), though embeddings did get one formal-register paraphrase right ("kindly note the payment is due on Friday"
+  -> Nikhil 0.60). Untried: time of day, reply structure, message length habits as features; a pretrained style embedding (LUAR);
+  the Gemini judge on synthetic data. Each only if it beats the noise on `eval_attribution.py`.
+- [ ] **A-8 · A message from someone who is not in the chat is forced onto somebody.** Only abstention guards against it (it says
+  "uncertain" when nothing is confident); there is no "none of these" class. Also: a message with no known word or letter
+  pattern at all (a new script, a new emoji) is answered with the base rate and flagged, but ASCII gibberish shares two-letter
+  fragments with everything and is only kept from committing by the threshold.
+- [ ] **A-9 · Build time on very large chats.** 14,500 messages build in ~16 s on this machine (calibration is capped at 6,000
+  checked messages) and a query takes 7-17 ms; the legacy engine embeds every message and is much slower. The first `/investigate`
+  after an import pays the build. Untested beyond 15k messages.
+- [ ] **F-16 · Uncertainty thresholds are calibrated for 3-person cases** (the *legacy* engine; the learned engine, now the default,
+  calibrates its own cut-off per case - A-1 - and commits on 71% of paper-leak messages at 82% precision). On the 9-person paper-leak case
   top-1 accuracy is 51.7% +- 3.3 (VADER fallback) / 49.6% +- 2.1 (Hinglish model), mean +- sd over 5 splits
   (2026-09-24, chance 11%), and the engine never commits (0% coverage on 142 test messages per split). On the
   3-person cases the spread is large (sd 8-14 points at 18-21 test messages) and Study Group (40-44%, chance 33%)
   is not clearly distinguishable from chance. (Improvement Stage item 1; the eval is now trustworthy enough to
   fit against - E-1 is done.)
-- [ ] **F-17 · spaCy syntax signal** (Improvement Stage item 2).
+- [ ] **F-17 · spaCy syntax signal** (Improvement Stage item 2; only matters to the legacy engine now, so low priority).
 - [ ] **F-18 · `DetectiveEngine` treats the last message of one source and the first of the next as
   adjacent** when it counts turn-taking (`transition_counts`). The board's exchange counting had the same
   flaw and was fixed on 2026-09-21; the engine still has it.
@@ -199,8 +239,8 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 ### Pages not visually reviewed
 - [ ] **V-1 · `person.html` (dossier) and `combined_dossier.html`** with 9 people and 5 DMs — only "loads
   without errors" is confirmed for the paper-leak case, not how it reads.
-- [ ] **V-2 · `detective_lang.html` (investigate)** with 9 similar speakers — mostly "uncertain" (see F-16);
-  the UI for that state hasn't been reviewed.
+- [x] **V-2 · `detective_lang.html` (investigate)** with 9 similar speakers — reviewed 2026-09-24 with the learned engine
+  (committed and uncertain states, "could be" list, evidence table, 1440 and 390 px screenshots; legacy view unchanged).
 - [ ] **V-3 · `merge_review.html`** and `cases.html` at phone width.
 
 ### Security and repo hygiene (found 2026-09-24 while publishing the repo)
@@ -254,6 +294,58 @@ Autonomous work goes first; anything that needs a human decision stops for it.
 
 ## Done
 
+- 2026-09-24 · **A-1 · A learned attribution engine, now the default (plan steps 1-2).** *Trigger:* on the Paper Leak the owner typed
+  *"Dont worry guys I'll pay"* (Yash's habitual line: "on me" x10, "no stress", "don't worry about money") and the engine came back
+  uncertain with Yash 2nd (13.9%; Parth 16.6%). *Why the legacy engine missed (measured):* its category signal (25% of the weight,
+  five hand-written word lists) was off - weight 0.0 - because "pay" and "worry" are in none of them; style, sentence form and emotion
+  give Yash 0.72-0.87 but the four leading candidates ended within 5 points (16.6 / 13.9 / 13.6 / 11.5%), so they do not separate the
+  bro-slang writers; each person is one averaged vector, so "on me" is averaged away; nine speakers can never clear 35% / 8 points.
+  *Research first* (2026-09-24): char/word n-grams with a linear model is the standard strong baseline for short-text authorship
+  (including an arXiv study of short Hinglish WhatsApp messages, SVM up to ~95%); fine-tuned transformers give modest gains on short
+  text and are unstable and costly with many authors; Big Five from text reaches only r ~ 0.25-0.40, a poor basis for *attribution*
+  (kept as a descriptive dossier); abstaining is best done with calibrated probabilities. *Built:* `learned_engine.py` (word 1-2-grams +
+  char 2-5-grams -> one multinomial logistic regression, balanced classes; probabilities calibrated on cross-validated predictions of the
+  case's own messages; abstains below the confidence at which those held-out checks were right >= 80% even at the pessimistic end of the
+  statistics (Wilson bound), never below 50%, and not at all under ~250 checked messages; every score is an exact sum of per-word /
+  per-phrase contributions, tested to add up to the log-odds; a "could be" set covering 90%), `eval_metrics.py` (top-k, log-loss,
+  "could be" set, abstention curve, paired flips) and `eval_attribution.py --engine legacy|learned|both --transfer --curve`,
+  `engine_kind.py` (`DETECTIVE_ENGINE`, a typo is an error), `engine_cache.get_attributor`, `engine` on the investigate request and in
+  `/status`, and the page (Learned / Legacy toggle, "could be" list, reliability line, evidence table, notes).
+  *Results, final code, same 5 splits, mean +- sd, legacy -> learned:* top-1 Study Group 40.0 +- 9.1 -> 61.1 +- 8.8, Housemates
+  59.0 +- 8.7 -> 67.6 +- 7.8, Paper Leak 49.6 +- 2.1 -> 73.5 +- 2.6 (chance 33 / 33 / 11); top-3 100 / 100 / 100 -> 100 / 100 / 96.1
+  (Paper Leak legacy 83.7); log-loss 1.04 -> 0.96, 0.94 -> 0.82, 1.82 -> 0.79; paired flips (only legacy right / only learned right)
+  8 / 27, 18 / 27, 60 / 230 - clear on Paper Leak and Study Group, modest on Housemates (the gain is under one sd); the "could be"
+  set holds the true sender 97.8 / 100 / 95.5% of the time and is 2.9 / 2.8 / 2.7 people wide (legacy: 7.9 of 9 on Paper Leak).
+  Commitment: never on the two 3-person cases (too little chat, A-4); on Paper Leak it commits on 71.3% +- 4.9 of messages and is
+  right 416/506 = 82.2% of those (target 80%). Learning curve on Paper Leak (messages per person: top-1): 5: 45.9, 10: 55.5, 20: 60.1,
+  40: 68.0, 80: 73.1, all (~65 after the hold-out): 73.5 (chance 11). The owner's sentence on the demo, trained on all 725
+  messages: Yash 94.7% and committed (evidence: worry +1.8, guys +1.7, i'll +0.6 toward Yash, "pay" -1.9 toward Parth, starting lean
+  +0.9; total 22 : 1); paraphrases that reuse few of his words ("chill everyone, I'll cover the bill") 0.88-0.93 in the research run.
+  *Design decisions, each from a measurement (top-1, Study Group / Housemates / Paper Leak):* unweighted 61.1 / 63.8 / 71.0 vs balanced
+  classes 64.4 / 66.7 / 72.4 (balanced won in all three, so it is the default); normalising apostrophes/case/stretching in the word
+  features 55.6 / 61.9 / 71.1 unweighted and 61.1 / 65.7 / 73.4 balanced (no gain, small loss on the small cases - dropped);
+  keeping apostrophes inside tokens ("i'll" one word) 61.1 / 67.6 / 73.5 vs splitting them 64.4 / 68.6 / 72.4 (within noise; kept
+  because the evidence then reads "i'll pay", not "' ll"); embedding and "behaviour prototype" features - negative (A-7).
+  *Calibration - what the checks found:* on the nine-person case, capped training size (messages: commits / right when committed)
+  90: 15% / 64%, 180: 13% / 74%, 270: 42% / 80%, 391: 52% / 83%, 491: 56% / 85%, 583: 73% / 82% - the cut-off is chosen on the same
+  held-out checks it is judged on, so it is optimistic on small data, hence the Wilson bound and the 250-check minimum; without the
+  Wilson bound the two 3-person demos "committed" at 33% and 43% precision.
+  *Bugs the tests and mutations found in my own first version:* an unbounded temperature fit ran to its lower limit on perfectly
+  separable held-out checks and turned an intercept-only gibberish message into a 93% answer (now bounded to 0.5-4, floor of 50% on the
+  commit line); a message with no known word or letter pattern at all got an arbitrary intercept-driven answer (now the base rate,
+  flagged); duplicate messages give identical confidences, so a cut-off could be justified by half of a tie group while admitting all
+  of it (now decided on the set actually admitted); a hand-computed Wilson value in a test was wrong (0.844 - it is 0.8548).
+  *Verification:* 420 tests pass with the model (+57 new: `test_learned_engine.py` 30, `test_eval_metrics.py` 12,
+  `test_investigate_route.py` 13, 2 in `test_ui_pages.py`; `test_status.py` updated for the new `/status` field); a scratch copy without the model file:
+  393 passed, 29 skipped. 16 deliberate breakages ("mutations") were each caught by a test (an equivalent mutant - a redundant
+  tie guard - showed the real enforcement was elsewhere, so the dead code was removed and the mutation re-aimed). In headless
+  Chromium against a scratch server: the page in both engines and both states, the toggle re-running the same sentence, 0 console
+  errors, no horizontal scroll at 390 px; and **a hostile export** (names and words that are markup: `<img onerror>`, `<svg onload>`,
+  `<script>`) uploaded through the real path - 0 injected elements, no script side effect, no dialog, everything shown as text; a
+  control that un-escapes one label made the same check find an injected element, so the check can fail (S-4).
+  *Limits, recorded as follow-ups:* the messages just before the query are not used (A-2); confidence transfers imperfectly across
+  contexts (A-3); small chats never commit (A-4); everything is synthetic (A-5). The legacy engine, the relationship graph and the
+  dossiers are unchanged and still available.
 - 2026-09-21 · **Investigation board rework** — see *Investigation board* in CLAUDE.md (larger canvas,
   drag-anywhere with saved positions, laser edges, glowing selection, tone/exchange filters, readable
   labels, per-source exchange counting, an explicit "unclear" tone for thin evidence).
