@@ -390,7 +390,8 @@ in `models.py` was written to make that swap a connection-string/column-type cha
 **Phase 6 — Contradiction detection.** Planned, requested, not started; the method is being designed with the owner
 (see BACKLOG N-1 for the design so far: local candidate generation and structured checks, **Gemini as the semantic
 judge** behind the `judge.py` placeholder - off by default, `NotImplementedError` until built - and Google's free-tier
-terms forbidding personal data, which makes the opt-in and what-gets-sent preview central). Given a person of interest, surface statements that
+terms forbidding personal data; **the owner decided (2026-09-24) that Gemini is used on synthetic demo data only and real
+chats are never sent to it**, to be enforced by a per-case flag, not by convention). Given a person of interest, surface statements that
 conflict: with themselves over time in one chat; across contexts (group vs DM, and across platforms once
 cases are linked); with what other people say; with timestamps and records (a message sent while they claim
 to be asleep, a gate register, a photo's time); knowledge they shouldn't have (a slip); and an explanation of

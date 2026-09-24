@@ -48,8 +48,13 @@ Autonomous work goes first; anything that needs a human decision stops for it.
     responses are used to improve Google's products, human reviewers may read them, and "Do not submit sensitive,
     confidential, or personal information to the Unpaid Services"; the **paid** tier does not use them that way. Real
     chats are personal information. So: opt-in per case (env switch now, UI later), show exactly what will be sent, and on
-    the free tier use synthetic/consented data only. Open question for the owner: free tier + synthetic data only, a paid
-    project, or pseudonymising names before sending (which can hurt name-based reasoning such as "Lalit").
+    the free tier use synthetic/consented data only. **Decided by the owner 2026-09-24: the Gemini judge is used on
+    synthetic demo data only, on the free tier; real chats are never sent to it** - on real data only the local
+    structured checks run and the judge stays off. (A paid project and pseudonymising names were considered and not
+    chosen; revisit both before the judge is ever enabled on real data.) *Design consequence to build, not built yet:*
+    enforce it in code rather than by convention - an explicit per-case flag (e.g. `Case.allow_external_llm`, False by
+    default, set only for the seeded demo cases), checked by the judge in addition to the env switch, so a real case
+    cannot reach Gemini by accident.
   - *Engine consequences of an external, rate-limited, non-deterministic judge:* local candidate generation keeps the calls
     few (free-tier limits are not published; only visible in AI Studio); a **record/replay cache** keyed on (model, prompt
     version, pair hash) so the eval is reproducible and tests never call the API; any API failure, quota error or safety
