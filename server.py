@@ -15,7 +15,6 @@ from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy import or_
 from sqlmodel import Session, select
@@ -30,6 +29,7 @@ from ingestion import backfill_timestamps, recover_stranded_sources, submit_inge
 from models import BoardLayout, Case, Identifier, MergeSuggestion, Message, Person, PersonCase, Source
 from parsers import PARSERS
 from seed_demo_case import seed_demo_case_if_needed
+from ui_static import UIStaticFiles
 
 UPLOAD_DIR = "uploads"
 
@@ -543,7 +543,9 @@ def delete_pin(case_id: int, pin_id: int, session: Session = Depends(get_session
     return {"status": "deleted"}
 
 
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+# Only the top-level .html pages are served (ui_static.py) - never the database,
+# uploads, source or .git that live in the same directory.
+app.mount("/", UIStaticFiles(directory=".", html=True), name="static")
 
 
 if __name__ == "__main__":
