@@ -1,7 +1,11 @@
 """Tests for the Hinglish sentiment scorer (hinglish_sentiment.py). Uses only
-files in the repo (the trained model and the blind-labeled chat set) - no
-downloads. The benchmark comparison (SentiMix, YouTube, English) lives in
-eval_sentiment.py. Run: pytest test_hinglish_sentiment.py
+files in the repo plus the trained model - no downloads. The benchmark comparison
+(SentiMix, YouTube, English) lives in eval_sentiment.py. Run: pytest test_hinglish_sentiment.py
+
+The trained model is built locally, not committed (see README). Tests marked
+@needs_model check its behaviour and are SKIPPED until you run
+`python eval_sentiment.py --retrain`. A model file that exists but loads as the
+VADER fallback (built with different features) is still a failure, not a skip.
 """
 import json
 import os
@@ -11,6 +15,12 @@ import pytest
 import hinglish_sentiment as hs
 
 A = hs.get_analyzer()
+
+# Skip (don't fail) on a fresh clone where the model was never built.
+needs_model = pytest.mark.skipif(
+    not os.path.exists(hs.MODEL_PATH),
+    reason="hinglish_sentiment_model.joblib not built - run: python eval_sentiment.py --retrain",
+)
 
 # Sentences the model is known to get wrong. They are kept (not deleted) so the gap stays visible;
 # when a retrain fixes one, pytest reports it as XPASS and the marker should come off. See BACKLOG F-21.
@@ -27,8 +37,11 @@ def label(text):
     return ("negative", "neutral", "positive")[max(range(3), key=lambda i: (s["neg"], s["neu"], s["pos"])[i])]
 
 
+@needs_model
 def test_the_trained_model_is_present_not_the_fallback():
-    assert not A.is_fallback, "hinglish_sentiment_model.joblib missing - run: python eval_sentiment.py --retrain"
+    # Only reached when the file exists (needs_model skips otherwise): a fallback here means it was
+    # built with different features than this code expects (hinglish_sentiment.FEATURE_VERSION).
+    assert not A.is_fallback, "hinglish_sentiment_model.joblib was built with different features - rebuild: python eval_sentiment.py --retrain"
 
 
 def test_output_is_vader_shaped():
@@ -47,6 +60,7 @@ def test_output_is_vader_shaped():
     pytest.param("wah kya match tha, jeet gaye", marks=KNOWN_MISS),
     pytest.param("mera din ban gaya tera message dekh ke", marks=KNOWN_MISS),
 ])
+@needs_model
 def test_plain_hinglish_positive_is_read_as_positive(text):
     assert label(text) == "positive"
     assert score(text) > 0.1
@@ -60,22 +74,26 @@ def test_plain_hinglish_positive_is_read_as_positive(text):
     "main bahut udaas hoon aaj",
     "main tumse naraaz hoon, samjhe",
 ])
+@needs_model
 def test_plain_hinglish_negative_is_read_as_negative(text):
     assert label(text) == "negative"
     assert score(text) < -0.1
 
 
+@needs_model
 def test_the_clearest_cases_are_read_with_conviction():
     assert score("bahut acha laga yaar") > 0.4
     assert score("yeh bilkul acha nahi hai") < -0.3
 
 
+@needs_model
 def test_hindi_style_negation_after_the_word_lowers_the_reading():
     # (plain "yeh acha hai" itself is scored slightly negative today - a known weakness listed in BACKLOG)
     assert score("yeh acha nahi hai") < score("yeh acha hai") - 0.15
     assert score("yeh acha nahi hai") < -0.1
 
 
+@needs_model
 def test_plain_hinglish_information_is_neutral():
     for text in ("kal subah milte hain station pe", "main abhi ghar pahunch gaya", "wo file bhej dena please"):
         assert label(text) == "neutral"
@@ -87,10 +105,12 @@ def test_plain_hinglish_information_is_neutral():
     ("i feel terrible, like i'm completely failing at this", -1),
     ("this is stressing me out so much", -1),
 ])
+@needs_model
 def test_english_is_not_lost(text, sign):
     assert score(text) * sign > 0.25
 
 
+@needs_model
 def test_ambiguous_chat_emoji_do_not_decide_the_score():
     # 💀 and 😭 mean laughing or panicking depending on the words; they must not move the score
     base = "bro who signs on a tuesday evening"
@@ -105,15 +125,18 @@ def test_ambiguous_chat_emoji_do_not_decide_the_score():
     ("worst day ever 😡", -1),
     ("mera dil toot gaya 😢", -1),
 ])
+@needs_model
 def test_unambiguous_chat_emoji_carry_their_chat_meaning(text, sign):
     assert score(text) * sign > 0.4
 
 
+@needs_model
 def test_acknowledgement_emoji_are_not_a_polarity():
     assert abs(score("noted 👍")) < 0.4
     assert label("ok 👍") != "negative"
 
 
+@needs_model
 def test_letter_stretching_is_squashed():
     assert score("yessssss finally") == pytest.approx(score("yess finally"))
 
@@ -126,6 +149,7 @@ def test_batch_matches_one_at_a_time():
     assert A.polarity_scores_batch([]) == []
 
 
+@needs_model
 def test_explain_says_which_pieces_pushed_the_score():
     why = A.explain("bakwaas movie thi, bilkul acha nahi laga")
     assert why["toward_negative"], "expected negative contributors"
@@ -143,6 +167,7 @@ def test_falls_back_to_plain_vader_if_the_model_file_is_missing(monkeypatch):
     monkeypatch.setattr(hs, "_analyzer", None)   # don't leak the fallback into later tests
 
 
+@needs_model
 def test_beats_vader_on_the_blind_labeled_chat_messages():
     """All 300 hand-labeled chat messages (none of them in the training data)."""
     with open(os.path.join(os.path.dirname(__file__), "sample_hinglish_chat_labels.json"), encoding="utf-8") as f:
